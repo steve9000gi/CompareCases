@@ -81,7 +81,7 @@ void CaseSpaceDialog::hashTest()
 
 	for (int i = 0; i < 123; i++)
 	{
-		/*int j = */ intStack.pop(); // ???
+		/*int j = */ intStack.pop(); // ????
 	}
 
 
