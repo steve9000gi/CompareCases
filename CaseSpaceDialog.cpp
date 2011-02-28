@@ -87,9 +87,9 @@ void CaseSpaceDialog::hashTest()
 
 	hash_map<int, QString> stringHashMap;
 
-	bool succeeded;
+	//bool succeeded;
 
-	QString s = "QWERTY12345";
+	//QString s = "QWERTY12345";
 
 	//stringHashMap.insert(s, 
 
