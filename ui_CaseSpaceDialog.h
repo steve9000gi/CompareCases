@@ -29,7 +29,7 @@ public:
     QPushButton *compareCasesPushButton;
     QLabel *queryCaseLabel;
     QLabel *QueryCaseNameLabel;
-    QPushButton *hashTestPushButton;
+    QPushButton *templateTestPushButton;
 
     void setupUi(QDialog *CaseSpaceDialog)
     {
@@ -50,9 +50,9 @@ public:
         QueryCaseNameLabel = new QLabel(CaseSpaceDialog);
         QueryCaseNameLabel->setObjectName(QString::fromUtf8("QueryCaseNameLabel"));
         QueryCaseNameLabel->setGeometry(QRect(90, 18, 723, 16));
-        hashTestPushButton = new QPushButton(CaseSpaceDialog);
-        hashTestPushButton->setObjectName(QString::fromUtf8("hashTestPushButton"));
-        hashTestPushButton->setGeometry(QRect(159, 323, 75, 23));
+        templateTestPushButton = new QPushButton(CaseSpaceDialog);
+        templateTestPushButton->setObjectName(QString::fromUtf8("templateTestPushButton"));
+        templateTestPushButton->setGeometry(QRect(159, 323, 75, 23));
 
         retranslateUi(CaseSpaceDialog);
         QObject::connect(buttonBox, SIGNAL(accepted()), CaseSpaceDialog, SLOT(accept()));
@@ -67,7 +67,7 @@ public:
         compareCasesPushButton->setText(QApplication::translate("CaseSpaceDialog", "Compare Cases", 0, QApplication::UnicodeUTF8));
         queryCaseLabel->setText(QApplication::translate("CaseSpaceDialog", "Query Case:", 0, QApplication::UnicodeUTF8));
         QueryCaseNameLabel->setText(QApplication::translate("CaseSpaceDialog", "<not selected>", 0, QApplication::UnicodeUTF8));
-        hashTestPushButton->setText(QApplication::translate("CaseSpaceDialog", "Hash Test", 0, QApplication::UnicodeUTF8));
+        templateTestPushButton->setText(QApplication::translate("CaseSpaceDialog", "template Test", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

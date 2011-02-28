@@ -26,7 +26,7 @@ public:
 
 private slots:
 	void compareCases();
-	void hashTest();
+	void testTemplate();
 
 private:
 	void createActions();

@@ -68,7 +68,7 @@
     <string>&lt;not selected&gt;</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="hashTestPushButton">
+  <widget class="QPushButton" name="templateTestPushButton">
    <property name="geometry">
     <rect>
      <x>159</x>
@@ -78,7 +78,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Hash Test</string>
+    <string>test Template</string>
    </property>
   </widget>
  </widget>

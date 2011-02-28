@@ -56,7 +56,7 @@ CaseSpaceDialog::~CaseSpaceDialog()
 void CaseSpaceDialog::createActions()
 {
 	connect(compareCasesPushButton, SIGNAL(clicked()), this, SLOT(compareCases()));
-	connect(hashTestPushButton, SIGNAL(clicked()), this, SLOT(hashTest()));
+	connect(templateTestPushButton, SIGNAL(clicked()), this, SLOT(testTemplate()));
 
 	//connect(okPushButton, SIGNAL(clicked()), this, SLOT(accept()));
 	//connect(cancelPushButton, SIGNAL(clicked()), this, SLOT(reject()));
@@ -69,9 +69,9 @@ void CaseSpaceDialog::compareCases()
 	compareDialog->show();
 }
 
-void CaseSpaceDialog::hashTest()
+void CaseSpaceDialog::testTemplate()
 {
-	//QMessageBox::information(this, "hashTest", "hashTest");
+	//QMessageBox::information(this, "testTemplate", "testTemplate");
 	stack<int> intStack;
 
 	for (int i = 0; i < 123; i++)
@@ -79,18 +79,20 @@ void CaseSpaceDialog::hashTest()
 		intStack.push(i);
 	}
 
-	for (int i = 0; i < 123; i++)
+	for (int i = 0; i < 125; i++)
 	{
-		/*int j = */ intStack.pop(); // ????
+		if (!intStack.empty())
+		{
+			int j = intStack.top();
+			intStack.pop();
+		}
 	}
 
 
 	hash_map<int, QString> stringHashMap;
 
 	//bool succeeded;
-
 	//QString s = "QWERTY12345";
-
 	//stringHashMap.insert(s, 
 
 	hash_map<int, int> intHashMap;
