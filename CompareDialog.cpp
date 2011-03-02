@@ -791,12 +791,9 @@ void CompareDialog::setupDVHChart(vtkChartXY *chart, char *title)
 		yCoords[i]->SetName(structureName[i]);
 		table->AddColumn(yCoords[i]);
 		table->Update();
-		int numCols = table->GetNumberOfColumns();
-		int numRows = table->GetNumberOfRows();
 		line = chart->AddPlot(vtkChart::LINE);
 		line->SetInput(table, 0, i + 1);
 		line->SetColor(color[i][0], color[i][1], color[i][2], 255);
-
 		yCoords[i]->Delete();
 	}
 

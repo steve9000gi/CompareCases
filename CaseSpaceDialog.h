@@ -15,6 +15,10 @@
 
 #include "ui_CaseSpaceDialog.h"  // auto generated from XML output from QT Designer
 
+// Forward declarations:
+class vtkChartXY;
+class vtkContextView;
+
 
 class CaseSpaceDialog : public QDialog, public Ui_CaseSpaceDialog
 {
@@ -28,8 +32,13 @@ private slots:
 	void compareCases();
 	void testTemplate();
 
+private: // Objects
+	vtkChartXY *caseSpaceChart;
+	vtkContextView *caseSpaceView;
+
 private:
 	void createActions();
+	void setupVTKUI();
 
 private:
 	CaseSpaceDialog(const CaseSpaceDialog&);				// Not implemented.

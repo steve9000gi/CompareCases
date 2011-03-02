@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>713</x>
-     <y>636</y>
+     <x>790</x>
+     <y>633</y>
      <width>156</width>
      <height>23</height>
     </rect>
@@ -27,19 +27,6 @@
    </property>
    <property name="standardButtons">
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="compareCasesPushButton">
-   <property name="geometry">
-    <rect>
-     <x>71</x>
-     <y>636</y>
-     <width>83</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Compare Cases</string>
    </property>
   </widget>
   <widget class="QLabel" name="queryCaseLabel">
@@ -68,20 +55,57 @@
     <string>&lt;not selected&gt;</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="templateTestPushButton">
+  <widget class="QVTKWidget" name="caseSpaceViewWidget" native="true">
    <property name="geometry">
     <rect>
-     <x>159</x>
-     <y>323</y>
-     <width>75</width>
-     <height>23</height>
+     <x>27</x>
+     <y>45</y>
+     <width>920</width>
+     <height>573</height>
     </rect>
    </property>
-   <property name="text">
-    <string>test Template</string>
+   <property name="minimumSize">
+    <size>
+     <width>920</width>
+     <height>569</height>
+    </size>
    </property>
   </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>27</x>
+     <y>632</y>
+     <width>166</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QPushButton" name="compareCasesPushButton">
+      <property name="text">
+       <string>Compare Cases</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="testPushButton">
+      <property name="text">
+       <string>Test</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKWidget</class>
+   <extends>QWidget</extends>
+   <header>qvtkwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

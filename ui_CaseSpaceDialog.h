@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CaseSpaceDialog.ui'
 **
-** Created: Mon Feb 28 08:52:31 2011
+** Created: Tue Mar 1 14:56:48 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -16,9 +16,12 @@
 #include <QtGui/QButtonGroup>
 #include <QtGui/QDialog>
 #include <QtGui/QDialogButtonBox>
+#include <QtGui/QHBoxLayout>
 #include <QtGui/QHeaderView>
 #include <QtGui/QLabel>
 #include <QtGui/QPushButton>
+#include <QtGui/QWidget>
+#include "qvtkwidget.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -26,10 +29,13 @@ class Ui_CaseSpaceDialog
 {
 public:
     QDialogButtonBox *buttonBox;
-    QPushButton *compareCasesPushButton;
     QLabel *queryCaseLabel;
     QLabel *QueryCaseNameLabel;
-    QPushButton *templateTestPushButton;
+    QVTKWidget *caseSpaceViewWidget;
+    QWidget *widget;
+    QHBoxLayout *horizontalLayout;
+    QPushButton *compareCasesPushButton;
+    QPushButton *testPushButton;
 
     void setupUi(QDialog *CaseSpaceDialog)
     {
@@ -38,21 +44,35 @@ public:
         CaseSpaceDialog->resize(973, 674);
         buttonBox = new QDialogButtonBox(CaseSpaceDialog);
         buttonBox->setObjectName(QString::fromUtf8("buttonBox"));
-        buttonBox->setGeometry(QRect(713, 636, 156, 23));
+        buttonBox->setGeometry(QRect(790, 633, 156, 23));
         buttonBox->setOrientation(Qt::Horizontal);
         buttonBox->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
-        compareCasesPushButton = new QPushButton(CaseSpaceDialog);
-        compareCasesPushButton->setObjectName(QString::fromUtf8("compareCasesPushButton"));
-        compareCasesPushButton->setGeometry(QRect(71, 636, 83, 23));
         queryCaseLabel = new QLabel(CaseSpaceDialog);
         queryCaseLabel->setObjectName(QString::fromUtf8("queryCaseLabel"));
         queryCaseLabel->setGeometry(QRect(23, 18, 61, 13));
         QueryCaseNameLabel = new QLabel(CaseSpaceDialog);
         QueryCaseNameLabel->setObjectName(QString::fromUtf8("QueryCaseNameLabel"));
         QueryCaseNameLabel->setGeometry(QRect(90, 18, 723, 16));
-        templateTestPushButton = new QPushButton(CaseSpaceDialog);
-        templateTestPushButton->setObjectName(QString::fromUtf8("templateTestPushButton"));
-        templateTestPushButton->setGeometry(QRect(159, 323, 75, 23));
+        caseSpaceViewWidget = new QVTKWidget(CaseSpaceDialog);
+        caseSpaceViewWidget->setObjectName(QString::fromUtf8("caseSpaceViewWidget"));
+        caseSpaceViewWidget->setGeometry(QRect(27, 45, 920, 573));
+        caseSpaceViewWidget->setMinimumSize(QSize(920, 569));
+        widget = new QWidget(CaseSpaceDialog);
+        widget->setObjectName(QString::fromUtf8("widget"));
+        widget->setGeometry(QRect(27, 632, 166, 25));
+        horizontalLayout = new QHBoxLayout(widget);
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        horizontalLayout->setContentsMargins(0, 0, 0, 0);
+        compareCasesPushButton = new QPushButton(widget);
+        compareCasesPushButton->setObjectName(QString::fromUtf8("compareCasesPushButton"));
+
+        horizontalLayout->addWidget(compareCasesPushButton);
+
+        testPushButton = new QPushButton(widget);
+        testPushButton->setObjectName(QString::fromUtf8("testPushButton"));
+
+        horizontalLayout->addWidget(testPushButton);
+
 
         retranslateUi(CaseSpaceDialog);
         QObject::connect(buttonBox, SIGNAL(accepted()), CaseSpaceDialog, SLOT(accept()));
@@ -64,10 +84,10 @@ public:
     void retranslateUi(QDialog *CaseSpaceDialog)
     {
         CaseSpaceDialog->setWindowTitle(QApplication::translate("CaseSpaceDialog", "Case Space", 0, QApplication::UnicodeUTF8));
-        compareCasesPushButton->setText(QApplication::translate("CaseSpaceDialog", "Compare Cases", 0, QApplication::UnicodeUTF8));
         queryCaseLabel->setText(QApplication::translate("CaseSpaceDialog", "Query Case:", 0, QApplication::UnicodeUTF8));
         QueryCaseNameLabel->setText(QApplication::translate("CaseSpaceDialog", "<not selected>", 0, QApplication::UnicodeUTF8));
-        templateTestPushButton->setText(QApplication::translate("CaseSpaceDialog", "template Test", 0, QApplication::UnicodeUTF8));
+        compareCasesPushButton->setText(QApplication::translate("CaseSpaceDialog", "Compare Cases", 0, QApplication::UnicodeUTF8));
+        testPushButton->setText(QApplication::translate("CaseSpaceDialog", "Test", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
