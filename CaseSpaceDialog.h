@@ -1,7 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // CaseSpaceDialog.h: Qt-based GUI for prostate cancer radiation therapy
-// planning tool. This window displays ...
+// planning tool. This window displays a cartesian graph showing the relative
+// distances of the selected sets of cases from the query case with respect to
+// several criteria, e.g., PTV + bladder overlap for the x axis and PTV + 
+// rectum overlap for the y axis.
 //
 // author:  Steve Chall, RENCI
 // primary collaborator: Vorakarn Chanyanavich, Duke Medical Center
@@ -38,7 +41,7 @@ private: // Objects
 
 private:
 	void createActions();
-	void setupVTKUI();
+	void setupCaseSpaceChart();
 
 private:
 	CaseSpaceDialog(const CaseSpaceDialog&);				// Not implemented.

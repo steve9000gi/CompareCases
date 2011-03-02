@@ -285,6 +285,25 @@ void CompareDialog::selectMatch(int patientNumber)
 // method, as a Qt "slot", has to have the same argument list as the Qt-defined
 // "signal" it's being connected with.
 //
+// Concerning image orientation, here's an email to the VTK users group:
+//
+// Date: Tue, 1 Mar 2011 10:45:24 -0700
+// From: David Gobbi <david.gobbi@gmail.com>
+// Subject: Re: [vtkusers] Rotate vtkImage with vtkmatrix4x4
+// To: Jothy <jothybasu@gmail.com>
+// Cc: VTK Mailing List <vtkusers@vtk.org>
+// ...
+// Hi Jothy,
+//
+// If you work with sagittal and coronal image you will have to worry about
+// image orientation, but with axial images everything is identity.
+// 
+// For axial images, just make sure that your camera ViewUp is (0, -1, 0)
+// and DirectionOfProjection is (0, 0, 1).  The direction of projection for
+// the camera is the (FocalPoint - Position) direction.
+// 
+//  - David
+//
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setSliceAxis(bool val /* = true */)
 {

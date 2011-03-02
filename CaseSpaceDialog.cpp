@@ -1,7 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // CaseSpaceDialog.cpp: Qt-based GUI for prostate cancer radiation therapy 
-// planning tool. This window displays ...
+// planning tool. This window displays a cartesian graph showing the relative
+// distances of the selected sets of cases from the query case with respect to
+// several criteria, e.g., PTV + bladder overlap for the x axis and PTV + 
+// rectum overlap for the y axis.
 //
 // author: Steve Chall, RENCI
 // primary collaborator: Vorakarn Chanyanavich, Duke Medical Center
@@ -16,8 +19,6 @@
 #include "vtkPNGReader.h"
 #include "vtkDICOMImageReader.h"
 #include "vtkImageFlip.h"
-#include "vtkDoubleArray.h"
-#include "vtkStringArray.h"
 */
 
 #include "vtkRenderWindow.h"
@@ -28,6 +29,9 @@
 #include "vtkTable.h"
 #include "vtkAxis.h"
 #include "vtkFloatArray.h"
+#include "vtkDoubleArray.h"
+#include "vtkStringArray.h"
+#include "vtkTextProperty.h"
 
 #include "CaseSpaceDialog.h"
 #include "CompareDialog.h"
@@ -45,7 +49,7 @@ CaseSpaceDialog::CaseSpaceDialog()
 		caseSpaceView(NULL)
 {
 	this->setupUi(this);
-	this->setupVTKUI();
+	this->setupCaseSpaceChart();
 	this->createActions();
 }
 
@@ -68,12 +72,18 @@ void CaseSpaceDialog::createActions()
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::compareCases()
 {
 	CompareDialog *compareDialog = new CompareDialog;
 	compareDialog->show();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::testTemplate()
 {
 	//QMessageBox::information(this, "testTemplate", "testTemplate");
@@ -104,18 +114,25 @@ void CaseSpaceDialog::testTemplate()
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // http://en.wikipedia.org/wiki/Park%E2%80%93Miller_random_number_generator
+//
+////////////////////////////////////////////////////////////////////////////////
 unsigned long lcg_rand(int a)
 {
     return ((unsigned long)a * 279470273) % 4294967291;
 }
 
-
-void CaseSpaceDialog::setupVTKUI()
+////////////////////////////////////////////////////////////////////////////////
+//
+// Currrently using dummy data (random number tables).
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setupCaseSpaceChart()
 {
 	if (caseSpaceChart) caseSpaceChart->Delete();
 	caseSpaceChart = vtkChartXY::New();
-	//setDVHYAxisTicks(caseSpaceChart);
 
 	if (caseSpaceView) caseSpaceView->Delete();
 	caseSpaceView = vtkContextView::New();
@@ -126,16 +143,18 @@ void CaseSpaceDialog::setupVTKUI()
 	caseSpaceView->GetRenderWindow()->SetSize(920, 569);
 
 	caseSpaceChart->SetTitle("");
-	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetTitle("PTV + bladder overlap");
-	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->SetTitle("PTV + rectum overlap");
+	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetTitle("PTV + rectum overlap");
+	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->SetTitle( /* Hack to position x-axis title on right of graph */
+	".                                                                                                  PTV + bladder overlap");
 	caseSpaceChart->SetShowLegend(true);
 
 	vtkFloatArray *dukeXCoords = vtkFloatArray::New();
 	const int numCases = 200;
 	vtkFloatArray *dukeYCoords = vtkFloatArray::New();
 	vtkTable *table = vtkTable::New();
-	vtkPlot *line;
-	float dukeX[numCases] = {
+	vtkPlot *dukePoints;
+	vtkPlot *highPointPoints;
+	float randArray0[numCases] = {
 	10097, 32533, 76520, 13586, 34673, 54876, 80959, 9117, 39292, 74945,
 	37542, 4805, 64894, 74296, 24805, 24037, 20636, 10402, 822, 91665,
 	8422, 68953, 19645, 9303, 23209, 2560, 15953, 34764, 35080, 33606,
@@ -158,7 +177,7 @@ void CaseSpaceDialog::setupVTKUI()
 	9893, 20505, 14225, 68514, 46427, 56788, 96297, 78822, 54382, 14598,
 	};
 
-	float dukeY[numCases] = {
+	float randArray1[numCases] = {
 	80508, 76285, 17630, 9429, 30293, 16391, 87516, 20628, 53159, 80261,
 	12043, 94593, 2328, 43332, 83707, 12201, 23088, 39829, 76777, 55495,
 	41717, 72807, 33686, 73225, 30173, 5410, 91541, 45387, 48084, 21855,
@@ -181,40 +200,39 @@ void CaseSpaceDialog::setupVTKUI()
 	74166, 39761, 35695, 43436, 38419, 937, 68925, 63631, 90667, 15306,
 	};
 
-
 	for (int i = 0; i < numCases; i++)
 	{
 		int randX = lcg_rand(i) % 2053;
 		int randY = lcg_rand(i * 7) * 1733;
 
-		dukeX[i] = ((int)dukeX[i] % 100) * ((randY % 2) ? 1.0 : -1.0);
-		dukeY[i] = ((int)dukeY[i] % 100) * ((randX % 2) ? -1.0 : 1.0);
-
-//		dukeX[i] = (lcg_rand(randX) % 100) * ((randY % 2) ? 1.0 : -1.0);
-//		dukeY[i] = (lcg_rand(randY) % 100) * ((randX % 2) ? -1.0 : 1.0);
+		randArray0[i] = ((int)randArray0[i] % 100) * ((randY % 2) ? 1.0 : -1.0);
+		randArray1[i] = ((int)randArray1[i] % 100) * ((randX % 2) ? -1.0 : 1.0);
 	}
 
-	dukeXCoords->SetArray(dukeX, numCases, 1);
-	dukeXCoords->SetName("PTV + bladder overlap");
+	dukeXCoords->SetArray(randArray0, numCases, 1);
+	dukeXCoords->SetName("High Point");
 	table->AddColumn(dukeXCoords);
 	table->SetNumberOfRows(numCases);
 
-	dukeYCoords->SetArray(dukeY, numCases, 1);
+	dukeYCoords->SetArray(randArray1, numCases, 1);
 	dukeYCoords->SetName("Duke");
 	table->AddColumn(dukeYCoords);
 	table->Update();
-	line = caseSpaceChart->AddPlot(vtkChart::POINTS);
-	line->SetInput(table, 0, 1);
-	line->SetColor(200, 200, 255, 255);
+	dukePoints = caseSpaceChart->AddPlot(vtkChart::POINTS);
+	dukePoints->SetInput(table, 0, 1);
+	dukePoints->SetColor(140, 220, 255, 255);
 
+	highPointPoints = caseSpaceChart->AddPlot(vtkChart::POINTS);
+	highPointPoints->SetInput(table, 1, 0); // just reverse the two arrays from Duke
+	highPointPoints->SetColor(150, 100, 255, 255);
 
 	float queryX[numCases]; 
 	float queryY[numCases];
 
 	for (int i = 0; i < numCases; i++) 
 	{
-		queryX[i] = dukeX[i] / 50.0;
-		queryY[i] = dukeY[i] / 50.0 * 1.618; // golden ratio to compensate for aspect ratio
+		queryX[i] = randArray0[i] / 400.0;
+		queryY[i] = randArray1[i] / 400.0 * 1.618; // golden ratio to compensate for aspect ratio
 	}
 
 	vtkFloatArray *queryXCoords = vtkFloatArray::New();
@@ -232,6 +250,30 @@ void CaseSpaceDialog::setupVTKUI()
 	queryPoint->SetColor(255, 148, 128, 255);
 
 	caseSpaceChart->SetDrawAxesAtOrigin(true);
+
+	// No ticks, no tick labels, please:
+	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetNumberOfTicks(0);
+	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->SetNumberOfTicks(0);
+	// Hm.  That didn't work:  how about empty arrays?:
+	vtkDoubleArray *tickPositions = vtkDoubleArray::New();
+	vtkStringArray *tickLabels = vtkStringArray::New();
+	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetTickPositions(tickPositions);
+	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetTickLabels(tickLabels);
+	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->SetTickPositions(tickPositions);
+	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->SetTickLabels(tickLabels);
+	// Empty arrays work if the range is explicitly set:
+	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetRange(-140.0, 140.0);
+	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->SetRange(-140.0, 140.0);
+	//caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetJustificationToRight();
+	caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetJustificationToLeft();
+	//const char *xVertJust = caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->GetVerticalJustificationAsString();
+	//const char *yVertJust = caseSpaceChart->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->GetVerticalJustificationAsString();
+	//caseSpaceChart->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetOrientation(-90.0);
+	caseSpaceChart->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetLineOffset(-193);  // Raise the y-axis title
+	//caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetLineOffset(-20);;
+	//double xOr = caseSpaceChart->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->GetOrientation();
+	//double yOr = caseSpaceChart->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->GetOrientation();
+
 	caseSpaceChart->Update();
 	caseSpaceChart->RecalculateBounds();
 
