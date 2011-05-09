@@ -5,7 +5,7 @@
 // cancer patient.
 //
 // author: Steve Chall, RENCI
-// chief collaborator: Vorakarn Chanyanavich, Duke Medical Center
+// chief collaborator: Vorakarn Chanyavanich, Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -17,7 +17,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient::Patient()
-	:	dataDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-02-24"),
+	:	dataDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-03-29"),
 		number(defaultPatientNumber),
 		sliceMin(-1),
 		sliceMax(-1),
@@ -29,7 +29,7 @@ Patient::Patient()
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient::Patient(int n)
-	:	dataDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-02-24"),
+	:	dataDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-03-29"),
 		number(n),
 		sliceMin(-1),
 		sliceMax(-1),
@@ -61,7 +61,7 @@ void Patient::setIsShowingFemoralHeads(bool showFemoralHeads)
 //
 // 2do: Add path select dialog (but probably not here).
 //
-// The Carl Zhang/Vorakarn Chanyanavich convention for naming structure 
+// The Carl Zhang/Vorakarn Chanyavanich convention for naming structure 
 // geometry input files:
 //
 //     <inFileType>_<patient number>_<structure>.out
@@ -113,7 +113,7 @@ QString Patient::getPathToCTData()
 	QString numberAsString = QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
 	CTDataPath.append(numberAsString);
 
-	CTDataPath.append("\\Primary");
+	CTDataPath.append("/Primary");
 
 	return CTDataPath;
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// CompareDialog.cpp: Qt-based GUI for prostate cancer radiation therapy planning 
+// CompareDialog.cpp: Qt-based GUI for prostate cancer radiotherapy planning 
 // tool. This window displays two horizontal "panels": the top displays data
 // for the "query" patient, i.e., the current patient for whom treatment is 
 // being planned.  The lower "panel" displays data for the "match" patient,
@@ -30,7 +30,7 @@
 // exploit that separability.
 //
 // author:  Steve Chall, RENCI
-// primary collaborator: Vorakarn Chanyanavich, Duke Medical Center
+// primary collaborator: Vorakarn Chanyavanich, Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -51,8 +51,12 @@
 #include "vtkFloatArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkStringArray.h"
+#include "vtkImageActor.h"
+#include "vtkPen.h"
 
 #include "Patient.h"
+#include "Projector.h"
+#include "CaseSpaceDialog.h"
 #include "CompareDialog.h"
 
 int min(int a, int b) 
@@ -68,21 +72,21 @@ int max(int a, int b)
 // rgb values, 0.0-1.0 range:
 static const double structureColor[CompareDialog::numStructures][3] =
 {
-	0.0, 0.0, 0.9,		// PTV
-	0.675, 0.0, 0.675,	// rectum
-	0.0, 0.9, 0.0,		// bladder
-	0.9, 0.0, 0.0,		// left femoral head
-	0.675, 0.675, 0.0	// right femoral head
+	0.9, 0.0, 0.0,			// PTV red     
+	0.545, 0.271, 0.075,	// rectum "saddle brown"
+	1.0, 0.84, 0.0,			// bladder "golden yellow"
+	0.33, 0.33, 0.4,		// left femoral head blue-gray
+	0.67, 0.67, 0.67		// right femoral head lite gray
 };
 
 // rgb values equivalent to those in structureColor, but in the 0-255 range:
 static const double color[CompareDialog::numStructures][3] =
 {
-	0.0, 0.0, 229.0,	// PTV
-	172.0, 0.0, 172.0,	// rectum
-	0.0, 229.0, 0.0,	// bladder
-	229.0, 0.0, 0.0,	// left femoral head
-	172.0, 172.0, 0.0	// right femoral head
+	230, 0.0, 0.0,			// PTV red     
+	139, 69, 19,			// rectum "saddle brown"
+	255, 215, 0.0,			// bladder "golden yellow"
+	85, 85, 102,			// left femoral head blue-gray
+	171, 171, 171			// right femoral head lite gray
 };
 
 static const char *structureName[CompareDialog::numStructures] =
@@ -111,16 +115,17 @@ CompareDialog::CompareDialog()
 		matchCTImageFlip(NULL),
 		queryCTImageViewer(NULL),
 		matchCTImageViewer(NULL),
-		queryProjectionReader(NULL),
-		matchProjectionReader(NULL),
-		queryProjectionViewer(NULL),
-		matchProjectionViewer(NULL),
 		gantryAngleMenu(NULL),
 		gantryAngleActionGroup(NULL),
 		queryDVH(NULL),
 		matchDVH(NULL),
 		queryDVHView(NULL),
-		matchDVHView(NULL)
+		matchDVHView(NULL),
+		caseSpaceDialog(NULL),
+		queryProjector(NULL),
+		matchProjector(NULL),
+		queryProjectionRenWin(NULL),
+		matchProjectionRenWin(NULL)
 {
 	setupUi(this);
 	setupVTKUI();
@@ -131,16 +136,47 @@ CompareDialog::CompareDialog()
 
 	legendGroupBox->setStyleSheet("QGroupBox { color: solid black; }");
 	legendGroupBox->setStyleSheet("QGroupBox { border: 2px solid black; }");
-
-	queryPatient = new Patient(Patient::defaultPatientNumber);
-	matchPatient = new Patient(Patient::defaultPatientNumber + 1);
-
-	selectQuery(Patient::defaultPatientNumber);
-	selectMatch(Patient::defaultPatientNumber + 1);
-
-	querySelectSpinBox->setValue(Patient::defaultPatientNumber);
-	matchSelectSpinBox->setValue(Patient::defaultPatientNumber + 1);
 }
+
+///ctor/////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
+	:	queryAngle(Patient::defaultGantryAngle),
+		matchAngle(Patient::defaultGantryAngle),
+		queryPatient(NULL),
+		matchPatient(NULL),
+		queryDICOMReader(NULL),
+		matchDICOMReader(NULL),
+		queryCTImageFlip(NULL),
+		matchCTImageFlip(NULL),
+		queryCTImageViewer(NULL),
+		matchCTImageViewer(NULL),
+		gantryAngleMenu(NULL),
+		gantryAngleActionGroup(NULL),
+		queryDVH(NULL),
+		matchDVH(NULL),
+		queryDVHView(NULL),
+		matchDVHView(NULL),
+		caseSpaceDialog(csDlog),
+		queryProjector(NULL),
+		matchProjector(NULL),
+		queryProjectionRenWin(NULL),
+		matchProjectionRenWin(NULL)
+{
+	setupUi(this);
+	setupVTKUI();
+	setupProjectionGantryAngleMenu();
+	createActions();
+
+	viewFemoralHeadsCheckBox->setChecked(true);
+	flatShadedCheckBox->setChecked(true);
+
+	legendGroupBox->setStyleSheet("QGroupBox { color: solid black; }");
+	legendGroupBox->setStyleSheet("QGroupBox { border: 2px solid black; }");
+}
+
+
 
 CompareDialog::~CompareDialog()
 {
@@ -184,26 +220,6 @@ CompareDialog::~CompareDialog()
 		matchCTImageViewer->Delete();
 	}
 		
-	if (queryProjectionReader)
-	{
-		queryProjectionReader->Delete();
-	}
-		
-	if (matchProjectionReader)
-	{
-		matchProjectionReader->Delete();
-	}
-		
-	if (queryProjectionViewer)
-	{
-		queryProjectionViewer->Delete();
-	}
-		
-	if (matchProjectionViewer)
-	{
-		matchProjectionViewer->Delete();
-	}
-		
 	if (gantryAngleMenu)
 	{
 		delete gantryAngleMenu;
@@ -233,12 +249,99 @@ CompareDialog::~CompareDialog()
 	{
 		matchDVHView->Delete();
 	}
+
+	if (queryProjector)
+	{
+		delete queryProjector;
+	}
+
+	if (matchProjector)
+	{
+		delete matchProjector;
+	}
+
+	if (queryProjectionRenWin)
+	{
+		queryProjectionRenWin->Delete();
+	}
+
+	if (matchProjectionRenWin)
+	{
+		matchProjectionRenWin->Delete();
+	}
+
+
+	// Re-enable the "Compare Cases" button back on the Case Space dialog when
+	// closing this (Compare dialog):
+	if (caseSpaceDialog)
+	{
+		caseSpaceDialog->enableCompareCasesButton(true);
+	}
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::setQuery(Patient *patient)
+{
+	queryPatient = patient;
+	querySelectSpinBox->setValue(queryPatient->getNumber());
+	selectQueryCTSlice(sliceSelectionSlider->value());
+	setSliceAxis();
+	selectQueryProjection();
+	displayQueryDVHData();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::setMatch(Patient *patient)
+{
+	matchPatient = patient;
+	matchSelectSpinBox->setValue(matchPatient->getNumber());
+	selectMatchCTSlice(sliceSelectionSlider->value());
+	setSliceAxis();
+	selectMatchProjection();
+	displayMatchDVHData();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// NOTE:  Currently checks for the existence of the directories that are
+// expected to hold the CT data, but not for the presence of correct data within
+// those directories.  And it doesn't check for the existence of even the 
+// directories for projection data, much less for the existence of that data 
+// within those directories.
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CompareDialog::dataExistsFor(Patient *patient)
+{
+	QFile CTDir(patient->getPathToCTData());
+
+	if (!CTDir.exists())
+	{
+		return false;
+	}
+
+	QFile DVHDataFile(patient->getPathToDVHData());
+
+	return (DVHDataFile.exists());
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Sets up CT, projection, and DVH displays for query patient with id == param
 // patientNumber.
+//
+// 2do: Need to select the patient from pointer/reference to array[s] of
+// patients from way back in the MainWindow.  This method just changes the
+// number on the Query Patient passed in from CaseSpaceDialog.  That may not
+// matter at this point (2011/03/29) because everything currently being used
+// for displaying patient data is accessed based on globally set paths plus
+// the patient number, but all the other data values accumulated earlier in
+// the Patient object are almost certainly not correct for a Patient with a
+// changed number.
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQuery(int patientNumber)
@@ -255,6 +358,15 @@ void CompareDialog::selectQuery(int patientNumber)
 // Sets up CT, projection, and DVH displays for match patient with id == param
 // patientNumber.
 //
+// 2do: Need to select the patient from pointer/reference to array[s] of
+// patients from way back in the MainWindow.  This method just changes the
+// number on the Match Patient passed in from CaseSpaceDialog.  That may not
+// matter at this point (2011/03/29) because everything currently being used
+// for displaying patient data is accessed based on globally set paths plus
+// the patient number, but all the other data values accumulated earlier in
+// the Patient object are almost certainly not correct for a Patient with a
+// changed number.
+//
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectMatch(int patientNumber)
 {
@@ -262,6 +374,12 @@ void CompareDialog::selectMatch(int patientNumber)
 	selectMatchCTSlice(sliceSelectionSlider->value());
 	setSliceAxis();
 	selectMatchProjection();
+
+	if (overlayDVHCheckBox->isChecked())
+	{
+		displayQueryDVHData();
+	}
+
 	displayMatchDVHData();
 }
 
@@ -310,8 +428,11 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 	if (axialRadioButton->isChecked()) 
 	{
 		sliceSelectionLabel->setText(tr("Z slice:"));
-		queryPatient->setSliceOrientation(Patient::Z);
-		matchPatient->setSliceOrientation(Patient::Z);
+		if (queryPatient) queryPatient->setSliceOrientation(Patient::Z);
+		if (matchPatient) matchPatient->setSliceOrientation(Patient::Z);
+
+		queryCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
+		matchCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
 		queryCTImageViewer->SetSliceOrientationToXY();
 		matchCTImageViewer->SetSliceOrientationToXY();
 	}
@@ -399,19 +520,19 @@ void CompareDialog::autoplay()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setGantryAngle27()
+void CompareDialog::setGantryAngle25()
 {
-	angle27Action->setChecked(true);
-	queryAngle = matchAngle = 27;
+	angle25Action->setChecked(true);
+	queryAngle = matchAngle = 25;
 	selectQueryProjection();
 	selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setGantryAngle78()
+void CompareDialog::setGantryAngle75()
 {
-	angle78Action->setChecked(true);
-	queryAngle = matchAngle = 78;
+	angle75Action->setChecked(true);
+	queryAngle = matchAngle = 75;
 	selectQueryProjection();
 	selectMatchProjection();
 }
@@ -419,10 +540,10 @@ void CompareDialog::setGantryAngle78()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setGantryAngle129()
+void CompareDialog::setGantryAngle130()
 {
-	angle129Action->setChecked(true);
-	queryAngle = matchAngle = 129;
+	angle130Action->setChecked(true);
+	queryAngle = matchAngle = 130;
 	selectQueryProjection();
 	selectMatchProjection();
 }
@@ -441,10 +562,10 @@ void CompareDialog::setGantryAngle180()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setGantryAngle231()
+void CompareDialog::setGantryAngle230()
 {
-	angle231Action->setChecked(true);
-	queryAngle = matchAngle = 231;
+	angle230Action->setChecked(true);
+	queryAngle = matchAngle = 230;
 	selectQueryProjection();
 	selectMatchProjection();
 }
@@ -452,10 +573,10 @@ void CompareDialog::setGantryAngle231()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setGantryAngle282()
+void CompareDialog::setGantryAngle280()
 {
-	angle282Action->setChecked(true);
-	queryAngle = matchAngle = 282;
+	angle280Action->setChecked(true);
+	queryAngle = matchAngle = 280;
 	selectQueryProjection();
 	selectMatchProjection();
 }
@@ -463,11 +584,41 @@ void CompareDialog::setGantryAngle282()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setGantryAngle333()
+void CompareDialog::setGantryAngle335()
 {
-	angle333Action->setChecked(true);
-	queryAngle = matchAngle = 333;
+	angle335Action->setChecked(true);
+	queryAngle = matchAngle = 335;
 	selectQueryProjection();
+	selectMatchProjection();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::changeTransparency(int transp)
+{
+	queryProjector->setTransparency(transp);
+	matchProjector->setTransparency(transp);
+
+	selectQueryProjection();
+	selectMatchProjection();
+
+	transparencySlider->setValue(transp);
+	transparencySpinBox->setValue(transp);
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// For projections
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::toggleFlatShadedStructures(bool checked)
+{
+	queryProjector->setFlatShaded(checked);
+	selectQueryProjection();
+	matchProjector->setFlatShaded(checked);
 	selectMatchProjection();
 }
 
@@ -481,6 +632,9 @@ void CompareDialog::toggleFemoralHeads(bool checked)
 	queryPatient->setIsShowingFemoralHeads(checked);
 	matchPatient->setIsShowingFemoralHeads(checked);
 
+	queryProjector->setNoFemoralHeads(!checked);
+	matchProjector->setNoFemoralHeads(!checked);
+
 	selectQueryProjection();
 	displayQueryDVHData();
 
@@ -493,53 +647,26 @@ void CompareDialog::toggleFemoralHeads(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupVTKUI()
 {
-	queryProjectionReader = vtkPNGReader::New();
-	matchProjectionReader = vtkPNGReader::New();
-	queryProjectionViewer = vtkImageViewer::New();
-	matchProjectionViewer = vtkImageViewer::New();
+	initQueryCTPipeLine();
+	initMatchCTPipeLine();
 
-	queryProjectionViewer->SetInputConnection(queryProjectionReader->GetOutputPort());
+	queryProjector = new Projector();
+	matchProjector = new Projector();
 
-	queryProjectionWidget->SetRenderWindow(queryProjectionViewer->GetRenderWindow());
-	queryProjectionViewer->SetupInteractor(queryProjectionWidget->GetRenderWindow()->GetInteractor());
+	queryProjectionRenWin = vtkRenderWindow::New();
+	matchProjectionRenWin = vtkRenderWindow::New();
 
-	queryProjectionViewer->SetColorLevel(138.5);	// Default values from...
-	queryProjectionViewer->SetColorWindow(233);		// ..."The VTK User's Guide"
+	queryProjector->WindowInit(queryProjectionRenWin, queryProjectionWidget);
+	matchProjector->WindowInit(matchProjectionRenWin, matchProjectionWidget);
 
-	matchProjectionViewer->SetInputConnection(matchProjectionReader->GetOutputPort());
+	queryProjector->InitExtrema();
+	matchProjector->InitExtrema();
 
-	matchProjectionWidget->SetRenderWindow(matchProjectionViewer->GetRenderWindow());
-	matchProjectionViewer->SetupInteractor(matchProjectionWidget->GetRenderWindow()->GetInteractor());
+	queryProjector->TextInit();
+	matchProjector->TextInit();
 
-	matchProjectionViewer->SetColorLevel(138.5);	// Default values from...
-	matchProjectionViewer->SetColorWindow(233);		// ..."The VTK User's Guide"
-
-	queryDICOMReader = vtkDICOMImageReader::New();
-	matchDICOMReader = vtkDICOMImageReader::New();
-
-	queryCTImageFlip = vtkImageFlip::New();
-	matchCTImageFlip = vtkImageFlip::New();
-
-	queryCTImageFlip->SetInputConnection(queryDICOMReader->GetOutputPort());
-	matchCTImageFlip->SetInputConnection(matchDICOMReader->GetOutputPort());
-
-	queryCTImageViewer = vtkImageViewer2::New();
-	matchCTImageViewer = vtkImageViewer2::New();
-
-	queryCTImageViewer->SetInputConnection(queryCTImageFlip->GetOutputPort());
-	matchCTImageViewer->SetInputConnection(matchCTImageFlip->GetOutputPort());
-
-	queryCTImageWidget->SetRenderWindow(queryCTImageViewer->GetRenderWindow());
-	queryCTImageViewer->SetupInteractor(queryCTImageWidget->GetRenderWindow()->GetInteractor());
-
-	queryCTImageViewer->SetColorLevel(100);			// Selected to increase contrast...
-	queryCTImageViewer->SetColorWindow(500);		// ...at Vorakarn's request
-
-	matchCTImageWidget->SetRenderWindow(matchCTImageViewer->GetRenderWindow());
-	matchCTImageViewer->SetupInteractor(matchCTImageWidget->GetRenderWindow()->GetInteractor());
-
-	matchCTImageViewer->SetColorLevel(100);			// Selected to increase contrast...
-	matchCTImageViewer->SetColorWindow(500);		// ...at Vorakarn's request
+	queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
+	matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
 
 	initQueryDVHObjects();
 	initMatchDVHObjects();
@@ -552,20 +679,121 @@ void CompareDialog::setupVTKUI()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::createActions()
 {
-	connect(querySelectSpinBox, SIGNAL(valueChanged(int)), this, SLOT(selectQuery(int)));
-	connect(matchSelectSpinBox, SIGNAL(valueChanged(int)), this, SLOT(selectMatch(int)));
+	connect(querySelectSpinBox, SIGNAL(valueChanged(int)), this, 
+		SLOT(selectQuery(int)));
+	connect(matchSelectSpinBox, SIGNAL(valueChanged(int)), this, 
+		SLOT(selectMatch(int)));
 
-	connect(axialRadioButton, SIGNAL(toggled(bool)), this, SLOT(setSliceAxis(bool)));
-	connect(sagittalRadioButton, SIGNAL(toggled(bool)), this, SLOT(setSliceAxis(bool)));
-	connect(coronalRadioButton, SIGNAL(toggled(bool)), this, SLOT(setSliceAxis(bool)));
+	connect(axialRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setSliceAxis(bool)));
+	connect(sagittalRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setSliceAxis(bool)));
+	connect(coronalRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setSliceAxis(bool)));
 
-	connect(sliceSelectionSlider, SIGNAL(valueChanged(int)), this, SLOT(changeSlice(int)));
+	connect(sliceSelectionSlider, SIGNAL(valueChanged(int)), this, 
+		SLOT(changeSlice(int)));
 	connect(autoPlayPushButton, SIGNAL(clicked()), this, SLOT(autoplay()));
 
-	connect(viewFemoralHeadsCheckBox, SIGNAL(clicked(bool)), this, SLOT(toggleFemoralHeads(bool)));
+	connect(viewFemoralHeadsCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleFemoralHeads(bool)));
+	connect(flatShadedCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleFlatShadedStructures(bool)));
+
+	connect(transparencySlider, SIGNAL(valueChanged(int)), this, 
+		SLOT(changeTransparency(int)));
+	connect(transparencySpinBox, SIGNAL(valueChanged(int)), this, 
+		SLOT(changeTransparency(int)));
+
+	connect(overlayDVHCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleOverlayDVH(bool)));
 
 	connect(okPushButton, SIGNAL(clicked()), this, SLOT(accept()));
 	connect(cancelPushButton, SIGNAL(clicked()), this, SLOT(reject()));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::initQueryCTPipeLine()
+{
+	if (queryDICOMReader)
+	{
+		queryDICOMReader->Delete();
+	}
+		
+	if (queryCTImageFlip)
+	{
+		queryCTImageFlip->Delete();
+	}
+		
+	if (queryCTImageViewer)
+	{
+		queryCTImageViewer->Delete();
+	}
+		
+	queryDICOMReader = vtkDICOMImageReader::New();
+	queryCTImageFlip = vtkImageFlip::New();
+	queryCTImageFlip->SetInputConnection(queryDICOMReader->GetOutputPort());
+	queryCTImageViewer = vtkImageViewer2::New();
+	queryCTImageViewer->SetInputConnection(queryCTImageFlip->GetOutputPort());
+	queryCTImageWidget->SetRenderWindow(queryCTImageViewer->GetRenderWindow());
+	queryCTImageViewer->SetupInteractor(
+		queryCTImageWidget->GetRenderWindow()->GetInteractor());
+
+	queryCTImageViewer->SetColorLevel(40);		// Set to increase contrast...
+	queryCTImageViewer->SetColorWindow(350);	// ...at Vorakarn's request
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::initMatchCTPipeLine()
+{
+	if (matchDICOMReader)
+	{
+		matchDICOMReader->Delete();
+	}
+		
+	if (matchCTImageFlip)
+	{
+		matchCTImageFlip->Delete();
+	}
+		
+	if (matchCTImageViewer)
+	{
+		matchCTImageViewer->Delete();
+	}
+		
+	matchDICOMReader = vtkDICOMImageReader::New();
+	matchCTImageFlip = vtkImageFlip::New();
+	matchCTImageFlip->SetInputConnection(matchDICOMReader->GetOutputPort());
+	matchCTImageViewer = vtkImageViewer2::New();
+	matchCTImageViewer->SetInputConnection(matchCTImageFlip->GetOutputPort());
+	matchCTImageWidget->SetRenderWindow(matchCTImageViewer->GetRenderWindow());
+	matchCTImageViewer->SetupInteractor(
+		matchCTImageWidget->GetRenderWindow()->GetInteractor());
+
+	matchCTImageViewer->SetColorLevel(40);		// Set to increase contrast...
+	matchCTImageViewer->SetColorWindow(350);	// ...at Vorakarn's request
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::accept()
+{
+	caseSpaceDialog->enableCompareCasesButton(true);
+	QDialog::accept();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::reject()
+{
+	caseSpaceDialog->enableCompareCasesButton(true);
+	QDialog::reject();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -575,12 +803,26 @@ void CompareDialog::createActions()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQueryCTSlice(int slice)
 {
-	queryDICOMReader->Delete();
-	queryDICOMReader = vtkDICOMImageReader::New();
-	queryDICOMReader->SetDirectoryName((queryPatient->getPathToCTData()).toAscii());
-	queryDICOMReader->Update();
-	queryCTImageFlip->SetInputConnection(queryDICOMReader->GetOutputPort());
-	queryCTImageViewer->SetSlice(slice);
+	initQueryCTPipeLine();
+
+	QFile file(queryPatient->getPathToCTData());
+
+	if (file.exists())
+	{
+		queryDICOMReader->SetDirectoryName(
+			(queryPatient->getPathToCTData()).toAscii());
+		queryDICOMReader->Update();
+		queryCTImageViewer->SetSlice(slice);
+	}
+	else
+	{
+		QString warn =
+			"CompareDialog::selectQueryCTSlice(int): Failed to open \""
+			+ queryPatient->getPathToCTData() + "\"";
+		//QMessageBox::warning(this, tr("File Open Failed"), warn);
+		queryDICOMReader = NULL;
+	}
+	
 	queryCTImageViewer->Render();
 }
 
@@ -591,12 +833,29 @@ void CompareDialog::selectQueryCTSlice(int slice)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectMatchCTSlice(int slice)
 {
-	matchDICOMReader->Delete();
-	matchDICOMReader = vtkDICOMImageReader::New();
-	matchDICOMReader->SetDirectoryName((matchPatient->getPathToCTData()).toAscii());
-	matchDICOMReader->Update();
-	matchCTImageFlip->SetInputConnection(matchDICOMReader->GetOutputPort());
-	matchCTImageViewer->SetSlice(slice);
+	initMatchCTPipeLine();
+
+	QFile file(matchPatient->getPathToCTData());
+
+	if (file.exists())
+	{
+		matchDICOMReader->SetDirectoryName(
+			(matchPatient->getPathToCTData()).toAscii());
+		matchDICOMReader->Update();
+		matchCTImageViewer->SetSlice(slice);
+	}
+	else
+	{
+		QString warn =
+			"CompareDialog::selectMatchCTSlice(int): Failed to open \""
+			+ matchPatient->getPathToCTData() + "\"";
+		//QMessageBox::warning(this, tr("File Open Failed"), warn);
+		matchCTImageViewer->SetColorLevel(0);
+		matchCTImageViewer->SetColorWindow(0);
+
+		matchDICOMReader = NULL;
+	}
+
 	matchCTImageViewer->Render();
 }
 
@@ -624,14 +883,18 @@ void CompareDialog::extractQueryDICOMFileMetaData()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQueryProjection()
 {
-	QString fileName = queryPatient->getPathToProjectionImage(queryAngle);
+	int pNum = queryPatient->getNumber();
 
-	if (!fileName.isEmpty())
-	{
-		queryProjectionReader->SetFileName(fileName);
-		queryProjectionViewer->Render();
-		queryProjectionWidget->show();
+    if (!queryProjector->BuildStructuresForPatient(pNum))
+	{	
+		QString warn =
+			"CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
+			+ QString::number(pNum);
+		QMessageBox::warning(this, tr("File Open Failed"), warn);		
 	}
+    //queryProjector->AddOriginToRenWin(queryProjector->renderer);
+	queryProjector->ComputeAvgZ();
+	queryProjector->SetProjection(pNum, queryAngle);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -639,14 +902,18 @@ void CompareDialog::selectQueryProjection()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectMatchProjection()
 {
-	QString fileName = matchPatient->getPathToProjectionImage(matchAngle);
+	int pNum = matchPatient->getNumber();
 
-	if (!fileName.isEmpty())
-	{
-		matchProjectionReader->SetFileName(fileName);
-		matchProjectionViewer->Render();
-		matchProjectionWidget->show();
+    if (!matchProjector->BuildStructuresForPatient(pNum))
+	{	
+		QString warn =
+			"CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
+			+ QString::number(pNum);
+		QMessageBox::warning(this, tr("File Open Failed"), warn);		
 	}
+    //matchProjector->AddOriginToRenWin(matchProjector->renderer);
+	matchProjector->ComputeAvgZ();
+	matchProjector->SetProjection(pNum, matchAngle);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -655,38 +922,37 @@ void CompareDialog::selectMatchProjection()
 void CompareDialog::setupProjectionGantryAngleMenu()
 {
 	gantryAngleMenu = new QMenu(this);
-	angle27Action = 
-		gantryAngleMenu->addAction("27 degrees", this, SLOT(setGantryAngle27()));
-	angle78Action = 
-		gantryAngleMenu->addAction("78 degrees", this, SLOT(setGantryAngle78()));
-	angle129Action = 
-		gantryAngleMenu->addAction("129 degrees", this, SLOT(setGantryAngle129()));
+	angle25Action = 
+		gantryAngleMenu->addAction("25 degrees", this, SLOT(setGantryAngle25()));
+	angle75Action = 
+		gantryAngleMenu->addAction("75 degrees", this, SLOT(setGantryAngle75()));
+	angle130Action = 
+		gantryAngleMenu->addAction("130 degrees", this, SLOT(setGantryAngle130()));
 	angle180Action = 
 		gantryAngleMenu->addAction("180 degrees", this, SLOT(setGantryAngle180()));
-	angle231Action = 
-		gantryAngleMenu->addAction("231 degrees", this, SLOT(setGantryAngle231()));
-	angle282Action = 
-		gantryAngleMenu->addAction("282 degrees", this, SLOT(setGantryAngle282()));
-	angle333Action = 
-		gantryAngleMenu->addAction("333 degrees", this, SLOT(setGantryAngle333()));
+	angle230Action = 
+		gantryAngleMenu->addAction("230 degrees", this, SLOT(setGantryAngle230()));
+	angle280Action = 
+		gantryAngleMenu->addAction("280 degrees", this, SLOT(setGantryAngle280()));
+	angle335Action = 
+		gantryAngleMenu->addAction("335 degrees", this, SLOT(setGantryAngle335()));
 
-	angle27Action->setCheckable(true);
-	angle78Action->setCheckable(true);
-	angle129Action->setCheckable(true);
+	angle25Action->setCheckable(true);
+	angle75Action->setCheckable(true);
+	angle130Action->setCheckable(true);
 	angle180Action->setCheckable(true);
-	angle231Action->setCheckable(true);
-	angle282Action->setCheckable(true);
-	angle333Action->setCheckable(true);
-
+	angle230Action->setCheckable(true);
+	angle280Action->setCheckable(true);
+	angle335Action->setCheckable(true);
 
 	gantryAngleActionGroup = new QActionGroup(this);
-	gantryAngleActionGroup->add(angle27Action);
-	gantryAngleActionGroup->add(angle78Action);
-	gantryAngleActionGroup->add(angle129Action);
+	gantryAngleActionGroup->add(angle25Action);
+	gantryAngleActionGroup->add(angle75Action);
+	gantryAngleActionGroup->add(angle130Action);
 	gantryAngleActionGroup->add(angle180Action);
-	gantryAngleActionGroup->add(angle231Action);
-	gantryAngleActionGroup->add(angle282Action);
-	gantryAngleActionGroup->add(angle333Action);
+	gantryAngleActionGroup->add(angle230Action);
+	gantryAngleActionGroup->add(angle280Action);
+	gantryAngleActionGroup->add(angle335Action);
 
 	angle180Action->setChecked(true);
 
@@ -737,7 +1003,7 @@ void CompareDialog::initMatchDVHObjects()
 // unpredictable if it occurs).
 //
 ////////////////////////////////////////////////////////////////////////////////
-bool CompareDialog::readDVHData(Patient &patient)
+bool CompareDialog::readQueryDVHData(Patient &patient)
 {
 	QString path = patient.getPathToDVHData();
 	QFile file(path);
@@ -763,9 +1029,55 @@ bool CompareDialog::readDVHData(Patient &patient)
 
 	while ((!in.atEnd()) && (i < numDVHPoints))
 	{
-		in >> dose[i] >> volumes[PTV][i] >> volumes[rectum][i] 
-		   >> volumes[bladder][i]  >> volumes[leftFem][i] 
-		   >> volumes[rightFem][i];
+		in >> dose[i] >> queryVolumes[PTV][i] >> queryVolumes[rectum][i] 
+		   >> queryVolumes[bladder][i]  >> queryVolumes[leftFem][i] 
+		   >> queryVolumes[rightFem][i];
+		i++;  // Hack: won't work unless incremented as separate statement [?]
+	}
+
+	in.flush();
+	file.close();
+
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Assumes that each DVH data file has two lines of (discardable) title and
+// column header info, followed by exactly numDVHPoints rows of data (although
+// there is a check for premature end of file, overall program behavior is
+// unpredictable if it occurs).
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CompareDialog::readMatchDVHData(Patient &patient)
+{
+	QString path = patient.getPathToDVHData();
+	QFile file(path);
+
+	// Silently fail if the data isn't available: at this point (2/06/11) it
+	// often isn't, that may continue to be the case indefinitely into the
+	// future, and announcing the fact is an annoying interruption in workflow.
+	//
+	if (!file.open(QIODevice::ReadOnly))
+	{
+		//QString warn = "Failed to open \"" + path + "\"";
+		//QMessageBox::warning(this, tr("File Open Failed"), warn);
+		return false;
+	}
+
+	QTextStream in(&file);
+
+	// Skip over the first two lines (title and column headers):
+	in.readLine();
+	in.readLine();
+
+	int i = 0;
+
+	while ((!in.atEnd()) && (i < numDVHPoints))
+	{
+		in >> dose[i] >> matchVolumes[PTV][i] >> matchVolumes[rectum][i] 
+		   >> matchVolumes[bladder][i]  >> matchVolumes[leftFem][i] 
+		   >> matchVolumes[rightFem][i];
 		i++;  // Hack: won't work unless incremented as separate statement [?]
 	}
 
@@ -781,7 +1093,88 @@ bool CompareDialog::readDVHData(Patient &patient)
 // object.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setupDVHChart(vtkChartXY *chart, char *title)
+void CompareDialog::setupQueryDVHChart(vtkChartXY *chart, char *title)
+{
+	this->clearDVHPlots(chart);
+
+	chart->SetTitle(title);
+	chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
+	chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
+	chart->SetShowLegend(true);
+
+	vtkFloatArray *xCoords = vtkFloatArray::New();
+	vtkFloatArray *yCoords[numStructures];
+	vtkTable *table = vtkTable::New();
+	vtkPlot *line;
+
+	xCoords->SetArray(dose, numDVHPoints, 1);
+	xCoords->SetName("% dose");
+	table->AddColumn(xCoords);
+	table->SetNumberOfRows(numDVHPoints);
+
+	int numStructuresToDisplay = viewFemoralHeadsCheckBox->isChecked() 
+							   ? numStructures : 3;
+
+	for (int i = 0; i < numStructuresToDisplay; i++)
+	{
+		yCoords[i] = vtkFloatArray::New();
+		yCoords[i]->SetArray(queryVolumes[i], numDVHPoints, 1);
+
+		if (overlayDVHCheckBox->isChecked())
+		{
+			QString name = "query ";
+			name.append(structureName[i]);
+			yCoords[i]->SetName(name);
+		}
+		else
+		{
+			yCoords[i]->SetName(structureName[i]);
+		}
+
+		table->AddColumn(yCoords[i]);
+		table->Update();
+		line = chart->AddPlot(vtkChart::LINE);
+		int numCols = table->GetNumberOfColumns();
+		line->SetInput(table, 0, i + 1);
+		line->SetColor(color[i][0], color[i][1], color[i][2], 255);
+		yCoords[i]->Delete();
+	}
+
+	if (overlayDVHCheckBox->isChecked())
+	{
+		vtkFloatArray *matchYCoords[numStructures];
+
+		for (int i = 0; i < numStructuresToDisplay; i++)
+		{
+			matchYCoords[i] = vtkFloatArray::New();
+			matchYCoords[i]->SetArray(matchVolumes[i], numDVHPoints, 1);
+			QString name = "match ";
+			name.append(structureName[i]);
+			matchYCoords[i]->SetName(name);
+			table->AddColumn(matchYCoords[i]);
+			table->Update();
+			line = chart->AddPlot(vtkChart::LINE);
+			line->SetInput(table, 0, table->GetNumberOfColumns() - 1);
+			line->SetColor(color[i][0], color[i][1], color[i][2], 255);
+			line->GetPen()->SetLineType(vtkPen::DASH_LINE);
+			line->GetPen()->SetWidth(4.0);
+			matchYCoords[i]->Delete();
+		}
+	}
+
+	chart->Update();
+	chart->RecalculateBounds();
+
+	xCoords->Delete();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Assumes that parameter chart points to a previously instantiated vtkChartXY
+// object.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 {
 	this->clearDVHPlots(chart);
 
@@ -806,7 +1199,7 @@ void CompareDialog::setupDVHChart(vtkChartXY *chart, char *title)
 	for (int i = 0; i < numStructuresToDisplay; i++)
 	{
 		yCoords[i] = vtkFloatArray::New();
-		yCoords[i]->SetArray(volumes[i], numDVHPoints, 1);
+		yCoords[i]->SetArray(matchVolumes[i], numDVHPoints, 1);
 		yCoords[i]->SetName(structureName[i]);
 		table->AddColumn(yCoords[i]);
 		table->Update();
@@ -855,6 +1248,9 @@ void CompareDialog::clearDVHPlots(vtkChartXY *chart)
 		chart->RemovePlotInstance(oldPlot);
 		chart->RemovePlot(i);
 	}
+
+	int nPlots = chart->GetNumberOfPlots();
+	int oPlots = nPlots;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -862,12 +1258,26 @@ void CompareDialog::clearDVHPlots(vtkChartXY *chart)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::displayQueryDVHData()
 {
-	if (readDVHData(*queryPatient))
+	if (readQueryDVHData(*queryPatient))
 	{	
-		QString title = "Query DVH: patient " + 
-		QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'));
+		QString title;
+
+		if (overlayDVHCheckBox->isChecked())
+		{
+			title = "Query DVH: query patient " + 
+			QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'))
+			+ " + match patient " +
+			QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
+			+ " overlay";
+		}
+		else
+		{
+			title = "Query DVH: patient " + 
+			QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'));
+		}
+
 		QByteArray ba = title.toLatin1();
-		setupDVHChart(queryDVH, ba.data());
+		setupQueryDVHChart(queryDVH, ba.data());
 		queryDVHView->Render();
 	}
 }
@@ -877,15 +1287,49 @@ void CompareDialog::displayQueryDVHData()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::displayMatchDVHData()
 {
-	if (readDVHData(*matchPatient))
+	if (readMatchDVHData(*matchPatient))
 	{
 		QString title = "Match DVH: patient " + 
 		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
 
 		QByteArray ba = title.toLatin1();
-		setupDVHChart(matchDVH, ba.data());
+		setupMatchDVHChart(matchDVH, ba.data());
 		matchDVHView->Render();
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// 
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::toggleOverlayDVH(bool checked)
+{
+/*	QString bVal = (checked) ? "true" : "false";
+
+	QString info =
+		"CompareDialog::toggleOverlayDVH(" + bVal + ")";
+	QMessageBox::information(this, tr("DVH Overlay state"), info);
+*/
+	QString title;
+
+	if (overlayDVHCheckBox->isChecked())
+	{
+		title = "Query DVH: query patient " + 
+		QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'))
+		+ " + match patient " +
+		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
+		+ " overlay";
+	}
+	else
+	{
+		title = "Query DVH: patient " + 
+		QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'));
+	}
+
+	QByteArray ba = title.toLatin1();
+	setupQueryDVHChart(queryDVH, ba.data());
+	queryDVHView->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

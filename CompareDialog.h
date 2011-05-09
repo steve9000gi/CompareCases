@@ -30,7 +30,7 @@
 // exploit that separability.
 //
 // author:  Steve Chall, RENCI
-// primary collaborator: Vorakarn Chanyanavich, Duke Medical Center
+// primary collaborator: Vorakarn Chanyavanich, Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -56,6 +56,8 @@ class vtkContextView;
 class vtkTable;
 class vtkChartXY;
 class Patient;
+class CaseSpaceDialog;
+class Projector;
 
 class CompareDialog : public QDialog, public Ui_CompareDialog
 {
@@ -73,22 +75,36 @@ public:
 	};
 
 	CompareDialog();
+	CompareDialog(CaseSpaceDialog *csDlog);
 	~CompareDialog();
 
+	virtual void accept();
+	virtual void reject();
+
+
+	void setQuery(Patient *patient);
+	void setMatch(Patient *patient);
+
+	bool dataExistsFor(Patient *patient);
+
 private slots:
-	void selectQuery(int patientNum);		// For query CT, projection, DVH displays
-	void selectMatch(int patientNum);		// For match CT, projection, DVH displays
-	void setSliceAxis(bool val = true);		// Both query and match CT data
-	void changeSlice(int slice);			// Both query and match CT data
-	void autoplay();						// Both query and match CT data
-	void setGantryAngle27();				// All these for projection data, ...
-	void setGantryAngle78();				
-	void setGantryAngle129();
+	void selectQuery(int patientNum);				// For query CT, projection, DVH displays
+	void selectMatch(int patientNum);				// For match CT, projection, DVH displays
+
+	void setSliceAxis(bool val = true);				// Both query and match CT data
+	void changeSlice(int slice);					// Both query and match CT data
+	void autoplay();								// Both query and match CT data
+	void setGantryAngle25();						// All these for projection data, ...
+	void setGantryAngle75();				
+	void setGantryAngle130();
 	void setGantryAngle180();
-	void setGantryAngle231();
-	void setGantryAngle282();
-	void setGantryAngle333();				// ...both query and match.
-	void toggleFemoralHeads(bool checked);	// For projection and DVH data. q. and m.
+	void setGantryAngle230();
+	void setGantryAngle280();
+	void setGantryAngle335();						// ...both query and match.
+	void changeTransparency(int transp);
+	void toggleFlatShadedStructures(bool checked);	// For projections
+	void toggleFemoralHeads(bool checked);			// For projection and DVH data. q. and m.
+	void toggleOverlayDVH(bool checked);
 
 private:
 	// General setup methods:
@@ -96,6 +112,8 @@ private:
 	void createActions();
 
 	// CT data display methods:
+	void initQueryCTPipeLine();
+	void initMatchCTPipeLine();
 	void selectQueryCTSlice(int slice);
 	void selectMatchCTSlice(int slice);
 	void extractQueryDICOMFileMetaData();
@@ -108,8 +126,10 @@ private:
 	// Dose Volume Histogram data display methods:
 	void initQueryDVHObjects();
 	void initMatchDVHObjects();
-	bool readDVHData(Patient &patient);
-	void setupDVHChart(vtkChartXY *chart, char *title);
+	bool readQueryDVHData(Patient &patient);
+	bool readMatchDVHData(Patient &patient);
+	void setupQueryDVHChart(vtkChartXY *chart, char *title);
+	void setupMatchDVHChart(vtkChartXY *chart, char *title);
 	void clearDVHPlots(vtkChartXY *chart);
 
 	void displayQueryDVHData();
@@ -129,21 +149,27 @@ private:
 	vtkImageViewer2 *matchCTImageViewer;
 
 	// Projection data display objects:
-	vtkPNGReader *queryProjectionReader;
+	/*
+	//vtkPNGReader *queryProjectionReader;
 	vtkPNGReader *matchProjectionReader;
-	vtkImageViewer *queryProjectionViewer;
+	//vtkImageViewer *queryProjectionViewer;
 	vtkImageViewer *matchProjectionViewer;
+	*/
+	vtkRenderWindow *queryProjectionRenWin;
+	vtkRenderWindow *matchProjectionRenWin;
+	Projector *queryProjector;
+	Projector *matchProjector;
 
 	// Projection gantry angle drop-down menu elements:
 	QMenu *gantryAngleMenu;
 	QActionGroup *gantryAngleActionGroup;
-	QAction *angle27Action;
-	QAction *angle78Action;
-	QAction *angle129Action;
+	QAction *angle25Action;
+	QAction *angle75Action;
+	QAction *angle130Action;
 	QAction *angle180Action;
-	QAction *angle231Action;
-	QAction *angle282Action;
-	QAction *angle333Action;
+	QAction *angle230Action;
+	QAction *angle280Action;
+	QAction *angle335Action;
 
 	int queryAngle;	// Current gantry angle for query projection display
 	int matchAngle; // Current gantry angle for match projection display
@@ -155,10 +181,14 @@ private:
 	vtkContextView *matchDVHView;
 
 	float dose[numDVHPoints];					// x-axis DVH values 	
-	float volumes[numStructures][numDVHPoints];	// y-axis DVH values
+	float *volumes;	// y-axis DVH values
+	float queryVolumes[numStructures][numDVHPoints];	// y-axis DVH values
+	float matchVolumes[numStructures][numDVHPoints];	// y-axis DVH values
 
 	static const int xDVHWidget;				// DVH display width
 	static const int yDVHWidget;				// DVH display height
+
+	CaseSpaceDialog *caseSpaceDialog;
 
 private:
 	CompareDialog(const CompareDialog&);				// Not implemented.

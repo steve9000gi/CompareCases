@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'MainWindow.ui'
 **
-** Created: Tue Mar 1 14:56:48 2011
+** Created: Thu May 5 15:30:55 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -14,17 +14,18 @@
 #include <QtGui/QAction>
 #include <QtGui/QApplication>
 #include <QtGui/QButtonGroup>
+#include <QtGui/QComboBox>
 #include <QtGui/QFormLayout>
 #include <QtGui/QGridLayout>
 #include <QtGui/QGroupBox>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QHeaderView>
 #include <QtGui/QLabel>
+#include <QtGui/QLineEdit>
 #include <QtGui/QMainWindow>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QPushButton>
-#include <QtGui/QRadioButton>
 #include <QtGui/QSpacerItem>
 #include <QtGui/QStatusBar>
 #include <QtGui/QVBoxLayout>
@@ -41,33 +42,34 @@ public:
     QAction *actionExit;
     QWidget *centralwidget;
     QWidget *widget;
-    QVBoxLayout *verticalLayout;
-    QHBoxLayout *horizontalLayout_2;
-    QSpacerItem *horizontalSpacer;
+    QGridLayout *gridLayout_2;
+    QSpacerItem *horizontalSpacer_3;
+    QVBoxLayout *verticalLayout_2;
     QGroupBox *institutionsGroupBox;
     QFormLayout *formLayout;
-    QRadioButton *justDukeRadioButton;
-    QRadioButton *addPoconoRadioButton;
-    QRadioButton *addHighPointRadioButton;
-    QSpacerItem *horizontalSpacer_2;
-    QHBoxLayout *horizontalLayout_3;
-    QSpacerItem *horizontalSpacer_3;
+    QPushButton *loadDukePushButton;
+    QPushButton *loadPoconoPushButton;
+    QPushButton *loadHighPointPushButton;
+    QLineEdit *loadDukeLineEdit;
+    QLineEdit *loadPoconoLineEdit;
+    QLineEdit *loadHighPointLineEdit;
     QGroupBox *selectQueryCaseGroupBox;
     QGridLayout *gridLayout;
-    QPushButton *selectFormDukePushButton;
-    QPushButton *selectFromPoconoPushButton;
-    QPushButton *selectFromHighPointPushButton;
-    QSpacerItem *horizontalSpacer_4;
-    QHBoxLayout *horizontalLayout_4;
-    QSpacerItem *horizontalSpacer_5;
+    QVBoxLayout *verticalLayout;
     QHBoxLayout *horizontalLayout;
+    QLabel *label;
+    QComboBox *dukeQueryCaseComboBox;
+    QHBoxLayout *horizontalLayout_2;
+    QLabel *label_2;
+    QComboBox *poconoQueryCaseComboBox;
+    QHBoxLayout *horizontalLayout_3;
+    QLabel *label_3;
+    QComboBox *highPointQueryCaseComboBox;
+    QHBoxLayout *horizontalLayout_4;
     QLabel *queryCaseLabel;
-    QLabel *QueryCaseNameLabel;
-    QSpacerItem *horizontalSpacer_6;
-    QHBoxLayout *horizontalLayout_5;
-    QSpacerItem *horizontalSpacer_7;
+    QLabel *queryCaseNameLabel;
     QPushButton *viewCaseSpaceButton;
-    QSpacerItem *horizontalSpacer_8;
+    QSpacerItem *horizontalSpacer_4;
     QMenuBar *menubar;
     QMenu *menuFile;
     QStatusBar *statusbar;
@@ -76,7 +78,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(338, 342);
+        MainWindow->resize(327, 352);
         actionSelect_Duke_Directory = new QAction(MainWindow);
         actionSelect_Duke_Directory->setObjectName(QString::fromUtf8("actionSelect_Duke_Directory"));
         actionSelect_Pocono_Directory = new QAction(MainWindow);
@@ -89,136 +91,153 @@ public:
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         widget = new QWidget(centralwidget);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(30, 7, 280, 281));
-        verticalLayout = new QVBoxLayout(widget);
-        verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
-        verticalLayout->setContentsMargins(0, 0, 0, 0);
-        horizontalLayout_2 = new QHBoxLayout();
-        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
-        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        widget->setGeometry(QRect(-2, 10, 330, 287));
+        gridLayout_2 = new QGridLayout(widget);
+        gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
+        gridLayout_2->setContentsMargins(0, 0, 0, 0);
+        horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-        horizontalLayout_2->addItem(horizontalSpacer);
+        gridLayout_2->addItem(horizontalSpacer_3, 0, 0, 1, 1);
 
+        verticalLayout_2 = new QVBoxLayout();
+        verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         institutionsGroupBox = new QGroupBox(widget);
         institutionsGroupBox->setObjectName(QString::fromUtf8("institutionsGroupBox"));
         formLayout = new QFormLayout(institutionsGroupBox);
         formLayout->setObjectName(QString::fromUtf8("formLayout"));
-        justDukeRadioButton = new QRadioButton(institutionsGroupBox);
-        justDukeRadioButton->setObjectName(QString::fromUtf8("justDukeRadioButton"));
+        formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+        loadDukePushButton = new QPushButton(institutionsGroupBox);
+        loadDukePushButton->setObjectName(QString::fromUtf8("loadDukePushButton"));
 
-        formLayout->setWidget(0, QFormLayout::LabelRole, justDukeRadioButton);
+        formLayout->setWidget(0, QFormLayout::LabelRole, loadDukePushButton);
 
-        addPoconoRadioButton = new QRadioButton(institutionsGroupBox);
-        addPoconoRadioButton->setObjectName(QString::fromUtf8("addPoconoRadioButton"));
+        loadPoconoPushButton = new QPushButton(institutionsGroupBox);
+        loadPoconoPushButton->setObjectName(QString::fromUtf8("loadPoconoPushButton"));
 
-        formLayout->setWidget(1, QFormLayout::LabelRole, addPoconoRadioButton);
+        formLayout->setWidget(1, QFormLayout::LabelRole, loadPoconoPushButton);
 
-        addHighPointRadioButton = new QRadioButton(institutionsGroupBox);
-        addHighPointRadioButton->setObjectName(QString::fromUtf8("addHighPointRadioButton"));
+        loadHighPointPushButton = new QPushButton(institutionsGroupBox);
+        loadHighPointPushButton->setObjectName(QString::fromUtf8("loadHighPointPushButton"));
 
-        formLayout->setWidget(2, QFormLayout::LabelRole, addHighPointRadioButton);
+        formLayout->setWidget(2, QFormLayout::LabelRole, loadHighPointPushButton);
+
+        loadDukeLineEdit = new QLineEdit(institutionsGroupBox);
+        loadDukeLineEdit->setObjectName(QString::fromUtf8("loadDukeLineEdit"));
+
+        formLayout->setWidget(0, QFormLayout::FieldRole, loadDukeLineEdit);
+
+        loadPoconoLineEdit = new QLineEdit(institutionsGroupBox);
+        loadPoconoLineEdit->setObjectName(QString::fromUtf8("loadPoconoLineEdit"));
+
+        formLayout->setWidget(1, QFormLayout::FieldRole, loadPoconoLineEdit);
+
+        loadHighPointLineEdit = new QLineEdit(institutionsGroupBox);
+        loadHighPointLineEdit->setObjectName(QString::fromUtf8("loadHighPointLineEdit"));
+
+        formLayout->setWidget(2, QFormLayout::FieldRole, loadHighPointLineEdit);
 
 
-        horizontalLayout_2->addWidget(institutionsGroupBox);
+        verticalLayout_2->addWidget(institutionsGroupBox);
 
-        horizontalSpacer_2 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        selectQueryCaseGroupBox = new QGroupBox(widget);
+        selectQueryCaseGroupBox->setObjectName(QString::fromUtf8("selectQueryCaseGroupBox"));
+        gridLayout = new QGridLayout(selectQueryCaseGroupBox);
+        gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+        verticalLayout = new QVBoxLayout();
+        verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
+        horizontalLayout = new QHBoxLayout();
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        label = new QLabel(selectQueryCaseGroupBox);
+        label->setObjectName(QString::fromUtf8("label"));
 
-        horizontalLayout_2->addItem(horizontalSpacer_2);
+        horizontalLayout->addWidget(label);
+
+        dukeQueryCaseComboBox = new QComboBox(selectQueryCaseGroupBox);
+        dukeQueryCaseComboBox->setObjectName(QString::fromUtf8("dukeQueryCaseComboBox"));
+
+        horizontalLayout->addWidget(dukeQueryCaseComboBox);
+
+
+        verticalLayout->addLayout(horizontalLayout);
+
+        horizontalLayout_2 = new QHBoxLayout();
+        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        label_2 = new QLabel(selectQueryCaseGroupBox);
+        label_2->setObjectName(QString::fromUtf8("label_2"));
+
+        horizontalLayout_2->addWidget(label_2);
+
+        poconoQueryCaseComboBox = new QComboBox(selectQueryCaseGroupBox);
+        poconoQueryCaseComboBox->setObjectName(QString::fromUtf8("poconoQueryCaseComboBox"));
+
+        horizontalLayout_2->addWidget(poconoQueryCaseComboBox);
 
 
         verticalLayout->addLayout(horizontalLayout_2);
 
         horizontalLayout_3 = new QHBoxLayout();
         horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
-        horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        label_3 = new QLabel(selectQueryCaseGroupBox);
+        label_3->setObjectName(QString::fromUtf8("label_3"));
 
-        horizontalLayout_3->addItem(horizontalSpacer_3);
+        horizontalLayout_3->addWidget(label_3);
 
-        selectQueryCaseGroupBox = new QGroupBox(widget);
-        selectQueryCaseGroupBox->setObjectName(QString::fromUtf8("selectQueryCaseGroupBox"));
-        gridLayout = new QGridLayout(selectQueryCaseGroupBox);
-        gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
-        selectFormDukePushButton = new QPushButton(selectQueryCaseGroupBox);
-        selectFormDukePushButton->setObjectName(QString::fromUtf8("selectFormDukePushButton"));
+        highPointQueryCaseComboBox = new QComboBox(selectQueryCaseGroupBox);
+        highPointQueryCaseComboBox->setObjectName(QString::fromUtf8("highPointQueryCaseComboBox"));
 
-        gridLayout->addWidget(selectFormDukePushButton, 0, 0, 1, 1);
-
-        selectFromPoconoPushButton = new QPushButton(selectQueryCaseGroupBox);
-        selectFromPoconoPushButton->setObjectName(QString::fromUtf8("selectFromPoconoPushButton"));
-
-        gridLayout->addWidget(selectFromPoconoPushButton, 1, 0, 1, 1);
-
-        selectFromHighPointPushButton = new QPushButton(selectQueryCaseGroupBox);
-        selectFromHighPointPushButton->setObjectName(QString::fromUtf8("selectFromHighPointPushButton"));
-
-        gridLayout->addWidget(selectFromHighPointPushButton, 2, 0, 1, 1);
-
-
-        horizontalLayout_3->addWidget(selectQueryCaseGroupBox);
-
-        horizontalSpacer_4 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout_3->addItem(horizontalSpacer_4);
+        horizontalLayout_3->addWidget(highPointQueryCaseComboBox);
 
 
         verticalLayout->addLayout(horizontalLayout_3);
 
+
+        gridLayout->addLayout(verticalLayout, 0, 0, 1, 1);
+
+
+        verticalLayout_2->addWidget(selectQueryCaseGroupBox);
+
         horizontalLayout_4 = new QHBoxLayout();
         horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
-        horizontalSpacer_5 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout_4->addItem(horizontalSpacer_5);
-
-        horizontalLayout = new QHBoxLayout();
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         queryCaseLabel = new QLabel(widget);
         queryCaseLabel->setObjectName(QString::fromUtf8("queryCaseLabel"));
 
-        horizontalLayout->addWidget(queryCaseLabel);
+        horizontalLayout_4->addWidget(queryCaseLabel);
 
-        QueryCaseNameLabel = new QLabel(widget);
-        QueryCaseNameLabel->setObjectName(QString::fromUtf8("QueryCaseNameLabel"));
+        queryCaseNameLabel = new QLabel(widget);
+        queryCaseNameLabel->setObjectName(QString::fromUtf8("queryCaseNameLabel"));
 
-        horizontalLayout->addWidget(QueryCaseNameLabel);
-
-
-        horizontalLayout_4->addLayout(horizontalLayout);
-
-        horizontalSpacer_6 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout_4->addItem(horizontalSpacer_6);
+        horizontalLayout_4->addWidget(queryCaseNameLabel);
 
 
-        verticalLayout->addLayout(horizontalLayout_4);
-
-        horizontalLayout_5 = new QHBoxLayout();
-        horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
-        horizontalSpacer_7 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout_5->addItem(horizontalSpacer_7);
+        verticalLayout_2->addLayout(horizontalLayout_4);
 
         viewCaseSpaceButton = new QPushButton(widget);
         viewCaseSpaceButton->setObjectName(QString::fromUtf8("viewCaseSpaceButton"));
 
-        horizontalLayout_5->addWidget(viewCaseSpaceButton);
-
-        horizontalSpacer_8 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout_5->addItem(horizontalSpacer_8);
+        verticalLayout_2->addWidget(viewCaseSpaceButton);
 
 
-        verticalLayout->addLayout(horizontalLayout_5);
+        gridLayout_2->addLayout(verticalLayout_2, 0, 1, 1, 1);
+
+        horizontalSpacer_4 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        gridLayout_2->addItem(horizontalSpacer_4, 0, 2, 1, 1);
 
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 338, 21));
+        menubar->setGeometry(QRect(0, 0, 327, 21));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
         MainWindow->setStatusBar(statusbar);
+#ifndef QT_NO_SHORTCUT
+        label->setBuddy(dukeQueryCaseComboBox);
+        label_2->setBuddy(poconoQueryCaseComboBox);
+        label_3->setBuddy(highPointQueryCaseComboBox);
+#endif // QT_NO_SHORTCUT
 
         menubar->addAction(menuFile->menuAction());
         menuFile->addAction(actionSelect_Duke_Directory);
@@ -238,17 +257,17 @@ public:
         actionSelect_Duke_Directory->setText(QApplication::translate("MainWindow", "Select Duke Directory...", 0, QApplication::UnicodeUTF8));
         actionSelect_Pocono_Directory->setText(QApplication::translate("MainWindow", "Select Pocono Directory...", 0, QApplication::UnicodeUTF8));
         actionSelect_High_Point_Directory->setText(QApplication::translate("MainWindow", "Select High Point Directory...", 0, QApplication::UnicodeUTF8));
-        actionExit->setText(QApplication::translate("MainWindow", "Exit", 0, QApplication::UnicodeUTF8));
-        institutionsGroupBox->setTitle(QApplication::translate("MainWindow", "Load institutions", 0, QApplication::UnicodeUTF8));
-        justDukeRadioButton->setText(QApplication::translate("MainWindow", "Duke", 0, QApplication::UnicodeUTF8));
-        addPoconoRadioButton->setText(QApplication::translate("MainWindow", "Duke + Pocono", 0, QApplication::UnicodeUTF8));
-        addHighPointRadioButton->setText(QApplication::translate("MainWindow", "Duke + Pocono + High Point", 0, QApplication::UnicodeUTF8));
+        actionExit->setText(QApplication::translate("MainWindow", "E&xit", 0, QApplication::UnicodeUTF8));
+        institutionsGroupBox->setTitle(QApplication::translate("MainWindow", "Load institutions:", 0, QApplication::UnicodeUTF8));
+        loadDukePushButton->setText(QApplication::translate("MainWindow", "Duke", 0, QApplication::UnicodeUTF8));
+        loadPoconoPushButton->setText(QApplication::translate("MainWindow", "Pocono", 0, QApplication::UnicodeUTF8));
+        loadHighPointPushButton->setText(QApplication::translate("MainWindow", "High Point", 0, QApplication::UnicodeUTF8));
         selectQueryCaseGroupBox->setTitle(QApplication::translate("MainWindow", "Select Query Case from...", 0, QApplication::UnicodeUTF8));
-        selectFormDukePushButton->setText(QApplication::translate("MainWindow", "Duke", 0, QApplication::UnicodeUTF8));
-        selectFromPoconoPushButton->setText(QApplication::translate("MainWindow", "Pocono", 0, QApplication::UnicodeUTF8));
-        selectFromHighPointPushButton->setText(QApplication::translate("MainWindow", "High Point", 0, QApplication::UnicodeUTF8));
+        label->setText(QApplication::translate("MainWindow", "Duke:", 0, QApplication::UnicodeUTF8));
+        label_2->setText(QApplication::translate("MainWindow", "Pocono:", 0, QApplication::UnicodeUTF8));
+        label_3->setText(QApplication::translate("MainWindow", "High Point:", 0, QApplication::UnicodeUTF8));
         queryCaseLabel->setText(QApplication::translate("MainWindow", "Query Case:", 0, QApplication::UnicodeUTF8));
-        QueryCaseNameLabel->setText(QApplication::translate("MainWindow", "<not selected>", 0, QApplication::UnicodeUTF8));
+        queryCaseNameLabel->setText(QApplication::translate("MainWindow", "<not selected>", 0, QApplication::UnicodeUTF8));
         viewCaseSpaceButton->setText(QApplication::translate("MainWindow", "View Case Space", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("MainWindow", "File", 0, QApplication::UnicodeUTF8));
     } // retranslateUi

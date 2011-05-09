@@ -4,7 +4,7 @@
 // to determining how to display data for an individual prostate cancer patient.
 //
 // author: Steve Chall, RENCI
-// chief collaborator: Vorakarn Chanyanavich, Duke Medical Center
+// chief collaborator: Vorakarn Chanyavanich, Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -62,7 +62,20 @@ public:
 
 	QString getPathToDVHData();
 	void setPathToDVHData(const QString &path);
-	
+
+	int getPTVSize() { return PTVSize; };
+	int getRectumSize() { return rectumSize; };
+	int getBladderSize() { return bladderSize; };
+	int getPTVPlusRectum() { return PTVPlusRectum; };
+	int getPTVPlusBladder() { return PTVPlusBladder; };
+	int getPTVPlusRectumPlusBladder() { return PTVPlusRectumPlusBladder; };
+	void setPTVSize(int s) { PTVSize = s; };
+	void setRectumSize(int s) { rectumSize = s; };
+	void setBladderSize(int s) { bladderSize = s; };
+	void setPTVPlusRectum(int ppr) { PTVPlusRectum = ppr; };
+	void setPTVPlusBladder(int ppb) { PTVPlusBladder = ppb; };
+	void setPTVPlusRectumPlusBladder(int pprpb) { PTVPlusRectumPlusBladder = pprpb; };
+
 protected:
 	int number;
 	int sliceMin;
@@ -75,6 +88,13 @@ protected:
 	QString DVHDataPath;
 
 	bool isShowingFemoralHeads;
+
+	int PTVSize;
+	int rectumSize;
+	int bladderSize;
+	int PTVPlusRectum;
+	int PTVPlusBladder;
+	int PTVPlusRectumPlusBladder;
 
 private:
 	Patient(const Patient&);			// Not implemented.

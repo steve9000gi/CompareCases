@@ -26,7 +26,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>6</y>
+      <y>2</y>
       <width>483</width>
       <height>51</height>
      </rect>
@@ -40,7 +40,7 @@
        <x>10</x>
        <y>19</y>
        <width>463</width>
-       <height>25</height>
+       <height>26</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -99,6 +99,12 @@
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
+        <property name="tickPosition">
+         <enum>QSlider::TicksAbove</enum>
+        </property>
+        <property name="tickInterval">
+         <number>16</number>
+        </property>
        </widget>
       </item>
       <item>
@@ -117,19 +123,6 @@
       </item>
      </layout>
     </widget>
-   </widget>
-   <widget class="QPushButton" name="gantryAnglePushButton">
-    <property name="geometry">
-     <rect>
-      <x>965</x>
-      <y>28</y>
-      <width>85</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Gantry Angle</string>
-    </property>
    </widget>
    <widget class="QLabel" name="dvhLabel">
     <property name="geometry">
@@ -154,7 +147,7 @@
      <rect>
       <x>10</x>
       <y>58</y>
-      <width>1836</width>
+      <width>1838</width>
       <height>514</height>
      </rect>
     </property>
@@ -169,33 +162,61 @@
        <property name="title">
         <string>Query</string>
        </property>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QSpinBox" name="querySelectSpinBox">
-          <property name="font">
-           <font>
-            <pointsize>8</pointsize>
-           </font>
-          </property>
-          <property name="frame">
-           <bool>true</bool>
-          </property>
-          <property name="readOnly">
-           <bool>false</bool>
-          </property>
-          <property name="prefix">
-           <string/>
-          </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>500</number>
-          </property>
-          <property name="value">
-           <number>12</number>
-          </property>
-         </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QPushButton" name="queryInstitutionPushButton">
+            <property name="minimumSize">
+             <size>
+              <width>59</width>
+              <height>23</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>59</width>
+              <height>23</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Duke</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="querySelectSpinBox">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="frame">
+             <bool>true</bool>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+            <property name="prefix">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>500</number>
+            </property>
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -254,9 +275,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
+                 <red>230</red>
                  <green>0</green>
-                 <blue>230</blue>
+                 <blue>0</blue>
                 </color>
                </brush>
               </colorrole>
@@ -301,9 +322,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
+                 <red>230</red>
                  <green>0</green>
-                 <blue>230</blue>
+                 <blue>0</blue>
                 </color>
                </brush>
               </colorrole>
@@ -415,9 +436,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>172</red>
-                 <green>0</green>
-                 <blue>172</blue>
+                 <red>139</red>
+                 <green>69</green>
+                 <blue>19</blue>
                 </color>
                </brush>
               </colorrole>
@@ -462,9 +483,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>172</red>
-                 <green>0</green>
-                 <blue>172</blue>
+                 <red>139</red>
+                 <green>69</green>
+                 <blue>19</blue>
                 </color>
                </brush>
               </colorrole>
@@ -576,8 +597,8 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
-                 <green>230</green>
+                 <red>255</red>
+                 <green>215</green>
                  <blue>0</blue>
                 </color>
                </brush>
@@ -614,8 +635,8 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
-                 <green>230</green>
+                 <red>255</red>
+                 <green>215</green>
                  <blue>0</blue>
                 </color>
                </brush>
@@ -710,9 +731,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>230</red>
-                 <green>0</green>
-                 <blue>0</blue>
+                 <red>85</red>
+                 <green>85</green>
+                 <blue>102</blue>
                 </color>
                </brush>
               </colorrole>
@@ -748,9 +769,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>230</red>
-                 <green>0</green>
-                 <blue>0</blue>
+                 <red>85</red>
+                 <green>85</green>
+                 <blue>102</blue>
                 </color>
                </brush>
               </colorrole>
@@ -844,9 +865,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>172</red>
-                 <green>172</green>
-                 <blue>0</blue>
+                 <red>171</red>
+                 <green>171</green>
+                 <blue>171</blue>
                 </color>
                </brush>
               </colorrole>
@@ -882,9 +903,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>172</red>
-                 <green>172</green>
-                 <blue>0</blue>
+                 <red>171</red>
+                 <green>171</green>
+                 <blue>171</blue>
                 </color>
                </brush>
               </colorrole>
@@ -989,16 +1010,16 @@
      </item>
     </layout>
     <zorder>queryDVHWidget</zorder>
-    <zorder>queryGroupBox</zorder>
     <zorder>queryCTImageWidget</zorder>
     <zorder>queryProjectionWidget</zorder>
+    <zorder>queryGroupBox</zorder>
    </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>578</y>
-      <width>1836</width>
+      <width>1838</width>
       <height>514</height>
      </rect>
     </property>
@@ -1013,24 +1034,52 @@
        <property name="title">
         <string>Match</string>
        </property>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <widget class="QSpinBox" name="matchSelectSpinBox">
-          <property name="font">
-           <font>
-            <pointsize>8</pointsize>
-           </font>
-          </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>500</number>
-          </property>
-          <property name="value">
-           <number>12</number>
-          </property>
-         </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QPushButton" name="matchInstitutionPushButton">
+            <property name="minimumSize">
+             <size>
+              <width>59</width>
+              <height>23</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>59</width>
+              <height>23</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Duke</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="matchSelectSpinBox">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>500</number>
+            </property>
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -1076,37 +1125,6 @@
      </item>
     </layout>
    </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>824</x>
-      <y>24</y>
-      <width>93</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>16</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Projection</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="viewFemoralHeadsCheckBox">
-    <property name="geometry">
-     <rect>
-      <x>1122</x>
-      <y>30</y>
-      <width>119</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>View Femoral Heads</string>
-    </property>
-   </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
@@ -1118,7 +1136,7 @@
     </property>
     <layout class="QGridLayout" name="gridLayout_3"/>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>1678</x>
@@ -1143,6 +1161,129 @@
       </widget>
      </item>
     </layout>
+   </widget>
+   <widget class="QGroupBox" name="projectionDisplayGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>623</x>
+      <y>2</y>
+      <width>495</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Projection Display</string>
+    </property>
+    <widget class="QPushButton" name="gantryAnglePushButton">
+     <property name="geometry">
+      <rect>
+       <x>272</x>
+       <y>19</y>
+       <width>104</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Gantry Angle</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="flatShadedCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>398</x>
+       <y>23</y>
+       <width>80</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Flat Shaded</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="layoutWidget_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>229</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QLabel" name="transparencyLabel">
+        <property name="text">
+         <string>%Transparency</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="transparencySpinBox">
+        <property name="minimum">
+         <number>0</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSlider" name="transparencySlider">
+        <property name="minimum">
+         <number>0</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::TicksAbove</enum>
+        </property>
+        <property name="tickInterval">
+         <number>10</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="maxTransparencyLabel_2">
+        <property name="text">
+         <string>100</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QCheckBox" name="viewFemoralHeadsCheckBox">
+    <property name="geometry">
+     <rect>
+      <x>1125</x>
+      <y>26</y>
+      <width>119</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>View Femoral Heads</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="overlayDVHCheckBox">
+    <property name="geometry">
+     <rect>
+      <x>1250</x>
+      <y>26</y>
+      <width>61</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Overlay</string>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar">
