@@ -1,8 +1,14 @@
 README file for CompareCases
 
+Written by Steve Chall (stevec@renci.org), RENCI @ Duke (www.renci.org)
+in collaboration with and based on the work of
+Joseph Y. Lo, Associate Research Professor of Medical Physics Grad Program, Radiology and Biomedical Engineering (joseph.lo@duke.edu)
+Shiva K. Das, Professor, Department of Radiation Oncology, Duke University School of Medicine (shiva.das@duke.edu)
+Vorakarn Chanyavanich, (vorakarn.chanyavanich@duke.edu)
+
 1. CompareCases Overview
 
-CompareCases is an application that supports the exploration of several kinds of data about pre-existing prostate cancer radiation therapy cases
+CompareCases is an application that supports the exploration of several kinds of data about pre-existing prostate cancer radiation therapy cases.  
 
 2. Graphical User Interface / Work Flow
 
@@ -31,3 +37,10 @@ Selecting input data paths
 CERR / MATLAB
 
 3.4 Dose Volume Histogram Data
+
+4. Bugs
+
+5. Future Work
+
+6. Additional reading
+

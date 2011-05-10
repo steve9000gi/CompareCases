@@ -148,13 +148,6 @@ private:
 	vtkImageViewer2 *queryCTImageViewer;
 	vtkImageViewer2 *matchCTImageViewer;
 
-	// Projection data display objects:
-	/*
-	//vtkPNGReader *queryProjectionReader;
-	vtkPNGReader *matchProjectionReader;
-	//vtkImageViewer *queryProjectionViewer;
-	vtkImageViewer *matchProjectionViewer;
-	*/
 	vtkRenderWindow *queryProjectionRenWin;
 	vtkRenderWindow *matchProjectionRenWin;
 	Projector *queryProjector;
