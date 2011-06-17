@@ -17,7 +17,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient::Patient()
-	:	dataDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-03-29"),
+	:	dataDir("."),
 		number(defaultPatientNumber),
 		sliceMin(-1),
 		sliceMax(-1),
@@ -29,7 +29,7 @@ Patient::Patient()
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient::Patient(int n)
-	:	dataDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-03-29"),
+	:	dataDir("."),
 		number(n),
 		sliceMin(-1),
 		sliceMax(-1),

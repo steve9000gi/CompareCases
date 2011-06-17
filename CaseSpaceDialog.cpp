@@ -337,10 +337,20 @@ void CaseSpaceDialog::setupCaseSpaceChart()
 
 	caseSpaceChart->SetShowLegend(true);
 
-	addDukeDataToChart();
+	if (mainWindow->getQueryCaseSourceInstitution() == MainWindow::kDuke)
+	{
+		addDukeDataToChart();
+	}
+	else if (mainWindow->getQueryCaseSourceInstitution() == MainWindow::kHighPoint)
+	{
+		addHighPointDataToChart();
+	}
+	else if (mainWindow->getQueryCaseSourceInstitution() == MainWindow::kPocono)
+	{
+		addPoconoDataToChart();
+	}
+
 	addQueryCaseToChart();
-	//addHighPointDataToChart();
-	//addPoconoDataToChart();
 
 	caseSpaceChart->SetDrawAxesAtOrigin(true);
 
@@ -429,6 +439,11 @@ void CaseSpaceDialog::addDukeDataToChart()
 	int n, PTVSize, rectumSize, bladderSize, PTVPlusRectum, PTVPlusBladder,
 		PTVPlusRectumPlusBladder;
 	dukePatientList = new Patient[numDukePatients];
+
+	for (int i = 0; i < numDukePatients; i++)
+	{
+		(dukePatientList[i]).setDataDir(mainWindow->getDataDir());
+	}
 
 	in.readLine();		// Skip over the first line (column headers):
 
@@ -654,8 +669,8 @@ void CaseSpaceDialog::addPoconoDataToChart()
 	{
 		//pX[i] = ((int)pX[i] % 200) - 100; 
 		//pY[i] = ((int)pY[i] % 200) - 100; 
-		dX[i] *= 40; 
-		dY[i] *= 40;
+		pX[i] *= 40; 
+		pY[i] *= 40;
 	}
 
 	poconoXCoords->SetArray(pX, numCases, 1);
@@ -728,8 +743,8 @@ void CaseSpaceDialog::addHighPointDataToChart()
 	{
 		//hpX[i] = ((int)hpX[i] % 200) - 100; 
 		//hpY[i] = ((int)hpY[i] % 200) - 100; 
-		dX[i] *= 40; 
-		dY[i] *= 40;
+		hpX[i] *= 40; 
+		hpY[i] *= 40;
 	}
 
 	highPointXCoords->SetArray(hpX, numCases, 1);

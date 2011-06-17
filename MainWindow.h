@@ -19,9 +19,12 @@
 #define CCMW_H
 
 #include <QDialog>
+#include <QFile>
 
 #include "ui_MainWindow.h"
 
+// Forward declaration:
+class CaseSpaceDialog;
 
 class MainWindow : public QMainWindow, public Ui_MainWindow
 {
@@ -36,9 +39,12 @@ public:
 	};
 
 	MainWindow();
+	~MainWindow()
+	{
+	};
 
 private slots:
-	void openCaseSpaceDialog();
+	void openCaseSpaceDialog();	
 	void selectDukeDirectory();
 	void selectPoconoDirectory();
 	void selectHighPointDirectory();
@@ -58,6 +64,8 @@ protected:
 	QAction *selectPoconoQueryCaseAction;
 	QAction *selectHighPointQueryCaseAction;
 
+	QFile dukeDataDirectoryPath;
+
 	QString dukeDir;
 	QString dukeOverlapDataPath;
 	QString poconoDir;
@@ -66,8 +74,12 @@ protected:
 	SourceInstitution queryCaseSourceInstitution;
 	int queryCasePatientNumber;
 
+	CaseSpaceDialog *caseSpaceDialog;
+
 public:
 	QString getDukeDir() { return dukeDir; };
+	 // TEMP hardwired pending introduction of data from other institutions:
+	QString getDataDir() { return dukeDir; };
 	QString &getDukeOverlapDataPath() { return dukeOverlapDataPath; };
 	SourceInstitution getQueryCaseSourceInstitution() { return queryCaseSourceInstitution; };
 	int getQueryCasePatientNumber() { return queryCasePatientNumber; };

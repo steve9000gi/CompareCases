@@ -45,6 +45,7 @@ public:
 	Patient *getPatientFromCoodinates(float *xArray, float *yArray, float x, float y);
 	Patient *getDukePatientFromCoodinates(float posX, float posY);
 	int getNumDukePatients() { return numDukePatients; };
+	MainWindow *getMainWindow() { return mainWindow; };
 
 	void enableCompareCasesButton(bool isEnabled)
 	{

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CompareDialog.ui'
 **
-** Created: Tue May 10 09:56:34 2011
+** Created: Thu May 12 13:22:32 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -91,10 +91,12 @@ public:
     QLabel *transparencyLabel;
     QSpinBox *transparencySpinBox;
     QSlider *transparencySlider;
-    QLabel *maxTransparencyLabel_2;
+    QLabel *maxTransparencyLabel;
+    QCheckBox *originCheckBox;
     QCheckBox *viewFemoralHeadsCheckBox;
     QCheckBox *overlayDVHCheckBox;
     QStatusBar *statusbar;
+    QPushButton *historyPushButton;
 
     void setupUi(QDialog *CompareDialog)
     {
@@ -460,10 +462,10 @@ public:
         projectionDisplayGroupBox->setGeometry(QRect(623, 2, 495, 51));
         gantryAnglePushButton = new QPushButton(projectionDisplayGroupBox);
         gantryAnglePushButton->setObjectName(QString::fromUtf8("gantryAnglePushButton"));
-        gantryAnglePushButton->setGeometry(QRect(272, 19, 104, 22));
+        gantryAnglePushButton->setGeometry(QRect(258, 21, 86, 23));
         flatShadedCheckBox = new QCheckBox(projectionDisplayGroupBox);
         flatShadedCheckBox->setObjectName(QString::fromUtf8("flatShadedCheckBox"));
-        flatShadedCheckBox->setGeometry(QRect(398, 23, 80, 16));
+        flatShadedCheckBox->setGeometry(QRect(355, 24, 79, 17));
         layoutWidget_3 = new QWidget(projectionDisplayGroupBox);
         layoutWidget_3->setObjectName(QString::fromUtf8("layoutWidget_3"));
         layoutWidget_3->setGeometry(QRect(10, 20, 229, 26));
@@ -493,11 +495,14 @@ public:
 
         horizontalLayout_6->addWidget(transparencySlider);
 
-        maxTransparencyLabel_2 = new QLabel(layoutWidget_3);
-        maxTransparencyLabel_2->setObjectName(QString::fromUtf8("maxTransparencyLabel_2"));
+        maxTransparencyLabel = new QLabel(layoutWidget_3);
+        maxTransparencyLabel->setObjectName(QString::fromUtf8("maxTransparencyLabel"));
 
-        horizontalLayout_6->addWidget(maxTransparencyLabel_2);
+        horizontalLayout_6->addWidget(maxTransparencyLabel);
 
+        originCheckBox = new QCheckBox(projectionDisplayGroupBox);
+        originCheckBox->setObjectName(QString::fromUtf8("originCheckBox"));
+        originCheckBox->setGeometry(QRect(440, 24, 51, 17));
         viewFemoralHeadsCheckBox = new QCheckBox(centralwidget);
         viewFemoralHeadsCheckBox->setObjectName(QString::fromUtf8("viewFemoralHeadsCheckBox"));
         viewFemoralHeadsCheckBox->setGeometry(QRect(1125, 26, 119, 17));
@@ -507,6 +512,9 @@ public:
         statusbar = new QStatusBar(CompareDialog);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
         statusbar->setGeometry(QRect(0, 4, 3, 18));
+        historyPushButton = new QPushButton(CompareDialog);
+        historyPushButton->setObjectName(QString::fromUtf8("historyPushButton"));
+        historyPushButton->setGeometry(QRect(14, 1096, 75, 23));
 #ifndef QT_NO_SHORTCUT
         sliceSelectionLabel->setBuddy(sliceSelectionSpinBox);
 #endif // QT_NO_SHORTCUT
@@ -546,11 +554,13 @@ public:
         cancelPushButton->setText(QApplication::translate("CompareDialog", "Cancel", 0, QApplication::UnicodeUTF8));
         projectionDisplayGroupBox->setTitle(QApplication::translate("CompareDialog", "Projection Display", 0, QApplication::UnicodeUTF8));
         gantryAnglePushButton->setText(QApplication::translate("CompareDialog", "Gantry Angle", 0, QApplication::UnicodeUTF8));
-        flatShadedCheckBox->setText(QApplication::translate("CompareDialog", "Flat Shaded", 0, QApplication::UnicodeUTF8));
+        flatShadedCheckBox->setText(QApplication::translate("CompareDialog", "Flat shaded", 0, QApplication::UnicodeUTF8));
         transparencyLabel->setText(QApplication::translate("CompareDialog", "%Transparency", 0, QApplication::UnicodeUTF8));
-        maxTransparencyLabel_2->setText(QApplication::translate("CompareDialog", "100", 0, QApplication::UnicodeUTF8));
+        maxTransparencyLabel->setText(QApplication::translate("CompareDialog", "100", 0, QApplication::UnicodeUTF8));
+        originCheckBox->setText(QApplication::translate("CompareDialog", "Axes", 0, QApplication::UnicodeUTF8));
         viewFemoralHeadsCheckBox->setText(QApplication::translate("CompareDialog", "View Femoral Heads", 0, QApplication::UnicodeUTF8));
         overlayDVHCheckBox->setText(QApplication::translate("CompareDialog", "Overlay", 0, QApplication::UnicodeUTF8));
+        historyPushButton->setText(QApplication::translate("CompareDialog", "History", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

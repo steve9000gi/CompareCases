@@ -10,6 +10,8 @@
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
 
+#include <qstring.h>
+
 #define STRAIGHTPIPE 0 // Skip decimation and smoothing if non-zero
 #define DISPLAY_AXES 0
 
@@ -69,6 +71,7 @@ public:
 	//static const int kNumStructureTypes; // = ekBody + 1;
 
 	Projector();
+	Projector(QString dataDir);
 	~Projector() {};
 	void setFlatShaded(bool value) { flatShaded = value; };
 	void setNoFemoralHeads(bool value) { noFemoralHeads = value; };
@@ -77,7 +80,7 @@ public:
 	void AddFollowingText(char *text, double x, double y, double z, double r,
                       double g, double b, vtkRenderer *ren);
 	void AddOriginToRenWin(vtkRenderer *r);
-	void BuildOrigin(void);
+	void AddOrigin(void);
 	void WindowInit(vtkRenderWindow *renWin, QVTKWidget *qVTKWidget);
 	void InitExtrema(void);
 	void PrintStructureName(eStructureType structureNum);
@@ -107,6 +110,8 @@ private:
 	bool flatShaded;
 	bool noFemoralHeads;
 	int transparency; // percentage
+
+	QString inPathFormat;
 
 public: // TEMP
 	vtkRenderer *renderer;

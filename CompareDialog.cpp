@@ -56,6 +56,7 @@
 
 #include "Patient.h"
 #include "Projector.h"
+#include "MainWindow.h"
 #include "CaseSpaceDialog.h"
 #include "CompareDialog.h"
 
@@ -321,13 +322,19 @@ bool CompareDialog::dataExistsFor(Patient *patient)
 	if (!CTDir.exists())
 	{
 		return false;
+
 	}
 
+#undef GOTDVHDATA
+
+#ifdef GOTDVHDATA
 	QFile DVHDataFile(patient->getPathToDVHData());
 
 	return (DVHDataFile.exists());
+#else
+	return true;
+#endif
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -497,10 +504,19 @@ void CompareDialog::changeSlice(int slice)
 // other keeps going.  Thus, synchronization is preserved as much as possible
 // but the user can also see all slices for both data sets.  
 //
+// NOTE:  Currently does not update slider or spin box until animation is
+// complete.
+//
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::autoplay()
 {
 	int maxSliceNum = sliceSelectionSlider->maxValue();
+
+	//setSliceAxis();
+
+	//bool hasTracking = sliceSelectionSlider->hasTracking();
+
+	bool updatesEnabled = sliceSelectionSlider->updatesEnabled();
 
 	for (int i = 0; i <= maxSliceNum; i++)
 	{
@@ -509,11 +525,14 @@ void CompareDialog::autoplay()
 		this->setWindowTitle(QString::number(i));
 		maxSliceLabel->setText(QString::number(i));
 
-		sliceSelectionSpinBox->setValue(i);
-		sliceSelectionSpinBox->update();
-
+		sliceSelectionSlider->setSliderPosition(i);
 		sliceSelectionSlider->setValue(i);
 		sliceSelectionSlider->update();
+		//int val = sliceSelectionSlider->value();
+		//int pos = sliceSelectionSlider->sliderPosition();
+
+		sliceSelectionSpinBox->setValue(i);
+		sliceSelectionSpinBox->update();
 	}
 }
 
@@ -623,6 +642,17 @@ void CompareDialog::toggleFlatShadedStructures(bool checked)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// For projections
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::toggleOrigin(bool checked)
+{
+	selectQueryProjection();
+	selectMatchProjection();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Affects projection and DVH displays for both query and match.
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -649,8 +679,9 @@ void CompareDialog::setupVTKUI()
 	initQueryCTPipeLine();
 	initMatchCTPipeLine();
 
-	queryProjector = new Projector();
-	matchProjector = new Projector();
+	QString dataDir = caseSpaceDialog->getMainWindow()->getDataDir();
+	queryProjector = new Projector(dataDir);
+	matchProjector = new Projector(dataDir);
 
 	queryProjectionRenWin = vtkRenderWindow::New();
 	matchProjectionRenWin = vtkRenderWindow::New();
@@ -698,6 +729,8 @@ void CompareDialog::createActions()
 		SLOT(toggleFemoralHeads(bool)));
 	connect(flatShadedCheckBox, SIGNAL(clicked(bool)), this, 
 		SLOT(toggleFlatShadedStructures(bool)));
+	connect(originCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleOrigin(bool)));
 
 	connect(transparencySlider, SIGNAL(valueChanged(int)), this, 
 		SLOT(changeTransparency(int)));
@@ -891,7 +924,12 @@ void CompareDialog::selectQueryProjection()
 			+ QString::number(pNum);
 		QMessageBox::warning(this, tr("File Open Failed"), warn);		
 	}
-    //queryProjector->AddOriginToRenWin(queryProjector->renderer);
+
+	if (originCheckBox->isChecked())
+	{
+		queryProjector->AddOrigin();
+	}
+
 	queryProjector->ComputeAvgZ();
 	queryProjector->SetProjection(pNum, queryAngle);
 }
@@ -910,7 +948,12 @@ void CompareDialog::selectMatchProjection()
 			+ QString::number(pNum);
 		QMessageBox::warning(this, tr("File Open Failed"), warn);		
 	}
-    //matchProjector->AddOriginToRenWin(matchProjector->renderer);
+
+	if (originCheckBox->isChecked())
+	{
+		matchProjector->AddOrigin();
+	}
+
 	matchProjector->ComputeAvgZ();
 	matchProjector->SetProjection(pNum, matchAngle);
 }

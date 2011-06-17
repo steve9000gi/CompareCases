@@ -1177,10 +1177,10 @@
     <widget class="QPushButton" name="gantryAnglePushButton">
      <property name="geometry">
       <rect>
-       <x>272</x>
-       <y>19</y>
-       <width>104</width>
-       <height>22</height>
+       <x>258</x>
+       <y>21</y>
+       <width>86</width>
+       <height>23</height>
       </rect>
      </property>
      <property name="text">
@@ -1190,14 +1190,14 @@
     <widget class="QCheckBox" name="flatShadedCheckBox">
      <property name="geometry">
       <rect>
-       <x>398</x>
-       <y>23</y>
-       <width>80</width>
-       <height>16</height>
+       <x>355</x>
+       <y>24</y>
+       <width>79</width>
+       <height>17</height>
       </rect>
      </property>
      <property name="text">
-      <string>Flat Shaded</string>
+      <string>Flat shaded</string>
      </property>
     </widget>
     <widget class="QWidget" name="layoutWidget_3">
@@ -1250,13 +1250,26 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="maxTransparencyLabel_2">
+       <widget class="QLabel" name="maxTransparencyLabel">
         <property name="text">
          <string>100</string>
         </property>
        </widget>
       </item>
      </layout>
+    </widget>
+    <widget class="QCheckBox" name="originCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>24</y>
+       <width>51</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Axes</string>
+     </property>
     </widget>
    </widget>
    <widget class="QCheckBox" name="viewFemoralHeadsCheckBox">
@@ -1294,6 +1307,19 @@
      <width>3</width>
      <height>18</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="historyPushButton">
+   <property name="geometry">
+    <rect>
+     <x>14</x>
+     <y>1096</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>History</string>
    </property>
   </widget>
   <action name="action_SelectQuery">

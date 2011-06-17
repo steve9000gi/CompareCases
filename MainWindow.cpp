@@ -25,11 +25,28 @@
 MainWindow::MainWindow()
 	:	queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
-		dukeDir("C:/Users/Steve/Documents/IMRT/Duke_Cases_2011-02-24")
+		//dukeDir("C:/Duke_Cases_2011-06-13")
+		dukeDir(""),
+		dukeDataDirectoryPath("./PathToDukeData")
 {
 	setupUi(this);
+
+	//QFile dukeDataDirectoryPath("./PathToDukeData");
+
+	if (!dukeDataDirectoryPath.open(QIODevice::ReadOnly))
+	{
+		selectDukeDirectory();	
+	}
+	else
+	{
+		dukeDir = dukeDataDirectoryPath.readLine();
+		dukeDataDirectoryPath.close();
+	}
+
 	setupSelectQueryCaseComboBoxes();
 	createActions();
+
+
 	//dukeQueryCaseComboBox->setDisabled(true);
 	loadDukeLineEdit->setText(dukeDir);
 	dukeQueryCaseComboBox->setDisabled(false);
@@ -43,7 +60,7 @@ MainWindow::MainWindow()
 ////////////////////////////////////////////////////////////////////////////////
 void MainWindow::openCaseSpaceDialog()
 {
-	CaseSpaceDialog *caseSpaceDialog = new CaseSpaceDialog(this);
+	caseSpaceDialog = new CaseSpaceDialog(this);
 	caseSpaceDialog->setQueryCaseText(queryCaseNameLabel->text());
 	//caseSpaceDialog->setDukeOverlapDataPath(dukeOverlapDataPath);
 	caseSpaceDialog->show();
@@ -63,8 +80,23 @@ void MainWindow::selectDukeDirectory()
 
 	if (!dukeDir.isEmpty())
 	{
+		setupDukeSelectQueryCaseComboBox();
+		//QFile dukeDataDirectoryPath("./PathToDukeData");
+
+		if (!dukeDataDirectoryPath.open(QIODevice::WriteOnly))
+		{
+			QString warn = "Failed to open \"PathToDukeData\"";
+			QMessageBox::warning(this, tr("File Open Failed"), warn);
+		}
+		else
+		{
+			dukeDataDirectoryPath.write(dukeDir);
+			dukeDataDirectoryPath.close();
+		}
+
 		loadDukeLineEdit->setText(dukeDir);
 		dukeQueryCaseComboBox->setDisabled(false);
+
 	}
 }
 
@@ -139,6 +171,7 @@ void MainWindow::createActions()
 
 	actionExit->setShortcut(tr("Ctrl+Q"));
 	connect(actionExit, SIGNAL(triggered()), this, SLOT(close()));
+	//cout << "A double takes " << sizeof(double) << " bytes." << endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -201,7 +234,13 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
 ////////////////////////////////////////////////////////////////////////////////
 void MainWindow::setupSelectQueryCaseComboBoxes()
 {
-	setupDukeSelectQueryCaseComboBox();
+	QFile dataDir(dukeDir);
+
+	if (dataDir.exists())
+	{
+		setupDukeSelectQueryCaseComboBox();
+	}
+
 /**/
 	// Dummy values
 	selectPoconoQueryCaseAction = new QAction(poconoQueryCaseComboBox);

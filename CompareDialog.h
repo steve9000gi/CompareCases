@@ -103,6 +103,7 @@ private slots:
 	void setGantryAngle335();						// ...both query and match.
 	void changeTransparency(int transp);
 	void toggleFlatShadedStructures(bool checked);	// For projections
+	void toggleOrigin(bool checked);
 	void toggleFemoralHeads(bool checked);			// For projection and DVH data. q. and m.
 	void toggleOverlayDVH(bool checked);
 

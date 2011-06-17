@@ -81,9 +81,10 @@ double minHack[Projector::kNumStructureTypes][3];
 //       <patient number> is a 3-digit integer (possibly front-padded with 0's),
 // and   <structure>  = [ "bladder" | "LtFem" | "PTV" | "rectum" | "RtFem" ].
 //
-char inPathFormat[] = 
+//char inPathFormat[] = 
 //"C:/Users/Steve/Documents/IMRT/Zhang-test/PMC069_body_included/%s_PMC%03d_%s.out"; // test case for body
-"C:/Users/Steve/Documents/IMRT/structures-2010-11-30/%03d/%s_%03d_%s.out";
+//"C:/Users/Steve/Documents/IMRT/structures-2010-11-30/%03d/%s_%03d_%s.out";
+//"C:/Duke_Cases_2011-06-13/structures/%03d/%s_%03d_%s.out";
 
 // Axes:
 vtkActor *oActor = NULL;
@@ -132,6 +133,27 @@ Projector::Projector()
 		noFemoralHeads(false),
 		avgZ(0.0)
 {
+}
+
+///ctor/////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+Projector::Projector(QString dataDir)
+	:	structure(NULL),
+		deci(NULL),
+		smoother(NULL),
+		normals(NULL),
+		mapper(NULL),
+		actor(NULL),
+		renderWindowInteractor(NULL),
+		renWin(NULL), 
+		textActor(NULL),
+		renderer(NULL),
+		flatShaded(true),
+		noFemoralHeads(false),
+		avgZ(0.0)
+{
+	inPathFormat = dataDir + "/structures/%03d/%s_%03d_%s.out";
 }
 
 ///AddFollowingText/////////////////////////////////////////////////////////////
@@ -192,13 +214,13 @@ void Projector::AddOriginToRenWin(vtkRenderer *r)
   AddFollowingText(z, 0, -1, 23, 0, 0, 1, r);
 }
 
-///BuildOrigin//////////////////////////////////////////////////////////////////
+///AddOrigin////////////////////////////////////////////////////////////////////
 //
 // The standard three arrows -- red = x, green = y, blue = z -- emanating from a
 // white cube.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void Projector:: BuildOrigin(void)
+void Projector:: AddOrigin(void)
 {
   const double kShaftLength = 20.0;
 
@@ -509,16 +531,18 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
   char vPath[kMaxChars]; 
   char fPath[kMaxChars];
 
-  sprintf_s(vPath, inPathFormat, patientNum, inFileType[ekVertices], patientNum,
+  QByteArray formatArray = inPathFormat.toAscii();
+  char *formatString = formatArray.data();
+  sprintf_s(vPath, formatString, patientNum, inFileType[ekVertices], patientNum,
             structureType[st]);
-  sprintf_s(fPath, inPathFormat, patientNum, inFileType[ekFaces], patientNum,
+  sprintf_s(fPath, formatString, patientNum, inFileType[ekFaces], patientNum,
             structureType[st]);
 
-	// The Carl Zhang/Vorakarn Chanyavanich convention for naming input files:
-	//     <inFileType>_<patient number>_<structure>.out
-	// where <inFileType> = [ "faces" | "vertices" ],
-	//       <patient number> is a 3-digit integer (possibly front-padded with 0's),
-	// and   <structure>  = [ "bladder" | "LtFem" | "PTV" | "rectum" | "RtFem" ].
+// The Carl Zhang/Vorakarn Chanyavanich convention for naming input files:
+//     <inFileType>_<patient number>_<structure>.out
+// where <inFileType> = [ "faces" | "vertices" ],
+//       <patient number> is a 3-digit integer (possibly front-padded with 0's),
+// and   <structure>  = [ "bladder" | "LtFem" | "PTV" | "rectum" | "RtFem" ].
 
   fstream vfs(vPath, ios_base::in); // Vertex File Stream
 
@@ -610,10 +634,11 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
   if (normals) normals->Delete();
   normals = vtkPolyDataNormals::New();
   normals->SetInputConnection(smoother->GetOutputPort());
+  normals->NonManifoldTraversalOff();
   //normals->FlipNormalsOn();
-  //normals->AutoOrientNormalsOn();
-  //normals->NonManifoldTraversalOff();
-  //normals->ConsistencyOn();
+  //normals->FlipNormalsOff();
+  normals->AutoOrientNormalsOn();
+  normals->ConsistencyOn();
   //normals->ComputeCellNormalsOn();
 
   if (mapper) mapper->Delete();
@@ -632,6 +657,9 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
 
   if (transparency != 0.0)
   {
+    //normals->FlipNormalsOn();
+	//normals->FlipNormalsOff();
+	normals->ComputeCellNormalsOn();
     actor->GetProperty()->SetOpacity(1.0 - (transparency / 100.0));
   }
 
