@@ -325,9 +325,11 @@ bool CompareDialog::dataExistsFor(Patient *patient)
 
 	}
 
-#undef GOTDVHDATA
+// TEMP Because there's currently (2011/06/24) still such a paucity of DVH data,
+// don't check for its existence.  That way the Compare dialog can still open:
+#undef CHECKFORDVHDATA
 
-#ifdef GOTDVHDATA
+#ifdef CHECKFORDVHDATA
 	QFile DVHDataFile(patient->getPathToDVHData());
 
 	return (DVHDataFile.exists());

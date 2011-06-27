@@ -51,6 +51,8 @@ private slots:
 	void selectDukeQueryCase(int index);
 	void selectPoconoQueryCase(int index);
 	void selectHighPointQueryCase(int index);
+	void viewDocumentation();
+	void about();
 
 protected:
 	// General setup methods:
@@ -75,6 +77,8 @@ protected:
 	int queryCasePatientNumber;
 
 	CaseSpaceDialog *caseSpaceDialog;
+
+	int versionNumber;
 
 public:
 	QString getDukeDir() { return dukeDir; };

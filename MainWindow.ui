@@ -14,7 +14,7 @@
    <string>Radiation Therapy Planning Tool</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>-2</x>
@@ -207,7 +207,15 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="action_View_documentation"/>
+    <addaction name="actionAbout_CompareCases"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionSelect_Duke_Directory">
@@ -228,6 +236,16 @@
   <action name="actionExit">
    <property name="text">
     <string>E&amp;xit</string>
+   </property>
+  </action>
+  <action name="actionAbout_CompareCases">
+   <property name="text">
+    <string>About CompareCases</string>
+   </property>
+  </action>
+  <action name="action_View_documentation">
+   <property name="text">
+    <string>&amp;View documentation</string>
    </property>
   </action>
  </widget>

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'MainWindow.ui'
 **
-** Created: Tue May 10 09:56:34 2011
+** Created: Thu Jun 23 11:36:34 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -40,8 +40,10 @@ public:
     QAction *actionSelect_Pocono_Directory;
     QAction *actionSelect_High_Point_Directory;
     QAction *actionExit;
+    QAction *actionAbout_CompareCases;
+    QAction *action_View_documentation;
     QWidget *centralwidget;
-    QWidget *widget;
+    QWidget *layoutWidget;
     QGridLayout *gridLayout_2;
     QSpacerItem *horizontalSpacer_3;
     QVBoxLayout *verticalLayout_2;
@@ -72,6 +74,7 @@ public:
     QSpacerItem *horizontalSpacer_4;
     QMenuBar *menubar;
     QMenu *menuFile;
+    QMenu *menuHelp;
     QStatusBar *statusbar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -87,12 +90,16 @@ public:
         actionSelect_High_Point_Directory->setObjectName(QString::fromUtf8("actionSelect_High_Point_Directory"));
         actionExit = new QAction(MainWindow);
         actionExit->setObjectName(QString::fromUtf8("actionExit"));
+        actionAbout_CompareCases = new QAction(MainWindow);
+        actionAbout_CompareCases->setObjectName(QString::fromUtf8("actionAbout_CompareCases"));
+        action_View_documentation = new QAction(MainWindow);
+        action_View_documentation->setObjectName(QString::fromUtf8("action_View_documentation"));
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
-        widget = new QWidget(centralwidget);
-        widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(-2, 10, 330, 287));
-        gridLayout_2 = new QGridLayout(widget);
+        layoutWidget = new QWidget(centralwidget);
+        layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
+        layoutWidget->setGeometry(QRect(-2, 10, 330, 287));
+        gridLayout_2 = new QGridLayout(layoutWidget);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
         gridLayout_2->setContentsMargins(0, 0, 0, 0);
         horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -101,7 +108,7 @@ public:
 
         verticalLayout_2 = new QVBoxLayout();
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
-        institutionsGroupBox = new QGroupBox(widget);
+        institutionsGroupBox = new QGroupBox(layoutWidget);
         institutionsGroupBox->setObjectName(QString::fromUtf8("institutionsGroupBox"));
         formLayout = new QFormLayout(institutionsGroupBox);
         formLayout->setObjectName(QString::fromUtf8("formLayout"));
@@ -139,7 +146,7 @@ public:
 
         verticalLayout_2->addWidget(institutionsGroupBox);
 
-        selectQueryCaseGroupBox = new QGroupBox(widget);
+        selectQueryCaseGroupBox = new QGroupBox(layoutWidget);
         selectQueryCaseGroupBox->setObjectName(QString::fromUtf8("selectQueryCaseGroupBox"));
         gridLayout = new QGridLayout(selectQueryCaseGroupBox);
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
@@ -198,12 +205,12 @@ public:
 
         horizontalLayout_4 = new QHBoxLayout();
         horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
-        queryCaseLabel = new QLabel(widget);
+        queryCaseLabel = new QLabel(layoutWidget);
         queryCaseLabel->setObjectName(QString::fromUtf8("queryCaseLabel"));
 
         horizontalLayout_4->addWidget(queryCaseLabel);
 
-        queryCaseNameLabel = new QLabel(widget);
+        queryCaseNameLabel = new QLabel(layoutWidget);
         queryCaseNameLabel->setObjectName(QString::fromUtf8("queryCaseNameLabel"));
 
         horizontalLayout_4->addWidget(queryCaseNameLabel);
@@ -211,7 +218,7 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_4);
 
-        viewCaseSpaceButton = new QPushButton(widget);
+        viewCaseSpaceButton = new QPushButton(layoutWidget);
         viewCaseSpaceButton->setObjectName(QString::fromUtf8("viewCaseSpaceButton"));
 
         verticalLayout_2->addWidget(viewCaseSpaceButton);
@@ -229,6 +236,8 @@ public:
         menubar->setGeometry(QRect(0, 0, 327, 21));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
+        menuHelp = new QMenu(menubar);
+        menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -240,11 +249,14 @@ public:
 #endif // QT_NO_SHORTCUT
 
         menubar->addAction(menuFile->menuAction());
+        menubar->addAction(menuHelp->menuAction());
         menuFile->addAction(actionSelect_Duke_Directory);
         menuFile->addAction(actionSelect_Pocono_Directory);
         menuFile->addAction(actionSelect_High_Point_Directory);
         menuFile->addSeparator();
         menuFile->addAction(actionExit);
+        menuHelp->addAction(action_View_documentation);
+        menuHelp->addAction(actionAbout_CompareCases);
 
         retranslateUi(MainWindow);
 
@@ -258,6 +270,8 @@ public:
         actionSelect_Pocono_Directory->setText(QApplication::translate("MainWindow", "Select Pocono Directory...", 0, QApplication::UnicodeUTF8));
         actionSelect_High_Point_Directory->setText(QApplication::translate("MainWindow", "Select High Point Directory...", 0, QApplication::UnicodeUTF8));
         actionExit->setText(QApplication::translate("MainWindow", "E&xit", 0, QApplication::UnicodeUTF8));
+        actionAbout_CompareCases->setText(QApplication::translate("MainWindow", "About CompareCases", 0, QApplication::UnicodeUTF8));
+        action_View_documentation->setText(QApplication::translate("MainWindow", "&View documentation", 0, QApplication::UnicodeUTF8));
         institutionsGroupBox->setTitle(QApplication::translate("MainWindow", "Load institutions:", 0, QApplication::UnicodeUTF8));
         loadDukePushButton->setText(QApplication::translate("MainWindow", "Duke", 0, QApplication::UnicodeUTF8));
         loadPoconoPushButton->setText(QApplication::translate("MainWindow", "Pocono", 0, QApplication::UnicodeUTF8));
@@ -270,6 +284,7 @@ public:
         queryCaseNameLabel->setText(QApplication::translate("MainWindow", "<not selected>", 0, QApplication::UnicodeUTF8));
         viewCaseSpaceButton->setText(QApplication::translate("MainWindow", "View Case Space", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("MainWindow", "File", 0, QApplication::UnicodeUTF8));
+        menuHelp->setTitle(QApplication::translate("MainWindow", "Help", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

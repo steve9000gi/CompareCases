@@ -23,7 +23,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-	:	queryCaseSourceInstitution(kDuke),
+	:	versionNumber(123),
+		queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
 		//dukeDir("C:/Duke_Cases_2011-06-13")
 		dukeDir(""),
@@ -45,7 +46,6 @@ MainWindow::MainWindow()
 
 	setupSelectQueryCaseComboBoxes();
 	createActions();
-
 
 	//dukeQueryCaseComboBox->setDisabled(true);
 	loadDukeLineEdit->setText(dukeDir);
@@ -171,6 +171,9 @@ void MainWindow::createActions()
 
 	actionExit->setShortcut(tr("Ctrl+Q"));
 	connect(actionExit, SIGNAL(triggered()), this, SLOT(close()));
+
+	connect(actionAbout_CompareCases, SIGNAL(triggered()), this, SLOT(about()));
+	connect(action_View_documentation, SIGNAL(triggered()), this, SLOT(viewDocumentation()));
 	//cout << "A double takes " << sizeof(double) << " bytes." << endl;
 }
 
@@ -341,6 +344,27 @@ void MainWindow::selectHighPointQueryCase(int index)
 
 	setViewCaseSpacePushButtonEnabling();
 }
+
+void MainWindow::viewDocumentation()
+{
+	QMessageBox::information(this, "view docs", "view docs");
+}
+
+void MainWindow::about()
+{
+	QString versionNumberAsString;
+	versionNumberAsString.setNum(versionNumber);
+	QString info = "CompareCases\nDevelopment version #" + versionNumberAsString;
+	info.append("\n\nCompareCases is a tool for assisting in the planning of prostate cancer radiotherapy.\n");
+	info.append("It's currently under development at RENCI@Duke University.\n\n");
+	info.append("Contributors include:\n");
+	info.append("Steve Chall, Renaissance Computing Institute\n");
+	info.append("Shiva Das, Duke University\n");
+	info.append("Joseph Lo, Duke University\n");
+	info.append("Vorakarn Chanyavanich, Emory University\n");
+	QMessageBox::about(this, tr("About CompareCases"), info);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // 

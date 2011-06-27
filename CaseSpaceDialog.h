@@ -18,6 +18,9 @@
 
 #include "ui_CaseSpaceDialog.h"  // auto generated from XML output from QT Designer
 
+// TEMP hardwired based on size of MI data files:
+static const int numMICases = 100;
+
 // Forward declarations:
 class ccChartXY;
 class vtkContextView;
@@ -93,6 +96,10 @@ private: // Objects
 	int numPoconoPatients;
 	int numHighPointPatients;
 
+	float *MIval[numMICases];
+	float MIMax;
+	float MIMin;
+
 	vtkTable *dukeTable;
 	vtkTable *poconoTable;
 	vtkTable *highPointTable;
@@ -122,6 +129,8 @@ private:
 	void addPoconoDataToChart();
 	void addHighPointDataToChart();
 	void addQueryCaseToChart();
+
+	bool readMIData();
 
 	void drawSelectedCase();
 

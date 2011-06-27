@@ -38,7 +38,6 @@
 
 using namespace std;
 
-
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,9 +70,12 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		dukePatientList(NULL),
 		queryCase(NULL),
 		matchCase(NULL),
-		compareDialog(NULL)
+		compareDialog(NULL),
+		MIMax(-FLT_MAX),
+		MIMin(FLT_MAX)
 {
 	this->setupUi(this);
+	this->readMIData();
 	this->setupCaseSpaceChart();
 	this->createActions();
 
@@ -108,18 +110,18 @@ void CaseSpaceDialog::setSelectedMatchPlotPos(vtkVector2f *pos)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Find which institution the selected case is from, then linearly search the
+// unsorted (small array of) x values until a match is found.  Then verify
+// that the corresponding y value also matches that of the selected case.
+// If the y value doesn't match then we have multiple data pairs that just
+// happen to share the same x value (not likely but possible).  Continue and
+// repeat until match is found (and it "must" be found because what we're
+// looking for has been selected by the user from existing points).  Set the
+// match text accordingly.
+//
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::identifyMatchCase()
 {
-	// Find which institution the selected case is from, then linearly search
-	// unsorted (small array of) x values until a match is found.  Then verify
-	// that the corresponding y value also matches that of the selected case.
-	// If the y value doesn't match then we have multiple data pairs that
-	// just happen to share the same x value.  Continue and repeat until match
-	// is found (and it must be found because what we're looking for has been  
-	// selected by the user from existing points).  Set the match text
-	// appropriately.
-
 	QString matchInstitution = selectedMatchPlot->GetLabel();
 
 	float *x; // Pointers to arrays of values of which the selected point...
@@ -142,7 +144,8 @@ void CaseSpaceDialog::identifyMatchCase()
 	}
 	else if (matchInstitution == "Query case")
 	{
-		QMessageBox::warning(this, "Query case", "You've selected the query case");
+		QMessageBox::warning(this, "Query case",
+			"You've selected the query case");
 		return;
 	}
 	else if (matchInstitution == "Selected case")
@@ -150,7 +153,7 @@ void CaseSpaceDialog::identifyMatchCase()
 		// QMessageBox::warning(this, "Selected case", "Already selected");
 		return;
 	}
-	else
+	else // Can't get here :-)
 	{
 		QMessageBox::warning(this, "Not found", "Match case not found");
 		return;
@@ -198,7 +201,9 @@ Patient *CaseSpaceDialog::getDukePatientFromCoodinates(float posX, float posY)
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
-// 2do: Generalize to all institutions. For now assumes it's a Duke patient.
+// Returns a pointer to the Patient at (x, y).  If not found, returns NULL.
+//
+// 2do: Generalize to all institutions. For now assumes it's a Duke patient.	`
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient *CaseSpaceDialog::getPatientFromCoodinates(float *xArray, float *yArray,
@@ -233,7 +238,7 @@ Patient *CaseSpaceDialog::getPatientFromCoodinates(float *xArray, float *yArray,
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
-// Associate the appropriate responses to user manipulation of the GUI controls.
+// Associate the appropriate code to the GUI controls.
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::createActions()
@@ -306,7 +311,6 @@ void CaseSpaceDialog::testFunction()
 	QString s = "QWERTY12345";
 
 	hash_map<int, int> intHashMap;
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -497,11 +501,13 @@ void CaseSpaceDialog::addDukeDataToChart()
 
 	for (i = 0; i < numDukePatients; i++)
 	{
-		dX[i] = dukePatientList[i].getPTVPlusBladder() - queryCase->getPTVPlusBladder();
-		dY[i] = dukePatientList[i].getPTVPlusRectum() - queryCase->getPTVPlusRectum();
+		dX[i] = dukePatientList[i].getPTVPlusBladder()
+			  - queryCase->getPTVPlusBladder();
+		dY[i] = dukePatientList[i].getPTVPlusRectum()
+			  - queryCase->getPTVPlusRectum();
 	}
 
-	dukeXCoords->SetArray(dX, numDukePatients, 1); // j was numPatients:  don't paint over Query Case
+	dukeXCoords->SetArray(dX, numDukePatients, 1); // May paint over Query Case?
 	dukeYCoords->SetArray(dY, numDukePatients, 1);
 	dukeTable->SetNumberOfRows(numDukePatients);
 
@@ -795,6 +801,59 @@ void CaseSpaceDialog::addQueryCaseToChart()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// TEMP hardwired for 100 Duke cases with the seven angles 25, 75, 130, 180,
+// 230, 280, and 335 degrees.
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CaseSpaceDialog::readMIData()
+{
+	int numAngles = 7;	// TEMP: hardwired for Duke cases
+
+	// TEMP: hardwired to use angle 4 (one-based) = 180 degrees.
+	int currAngleNum = 4;
+	QString MIInPathFormat = mainWindow->getDataDir() + "/MI/mi_%01d.txt";
+	QByteArray formatArray = MIInPathFormat.toAscii();
+	char *formatString = formatArray.data();
+	const int kMaxChars = 255;
+	char MIPath[kMaxChars];
+
+	sprintf_s(MIPath, formatString, currAngleNum);
+
+	ifstream MIfs;
+	MIfs.open(MIPath, ifstream::in);
+
+	if (!MIfs.is_open())
+	{
+	cout << "Failed to open MI file " << MIPath << endl;
+	return false;
+	}
+
+	for (int row = 0; row < numMICases; row++)
+	{
+		MIval[row] = new float[numMICases];
+
+		for (int col = 0; col < numMICases; col++)
+		{
+			if (MIfs.eof())
+			{
+				cout << "Unexpected end of file reading " << MIPath << endl;
+				MIfs.close();
+				return false;
+			}
+			
+			MIfs >> MIval[row][col];
+
+			if (MIval[row][col] > MIMax) MIMax = MIval[row][col];
+			if (MIval[row][col] < MIMin) MIMin = MIval[row][col];
+		}
+	}
+
+	MIfs.close();
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Broken.  Pretty sure it's a bug in ccChartXY, i.e., vtkChartXY.
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -810,34 +869,42 @@ void CaseSpaceDialog::drawSelectedCase()
 		selectedMatchCaseTable->Delete();
 	}
 
-	const int numCases = 1;
+	const int numDuplicates = 1;
 
-	float selectedX[numCases]; 
-	float selectedY[numCases];
+	float selectedX[numDuplicates]; 
+	float selectedY[numDuplicates];
 
-	for (int i = 0; i < numCases; i++) 
+	// ccChartXY doesn't place points correctly if there are "too 
+	// few" (i.e., from informal tests, about 27) elements in the
+	// columns added, so the hack is to draw a bunch, all at the 
+	// same place.  However, with the current VTK build (5.6.1)
+	// that doesn't seem to help either (selected case point is
+	// always drawn at the origin) so this loop is being set to 
+	// a single iteration but with the hacked code still here if I
+	// want to resurrect it:
+	for (int i = 0; i < numDuplicates; i++) 
 	{
-		//selectedX[i] = selectedMatchPlotPosition->X();
-		//selectedY[i] = selectedMatchPlotPosition->Y();
-		selectedX[i] = (i + 1) * 1000000.0;  // Hack SAC
-		selectedY[i] = (-i - 1) * 1000000.0; // "
+		selectedX[i] = selectedMatchPlotPosition->X();
+		selectedY[i] = selectedMatchPlotPosition->Y();
+		// Even when the following two lines are substituted for the
+		// previous two, the selected case point still shows up at
+		// the origin.  That's why I think the bug is in ccChartXY
+		// (SAC 2011/06/26):
+		//selectedX[i] = (i + 1) * 1000000.0;
+		//selectedY[i] = (-i - 1) * 1000000.0;
 	}
 
 	vtkFloatArray *selectedXCoords = vtkFloatArray::New();
 	vtkFloatArray *selectedYCoords = vtkFloatArray::New();
-	selectedXCoords->SetArray(selectedX, numCases, 1);
+	selectedXCoords->SetArray(selectedX, numDuplicates, 1);
 	selectedXCoords->SetName("sel");
-	selectedYCoords->SetArray(selectedY, numCases, 1);
+	selectedYCoords->SetArray(selectedY, numDuplicates, 1);
 	selectedYCoords->SetName("Selected case");
 
 	selectedMatchCaseTable = vtkTable::New();
 	selectedMatchCaseTable->AddColumn(selectedXCoords);
 	selectedMatchCaseTable->AddColumn(selectedYCoords);
 
-	//selectedMatchCaseTable->Update();
-	//caseSpaceChart->Update();
-
-	//selectedPoint = caseSpaceChart->AddPlot(vtkChart::POINTS, vtkPlotPoints::PLUS);
 	selectedPoint = caseSpaceChart->AddPlot(vtkChart::POINTS, vtkPlotPoints::DIAMOND);
 	selectedPoint->SetInput(selectedMatchCaseTable, 0, 1);
 	selectedPoint->SetColor(255, 185, 0, 255);
