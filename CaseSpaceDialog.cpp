@@ -14,12 +14,23 @@
 #include <QtGui>
 
 #include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include "vtkCubeSource.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkActor.h"
+#include "vtkProperty.h"
+#include "vtkCamera.h"
+#include "vtkAssembly.h"
+#include "vtkFollower.h"
+#include "vtkCellPicker.h"
+
+
 #include "vtkContextView.h"
 #include "vtkContextScene.h"
 #include "vtkPlot.h"
 #include "vtkTable.h"
 #include "vtkAxis.h"
-#include "vtkFloatArray.h"
+#include "vtkDoubleArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkStringArray.h"
 #include "vtkTextProperty.h"
@@ -30,6 +41,8 @@
 #include "CompareDialog.h"
 #include "MainWindow.h"
 #include "Patient.h"
+#include "Projector.h"
+#include "Axes.h"
 
 #include <vector>
 #include <stack>
@@ -37,6 +50,92 @@
 #include <stdint.h>
 
 using namespace std;
+
+static const char *MIAvgFileName = "/MI/mi_avg1-7.txt";
+
+
+class RendererCallback : public vtkCommand
+{
+public:
+  static RendererCallback *New() { return new RendererCallback; }
+
+  ///Execute////////////////////////////////////////////////////////////////////
+  // 
+  // Gets called whenever the user interactively manipulates the camera.  
+  //
+  //////////////////////////////////////////////////////////////////////////////
+  virtual void Execute(vtkObject *caller, unsigned long, void *)
+  {
+    vtkRenderer *r = vtkRenderer::SafeDownCast(caller);
+    CaseSpaceDialog::ReportCameraPosition(r);
+	//cout << "Hi from callback." << endl;
+  }
+};
+
+
+// PickCallback: intended to be called for pick events.
+//
+class PickCallback : public vtkCommand
+{
+public:
+  static PickCallback *New() { return new PickCallback; }
+
+  void SetCaseSpaceDialog(CaseSpaceDialog *dlg) { csDlg = dlg; };
+
+  ///Execute////////////////////////////////////////////////////////////////////
+  //
+  // Gets called for pick events.
+  //
+  //////////////////////////////////////////////////////////////////////////////
+  virtual void Execute(vtkObject *caller, unsigned long, void *)
+  {
+    vtkCellPicker *picker = vtkCellPicker::SafeDownCast(caller);
+
+    if (picker)
+    {
+      cout << "Picked a cell" << endl;
+	  csDlg->pickPatient();
+    }
+  }
+
+private:
+	CaseSpaceDialog *csDlg;
+};
+
+PickCallback *pickCallback = NULL;
+vtkCellPicker *picker = NULL;
+
+
+// HoverCallback: intended to be called for pick events.
+//
+class HoverCallback : public vtkCommand
+{
+public:
+  static HoverCallback *New() { return new HoverCallback; }
+
+  void SetCaseSpaceDialog(CaseSpaceDialog *dlg) { csDlg = dlg; };
+
+  ///Execute////////////////////////////////////////////////////////////////////
+  //
+  // Gets called for hover events.
+  //
+  //////////////////////////////////////////////////////////////////////////////
+  virtual void Execute(vtkObject *caller, unsigned long, void *)
+  {
+    vtkCellPicker *picker = vtkCellPicker::SafeDownCast(caller);
+
+    if (picker)
+    {
+      cout << "Hovering" << endl;
+    }
+  }
+
+private:
+	CaseSpaceDialog *csDlg;
+};
+
+HoverCallback *hoverCallback = NULL;
+
 
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
@@ -72,16 +171,31 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		matchCase(NULL),
 		compareDialog(NULL),
 		MIMax(-FLT_MAX),
-		MIMin(FLT_MAX)
+		MIMin(FLT_MAX),
+		MIRange(0.0),
+		queryCaseIndex(-1),		// Impossible dummy value -> uninitialized,
+		caseSpaceRenWin(NULL),
+		zMult(10000.0),
+		axes(NULL),
+		stdCamDist(33700.0),	// Empricially determined
+		stdVertShift(2500.0),	// Add to move camera up, oblique & MI views
+		parallelScale(5300.0),
+		thresholdPlaneThickness(15.0)
 {
 	this->setupUi(this);
 	this->readMIData();
-	this->setupCaseSpaceChart();
+	this->setupCaseSpaceRenWin();
+	this->prepareMIDisplay();
+	this->addQueryCase();
+	this->addMIThresholdPlane();
+	// this->averageMIData(); Only needed to run it once
 	this->createActions();
 
 	testPushButton->hide();
 	compareCasesPushButton->setEnabled(false);
 
+	ren->GetActiveCamera()->ParallelProjectionOn(); 
+	setObliqueView(true);
 }
 
 ///dtor/////////////////////////////////////////////////////////////////////////
@@ -122,10 +236,11 @@ void CaseSpaceDialog::setSelectedMatchPlotPos(vtkVector2f *pos)
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::identifyMatchCase()
 {
-	QString matchInstitution = selectedMatchPlot->GetLabel();
+	//QString matchInstitution = selectedMatchPlot->GetLabel();
+	QString matchInstitution = "Duke"; // TEMP SAC 2011/07/15
 
-	float *x; // Pointers to arrays of values of which the selected point...
-	float *y; // ...is a member.
+	double *x; // Pointers to arrays of values of which the selected point...
+	double *y; // ...is a member.
 
 	if (matchInstitution == "Duke")
 	{
@@ -167,7 +282,7 @@ void CaseSpaceDialog::identifyMatchCase()
 	{
 		matchCaseNameLabel->setText(matchInstitution + " patient #"
 			+ QString::number(matchCase->getNumber()));
-		drawSelectedCase();
+		//drawSelectedCase();
 
 		if (!compareDialog)
 		{
@@ -194,7 +309,7 @@ void CaseSpaceDialog::identifyMatchCase()
 // Hardwired to Duke.  2do:  Generalize to all institutions.
 //
 ////////////////////////////////////////////////////////////////////////////////
-Patient *CaseSpaceDialog::getDukePatientFromCoodinates(float posX, float posY)
+Patient *CaseSpaceDialog::getDukePatientFromCoodinates(double posX, double posY)
 {
 	return this->getPatientFromCoodinates(dX, dY, posX, posY);
 };
@@ -206,8 +321,8 @@ Patient *CaseSpaceDialog::getDukePatientFromCoodinates(float posX, float posY)
 // 2do: Generalize to all institutions. For now assumes it's a Duke patient.	`
 //
 ////////////////////////////////////////////////////////////////////////////////
-Patient *CaseSpaceDialog::getPatientFromCoodinates(float *xArray, float *yArray,
-												   float x, float y)
+Patient *CaseSpaceDialog::getPatientFromCoodinates(double *xArray, double *yArray,
+												   double x, double y)
 {
 	int ix = 0;
 	bool found = false;
@@ -245,6 +360,16 @@ void CaseSpaceDialog::createActions()
 {
 	connect(compareCasesPushButton, SIGNAL(clicked()), this, SLOT(compareCases()));
 	connect(testPushButton, SIGNAL(clicked()), this, SLOT(testFunction()));
+	connect(XYViewRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setXYView(bool)));
+	connect(XMIViewRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setXMIView(bool)));
+	connect(YMIViewRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setYMIView(bool)));
+	connect(obliqueViewRadioButton, SIGNAL(toggled(bool)), this, 
+		SLOT(setObliqueView(bool)));
+	connect(MIRangeSlider, SIGNAL(valueChanged(int)), this, 
+		SLOT(setThresholdPlaneZVal(int)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -262,7 +387,7 @@ void CaseSpaceDialog::compareCases()
 
 		if (compareDialog->dataExistsFor(matchCase))
 		{
-			QString selectedMatchPlotLabel = selectedMatchPlot->GetLabel();
+			QString selectedMatchPlotLabel = "Duke"; // TEMP SAC 2011/07/15 selectedMatchPlot->GetLabel();
 
 			compareDialog->setQuery(queryCase);
 			compareDialog->setMatch(matchCase);
@@ -328,7 +453,8 @@ void CaseSpaceDialog::setupCaseSpaceChart()
 	caseSpaceView->GetScene()->AddItem(caseSpaceChart);
 	caseSpaceView->SetInteractor(caseSpaceViewWidget->GetInteractor());
 	caseSpaceViewWidget->SetRenderWindow(caseSpaceView->GetRenderWindow());
-	caseSpaceView->GetRenderWindow()->SetSize(920, 569);
+	//caseSpaceView->GetRenderWindow()->SetSize(920, 569);
+	caseSpaceView->GetRenderWindow()->SetSize(1600, 996);
 
 	caseSpaceChart->SetTitle("");
 	caseSpaceChart->GetAxis(vtkAxis::LEFT)->SetTitle("PTV + rectum overlap");
@@ -373,10 +499,10 @@ void CaseSpaceDialog::setupCaseSpaceChart()
 	// (Empty arrays work if the range is explicitly set:)
 	// Need to put query case at origin.  Shift the ranges negative by query
 	// case values:
-	float xMax = maxPTVPlusBladder - queryCase->getPTVPlusBladder();
-	float xMin = minPTVPlusBladder - queryCase->getPTVPlusBladder();
-	float yMax = maxPTVPlusRectum - queryCase->getPTVPlusRectum();
-	float yMin = minPTVPlusRectum - queryCase->getPTVPlusRectum();
+	double xMax = maxPTVPlusBladder - queryCase->getPTVPlusBladder();
+	double xMin = minPTVPlusBladder - queryCase->getPTVPlusBladder();
+	double yMax = maxPTVPlusRectum - queryCase->getPTVPlusRectum();
+	double yMin = minPTVPlusRectum - queryCase->getPTVPlusRectum();
 
 	// Set the ranges a little bigger (* 0.75 and 1.333) to make sure all points
 	//are well inside:
@@ -399,13 +525,67 @@ void CaseSpaceDialog::setupCaseSpaceChart()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// 3-D case space.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setupCaseSpaceRenWin()
+{
+	caseSpaceRenWin = vtkRenderWindow::New();
+	caseSpaceViewWidget->SetRenderWindow(caseSpaceRenWin);
+	caseSpaceRenWin->SetSize(920, 569);
+
+	ren = vtkRenderer::New();
+	ren->SetBackground(0, 0, 0);
+	ren->SetBackground2(0.1, 0.1, 0.1);
+	ren->SetGradientBackground(true);
+	ren->SetRenderWindow(caseSpaceRenWin);
+	caseSpaceRenWin->AddRenderer(ren);
+
+	RendererCallback *callback = RendererCallback::New();
+	ren->AddObserver(vtkCommand::StartEvent, callback);
+	callback->Delete();
+
+	pickCallback = PickCallback::New();
+	pickCallback->SetCaseSpaceDialog(this);
+
+	hoverCallback = HoverCallback::New();
+	hoverCallback->SetCaseSpaceDialog(this);
+
+	picker = vtkCellPicker::New();
+	picker->SetTolerance(0.0);
+	picker->AddObserver(vtkCommand::EndPickEvent, pickCallback);
+	picker->AddObserver(vtkCommand::HoverEvent, hoverCallback);
+
+	renderWindowInteractor = caseSpaceViewWidget->GetInteractor();
+	renderWindowInteractor->SetRenderWindow(caseSpaceRenWin);
+	renderWindowInteractor->SetPicker(picker);
+
+	selectedMatchPlotPosition = new vtkVector2f;
+
+	if (mainWindow->getQueryCaseSourceInstitution() == MainWindow::kDuke)
+	{
+		addDukeDataToChart();
+	}
+	else if (mainWindow->getQueryCaseSourceInstitution() == MainWindow::kHighPoint)
+	{
+		addHighPointDataToChart();
+	}
+	else if (mainWindow->getQueryCaseSourceInstitution() == MainWindow::kPocono)
+	{
+		addPoconoDataToChart();
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::addDukeDataToChart()
 {
-	vtkFloatArray *dukeXCoords = vtkFloatArray::New();
-	vtkFloatArray *dukeYCoords = vtkFloatArray::New();
+	vtkDoubleArray *dukeXCoords = vtkDoubleArray::New();
+	vtkDoubleArray *dukeYCoords = vtkDoubleArray::New();
 	dukeTable = vtkTable::New();
-	vtkPlot *dukePoints;
+//	vtkPlot *dukePoints;
 
 	QFile file(dukeOverlapDataPath);
 
@@ -437,8 +617,8 @@ void CaseSpaceDialog::addDukeDataToChart()
 		return; 
 	}
 
-	dX = new float[numDukePatients];
-	dY = new float[numDukePatients];
+	dX = new double[numDukePatients];
+	dY = new double[numDukePatients];
 
 	int n, PTVSize, rectumSize, bladderSize, PTVPlusRectum, PTVPlusBladder,
 		PTVPlusRectumPlusBladder;
@@ -468,6 +648,7 @@ void CaseSpaceDialog::addDukeDataToChart()
 		if ((n == queryCasePatientNumber) && (sourceInstitution == MainWindow::kDuke))
 		{
 			queryCase = &(dukePatientList[i]);
+			queryCaseIndex = i;
 		}
 
 		dukePatientList[i].setNumber(n);
@@ -501,33 +682,53 @@ void CaseSpaceDialog::addDukeDataToChart()
 
 	for (i = 0; i < numDukePatients; i++)
 	{
-		dX[i] = dukePatientList[i].getPTVPlusBladder()
-			  - queryCase->getPTVPlusBladder();
-		dY[i] = dukePatientList[i].getPTVPlusRectum()
-			  - queryCase->getPTVPlusRectum();
+		if (i == queryCaseIndex) continue;
+
+		dX[i] = dukePatientList[i].getPTVPlusBladder();
+		dY[i] = dukePatientList[i].getPTVPlusRectum();
+
+		dukePoint[i] = vtkCubeSource::New();
+		dukePoint[i]->SetCenter(dX[i], dY[i], MIval[queryCaseIndex][i] * zMult);
+		dukePoint[i]->SetXLength(100.0);
+		dukePoint[i]->SetYLength(100.0);
+		dukePoint[i]->SetZLength(100.0);
+
+		dukePointMapper[i] = vtkPolyDataMapper::New();
+		dukePointMapper[i]->SetInputConnection(dukePoint[i]->GetOutputPort());
+
+		dukePointActor[i] = vtkActor::New();
+		dukePointActor[i]->SetMapper(dukePointMapper[i]);
+		dukePointActor[i]->GetProperty()->SetColor(100 / 255.0 , 120 / 255.0 , 165 / 255.0);
+
+		ren->AddActor(dukePointActor[i]);
 	}
 
-	dukeXCoords->SetArray(dX, numDukePatients, 1); // May paint over Query Case?
-	dukeYCoords->SetArray(dY, numDukePatients, 1);
-	dukeTable->SetNumberOfRows(numDukePatients);
+	ren->Render();
+}
 
-	dukeXCoords->SetName("Duke X");
-	dukeTable->AddColumn(dukeXCoords);
+void CaseSpaceDialog::addQueryCase()
+{
+	queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum();
 
-	dukeYCoords->SetName("Duke");
-	dukeTable->AddColumn(dukeYCoords);
-	dukePoints = caseSpaceChart->AddPlot(vtkChart::POINTS);
-	dukePoints->SetInput(dukeTable, 0, 1);
-	//dukePoints->SetColor(190, 210, 255, 255);
-	dukePoints->SetColor(100, 120, 165, 255); // Darken for projector display
+	vtkCubeSource *queryPoint = vtkCubeSource::New();
+	xCenterQueryPt = queryCase->getPTVPlusBladder();
+	yCenterQueryPt = queryCase->getPTVPlusRectum();
+	zCenterQueryPt = MIMin * zMult;
+	//queryPoint->SetCenter(queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum(), MIMin * zMult);
+	queryPoint->SetCenter(xCenterQueryPt, yCenterQueryPt, zCenterQueryPt);
+	queryPoint->SetXLength(200.0);
+	queryPoint->SetYLength(200.0);
+	queryPoint->SetZLength(200.0);
 
-	// This is so that the chart's tooltips display the real patient values,
-	// even though everything's been shifted to put the Query Case at the
-	// origin:
-	caseSpaceChart->SetXShift(queryCase->getPTVPlusBladder());
-	caseSpaceChart->SetYShift(queryCase->getPTVPlusRectum());
+	vtkPolyDataMapper *queryPointMapper = vtkPolyDataMapper::New();
+	queryPointMapper->SetInputConnection(queryPoint->GetOutputPort());
 
-	dukeTable->Update();
+	vtkActor *queryPointActor = vtkActor::New();
+	queryPointActor->SetMapper(queryPointMapper);
+	queryPointActor->GetProperty()->SetColor(1.0, 0.5, 0.0);
+	queryPointActor->PickableOff();
+
+	ren->AddActor(queryPointActor);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -537,8 +738,8 @@ void CaseSpaceDialog::addDukeDataToChart()
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::addDummyDukeDataToChart()
 {
-	vtkFloatArray *dukeXCoords = vtkFloatArray::New();
-	vtkFloatArray *dukeYCoords = vtkFloatArray::New();
+	vtkDoubleArray *dukeXCoords = vtkDoubleArray::New();
+	vtkDoubleArray *dukeYCoords = vtkDoubleArray::New();
 	dukeTable = vtkTable::New();
 	vtkPlot *dukePoints;
 	const int numCases = 200;
@@ -546,7 +747,7 @@ void CaseSpaceDialog::addDummyDukeDataToChart()
 	// Random numbers from 
 	// http://www.rand.org/content/dam/rand/pubs/monograph_reports/2005/digits.txt.zip:
 
-	float dukeX[numCases] = 
+	double dukeX[numCases] = 
 	{
 		10097, 32533, 76520, 13586, 34673, 54876, 80959, 9117, 39292, 74945,
 		37542, 4805, 64894, 74296, 24805, 24037, 20636, 10402, 822, 91665,
@@ -570,10 +771,10 @@ void CaseSpaceDialog::addDummyDukeDataToChart()
 		9893, 20505, 14225, 68514, 46427, 56788, 96297, 78822, 54382, 14598,
 	};
 
-	dX = new float[numCases];
-	memcpy(dX, dukeX, numCases * sizeof(float));
+	dX = new double[numCases];
+	memcpy(dX, dukeX, numCases * sizeof(double));
 
-	float dukeY[numCases] =
+	double dukeY[numCases] =
 	{
 		80508, 76285, 17630, 9429, 30293, 16391, 87516, 20628, 53159, 80261,
 		12043, 94593, 2328, 43332, 83707, 12201, 23088, 39829, 76777, 55495,
@@ -597,8 +798,8 @@ void CaseSpaceDialog::addDummyDukeDataToChart()
 		74166, 39761, 35695, 43436, 38419, 937, 68925, 63631, 90667, 15306,
 	};
 
-	dY = new float[numCases];
-	memcpy(dY, dukeY, numCases * sizeof(float));
+	dY = new double[numCases];
+	memcpy(dY, dukeY, numCases * sizeof(double));
 
 	for (int i = 0; i < numCases; i++)
 	{
@@ -631,13 +832,13 @@ void CaseSpaceDialog::addDummyDukeDataToChart()
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::addPoconoDataToChart()
 {
-	vtkFloatArray *poconoXCoords = vtkFloatArray::New();
-	vtkFloatArray *poconoYCoords = vtkFloatArray::New();
+	vtkDoubleArray *poconoXCoords = vtkDoubleArray::New();
+	vtkDoubleArray *poconoYCoords = vtkDoubleArray::New();
 	poconoTable = vtkTable::New();
 	vtkPlot *poconoPoints;
 	const int numCases = 100;
 	
-	float poconoX[numCases] =
+	double poconoX[numCases] =
 	{
 		50024, 77973, 37215, 15317, 29627, 6296, 96124, 55171, 80151, 44481,
 		18570, 28827, 78396, 43240, 17224, 45981, 6678, 81875, 30469, 99142,
@@ -651,10 +852,10 @@ void CaseSpaceDialog::addPoconoDataToChart()
 		92252, 57535, 15295, 52671, 13826, 96554, 15538, 71169, 41268, 54695
 	};
 
-	pX = new float[numCases];
-	memcpy(pX, poconoX, numCases * sizeof(float));
+	pX = new double[numCases];
+	memcpy(pX, poconoX, numCases * sizeof(double));
 
-	float poconoY[numCases] =
+	double poconoY[numCases] =
 	{
 		53315, 11477, 50231, 13235, 82006, 70697, 14795, 13947, 20448, 55934,
 		13499, 89995, 97861, 7538, 56643, 9798, 70722, 54503, 24026, 42450,
@@ -668,8 +869,8 @@ void CaseSpaceDialog::addPoconoDataToChart()
 		33695, 45328, 55442, 82857, 1995, 4935, 27406, 98715, 11578, 68614
 	};
 
-	pY = new float[numCases];
-	memcpy(pY, poconoY, numCases * sizeof(float));
+	pY = new double[numCases];
+	memcpy(pY, poconoY, numCases * sizeof(double));
 
 	for (int i = 0; i < numCases; i++)
 	{
@@ -702,8 +903,8 @@ void CaseSpaceDialog::addPoconoDataToChart()
 void CaseSpaceDialog::addHighPointDataToChart()
 {
 	vtkTable *highPointTable = vtkTable::New();
-	vtkFloatArray *highPointXCoords = vtkFloatArray::New();
-	vtkFloatArray *highPointYCoords = vtkFloatArray::New();
+	vtkDoubleArray *highPointXCoords = vtkDoubleArray::New();
+	vtkDoubleArray *highPointYCoords = vtkDoubleArray::New();
 	vtkPlot *highPointPoints;
 
 	const int numCases = 100;
@@ -711,7 +912,7 @@ void CaseSpaceDialog::addHighPointDataToChart()
 	// Random numbers from 
 	// http://www.rand.org/content/dam/rand/pubs/monograph_reports/2005/digits.txt.zip:
 
-	float highPointX[numCases] =
+	double highPointX[numCases] =
 	{
 		74125, 63878, 62461, 97700, 85648, 77945, 45938, 29687, 84670, 78942,
 		01242, 89212, 9406, 805, 27040, 88349, 44212, 50771, 90802, 61844,
@@ -725,10 +926,10 @@ void CaseSpaceDialog::addHighPointDataToChart()
 		81207, 59017, 63439, 68594, 31557, 74216, 84924, 96216, 65668, 83454
 	};
 
-	hpX = new float[numCases];
-	memcpy(hpX, highPointX, numCases * sizeof(float));
+	hpX = new double[numCases];
+	memcpy(hpX, highPointX, numCases * sizeof(double));
 
-	float highPointY[numCases] =
+	double highPointY[numCases] =
 	{
 		41438, 85843, 28227, 64869, 83324, 49508, 6473, 70409, 59405, 24722,
 		88974, 25138, 87231, 79127, 27017, 24909, 49727, 3647, 4352, 97628,
@@ -742,8 +943,8 @@ void CaseSpaceDialog::addHighPointDataToChart()
 		93353, 84149, 57433, 48999, 26980, 90777, 67457, 54214, 93754, 4276
 	};
 
-	hpY = new float[numCases];
-	memcpy(hpY, highPointY, numCases * sizeof(float));
+	hpY = new double[numCases];
+	memcpy(hpY, highPointY, numCases * sizeof(double));
 
 	for (int i = 0; i < numCases; i++)
 	{
@@ -774,8 +975,8 @@ void CaseSpaceDialog::addHighPointDataToChart()
 void CaseSpaceDialog::addQueryCaseToChart()
 {
 	const int numCases = 28;
-	float queryX[numCases];
-	float queryY[numCases];
+	double queryX[numCases];
+	double queryY[numCases];
 
 	for (int i = 0; i < numCases; i++) 
 	{
@@ -784,8 +985,8 @@ void CaseSpaceDialog::addQueryCaseToChart()
 	}
 
 	queryCaseTable = vtkTable::New();
-	vtkFloatArray *queryXCoords = vtkFloatArray::New();
-	vtkFloatArray *queryYCoords = vtkFloatArray::New();
+	vtkDoubleArray *queryXCoords = vtkDoubleArray::New();
+	vtkDoubleArray *queryYCoords = vtkDoubleArray::New();
 	vtkPlot *queryPoint = caseSpaceChart->AddPlot(vtkChart::POINTS); //, vtkPlotPoints::CROSS);
 	queryXCoords->SetArray(queryX, numCases, 1);
 	queryXCoords->SetName("qcx");
@@ -801,54 +1002,254 @@ void CaseSpaceDialog::addQueryCaseToChart()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// TEMP hardwired for 100 Duke cases with the seven angles 25, 75, 130, 180,
-// 230, 280, and 335 degrees.
+// TEMP hardwired for 100 Duke cases with MI values averaged over the seven
+// angles 25, 75, 130, 180, 230, 280, and 335 degrees.
 //
 ////////////////////////////////////////////////////////////////////////////////
 bool CaseSpaceDialog::readMIData()
 {
-	int numAngles = 7;	// TEMP: hardwired for Duke cases
+	QString MIPath = mainWindow->getDataDir() + MIAvgFileName;
+	QByteArray pathArray = MIPath.toAscii();
+	char *pathString = pathArray.data();
 
-	// TEMP: hardwired to use angle 4 (one-based) = 180 degrees.
-	int currAngleNum = 4;
-	QString MIInPathFormat = mainWindow->getDataDir() + "/MI/mi_%01d.txt";
-	QByteArray formatArray = MIInPathFormat.toAscii();
-	char *formatString = formatArray.data();
-	const int kMaxChars = 255;
-	char MIPath[kMaxChars];
-
-	sprintf_s(MIPath, formatString, currAngleNum);
+	ofstream MIofs;
 
 	ifstream MIfs;
-	MIfs.open(MIPath, ifstream::in);
+	MIfs.open(pathString, ifstream::in);
 
 	if (!MIfs.is_open())
 	{
-	cout << "Failed to open MI file " << MIPath << endl;
+	cout << "Failed to open MI file " << pathString << endl;
 	return false;
 	}
 
 	for (int row = 0; row < numMICases; row++)
 	{
-		MIval[row] = new float[numMICases];
+		MIval[row] = new double[numMICases];
 
 		for (int col = 0; col < numMICases; col++)
 		{
 			if (MIfs.eof())
 			{
-				cout << "Unexpected end of file reading " << MIPath << endl;
+				cout << "Unexpected end of file reading " << pathString << endl;
 				MIfs.close();
 				return false;
 			}
 			
 			MIfs >> MIval[row][col];
 
-			if (MIval[row][col] > MIMax) MIMax = MIval[row][col];
-			if (MIval[row][col] < MIMin) MIMin = MIval[row][col];
+			//if (MIval[row][col] > MIMax) MIMax = MIval[row][col];
+			//if (MIval[row][col] < MIMin) MIMin = MIval[row][col];
 		}
 	}
 
 	MIfs.close();
+	return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Note the difference between queryCaseIndex which is the index into arrays
+// of data (sequential: 0, 1, 2...) vs. the query case Patient number, which 
+// will probably *not* be sequential.  Right now (2011/07/10), for example, the
+// Duke patient numbers start 3, 4, 6, 7, 9...  They don't start at 0 (or at 1)
+// and they aren't sequential.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::prepareMIDisplay()
+{
+
+	// Get extrema for all cases wrt query case:
+	MIMax = -FLT_MAX;
+	MIMin = FLT_MAX;
+
+	for (int i = 0; i < numMICases; i++)
+	{
+		if (MIval[queryCaseIndex][i] > MIMax) MIMax = MIval[queryCaseIndex][i];
+		if (MIval[queryCaseIndex][i] < MIMin) MIMin = MIval[queryCaseIndex][i];
+	}
+
+	// Then get the fraction from min to max for each case:
+	MIRange = MIMax - MIMin;
+
+	this->ReportCameraPosition(ren);
+	axes = new Axes();
+	//double shaftLength = 6000.0;
+	double shaftLength = 4000.0;
+	double textOffset = 1.05 * shaftLength;
+	axesAssembly = axes->InsertThis(ren, shaftLength);
+
+	axesAssembly->SetPosition(queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum(), MIMin * zMult + thresholdPlaneThickness * 5);
+
+	vtkFollower *xf = axes->AddFollowingText("PTV + bladder overlap", 
+		queryCase->getPTVPlusBladder() + shaftLength * 1.1, queryCase->getPTVPlusRectum(), MIMin * zMult + thresholdPlaneThickness * 5, 
+		1, 0, 0, ren);
+	vtkFollower *yf = axes->AddFollowingText("PTV + rectum overlap",
+		queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum() + shaftLength * 1.1, MIMin * zMult + thresholdPlaneThickness * 5,
+		0, 1, 0, ren);
+	vtkFollower *zf = axes->AddFollowingText("MI", 
+		queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum(), MIMin * zMult + shaftLength * 1.1,
+		 0, 0, 1, ren);
+
+	xf->SetScale(shaftLength / 35.0);
+	yf->SetScale(shaftLength / 35.0);
+	zf->SetScale(shaftLength / 35.0);
+
+	ren->AddActor(xf);
+	ren->AddActor(yf);
+	ren->AddActor(zf);
+
+	for (int i = 0; i < numMICases; i++)
+	{
+		if (i == queryCaseIndex) continue;
+
+		MIFraction[i] = (MIval[queryCaseIndex][i] - MIMin) / MIRange;
+		dukePointActor[i]->GetProperty()->SetColor(MIFraction[i] * 1.2, MIFraction[i] * 1.2, 1.0 - (MIFraction[i] * 1.2));
+	}
+
+	// Set up the MI Range Slider with current values:
+	QString maxAsText;
+	maxAsText.setNum(MIMax, 'g', 3);
+	MIMaxLabel->setText(maxAsText);
+	QString minAsText;
+	minAsText.setNum(MIMin, 'g', 3);
+	MIMinLabel->setText(minAsText);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::addMIThresholdPlane()
+{
+	MIThresholdPlane = vtkCubeSource::New();
+	MIThresholdPlane->SetXLength(maxPTVPlusBladder - minPTVPlusBladder);
+	MIThresholdPlane->SetYLength(maxPTVPlusRectum - minPTVPlusRectum);
+	MIThresholdPlane->SetZLength(thresholdPlaneThickness);
+
+	//MIThresholdPlane->SetCenter(queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum(), MIMin * zMult);
+	MIThresholdPlane->SetCenter((maxPTVPlusBladder - minPTVPlusBladder) / 2.0,
+								(maxPTVPlusRectum - minPTVPlusRectum) / 2.0,
+								MIMin * zMult);
+
+	vtkPolyDataMapper *mitpMapper = vtkPolyDataMapper::New();
+	mitpMapper->SetInputConnection(MIThresholdPlane->GetOutputPort());
+
+	vtkActor *mitpActor = vtkActor::New();
+	mitpActor->SetMapper(mitpMapper);
+	mitpActor->GetProperty()->SetOpacity(0.33);
+	mitpActor->GetProperty()->SetSpecular(0);
+	mitpActor->GetProperty()->SetDiffuse(0);
+	mitpActor->GetProperty()->SetAmbient(1);
+	mitpActor->GetProperty()->SetAmbientColor(0.2, 0.2, 0.2);
+	mitpActor->PickableOff();
+	//mitpActor->GetProperty()->SetColor(0.4, 0.4, 0.4);
+
+	ren->AddActor(mitpActor);
+
+	setThresholdPlaneZVal(MIRangeSlider->value());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// One-off for 100 Duke cases with the seven angles 25, 75, 130, 180,
+// 230, 280, and 335 degrees.
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CaseSpaceDialog::averageMIData()
+{
+	// Instantiate and initialize array:
+	for (int i = 0; i < numMICases; i++)
+	{
+		MIval[i] = new double[numMICases];
+
+		for (int j = 0; j < numMICases; j++)
+		{
+			MIval[i][j] = 0.0;
+		}
+	}
+
+	int numAngles = 7;	// TEMP: hardwired for Duke cases
+	const int kMaxChars = 255;
+
+	// Add up the values for each element (filenames are 1-based):
+	for (int currAngleNum = 1; currAngleNum <= numAngles; currAngleNum++)
+	{
+		QString MIInPathFormat = mainWindow->getDataDir() + "/MI/mi_%01d.txt";
+		QByteArray formatArray = MIInPathFormat.toAscii();
+		char *formatString = formatArray.data();
+		char MIPath[kMaxChars];
+
+		sprintf_s(MIPath, formatString, currAngleNum);
+
+		ifstream MIfs;
+		MIfs.open(MIPath, ifstream::in);
+
+		if (!MIfs.is_open())
+		{
+			cout << "Failed to open MI file " << MIPath << endl;
+			return false;
+		}
+
+		for (int row = 0; row < numMICases; row++)
+		{
+
+			for (int col = 0; col < numMICases; col++)
+			{
+				if (MIfs.eof())
+				{
+					cout << "Unexpected end of file reading " << MIPath << endl;
+					MIfs.close();
+					return false;
+				}
+				
+				double val;
+				MIfs >> val;
+				MIval[row][col] += val;
+
+			}
+		}
+
+		MIfs.close();
+	}
+
+	// Compute the average for each element, and track extrema:
+	for (int i = 0; i < numMICases; i++)
+	{
+		for (int j = 0; j < numMICases; j++)
+		{
+			MIval[i][j] /= numAngles;
+
+			if (MIval[i][j] > MIMax) MIMax = MIval[i][j];
+			if (MIval[i][j] < MIMin) MIMin = MIval[i][j];
+		}
+	}
+
+	// Write the averages to file:
+	QString MIOutPath = mainWindow->getDataDir() + MIAvgFileName;
+	QByteArray outPathArray = MIOutPath.toAscii();
+	char *outPathString = outPathArray.data();
+
+	ofstream MIofs;
+	MIofs.open(outPathString, ifstream::out);
+
+	if (!MIofs.is_open())
+	{
+		cout << "Failed to open MI file " << outPathString << endl;
+		return false;
+	}
+
+	for (int row = 0; row < numMICases; row++)
+	{
+		for (int col = 0; col < numMICases; col++)
+		{
+			MIofs << MIval[row][col] << ' ';
+		}
+
+		MIofs << "\n";
+	}
+
+	MIofs.close();
+
 	return true;
 }
 
@@ -871,8 +1272,8 @@ void CaseSpaceDialog::drawSelectedCase()
 
 	const int numDuplicates = 1;
 
-	float selectedX[numDuplicates]; 
-	float selectedY[numDuplicates];
+	double selectedX[numDuplicates]; 
+	double selectedY[numDuplicates];
 
 	// ccChartXY doesn't place points correctly if there are "too 
 	// few" (i.e., from informal tests, about 27) elements in the
@@ -894,8 +1295,8 @@ void CaseSpaceDialog::drawSelectedCase()
 		//selectedY[i] = (-i - 1) * 1000000.0;
 	}
 
-	vtkFloatArray *selectedXCoords = vtkFloatArray::New();
-	vtkFloatArray *selectedYCoords = vtkFloatArray::New();
+	vtkDoubleArray *selectedXCoords = vtkDoubleArray::New();
+	vtkDoubleArray *selectedYCoords = vtkDoubleArray::New();
 	selectedXCoords->SetArray(selectedX, numDuplicates, 1);
 	selectedXCoords->SetName("sel");
 	selectedYCoords->SetArray(selectedY, numDuplicates, 1);
@@ -909,3 +1310,194 @@ void CaseSpaceDialog::drawSelectedCase()
 	selectedPoint->SetInput(selectedMatchCaseTable, 0, 1);
 	selectedPoint->SetColor(255, 185, 0, 255);
 }
+
+///ReportCameraPosition/////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+const void CaseSpaceDialog::ReportCameraPosition(vtkRenderer *r)
+{
+	double pos[3], fp[3], vUp[3], clipRange[2];
+	r->GetActiveCamera()->GetPosition(pos);
+	r->GetActiveCamera()->GetFocalPoint(fp);  
+	r->GetActiveCamera()->GetViewUp(vUp);
+	r->GetActiveCamera()->GetClippingRange(clipRange);
+	double parallelScale = r->GetActiveCamera()->GetParallelScale();
+	double viewAngle = r->GetActiveCamera()->GetViewAngle();
+
+
+	cout << "\n///Active Camera////////////////////////////////////" << endl;
+	cout << "// position: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")"
+		<< endl;
+	cout << "// focal point: (" << fp[0] << ", " << fp[1] << ", " << fp[2] << ")"
+		<< endl;
+	cout << "// view up: (" << vUp[0] << ", " << vUp[1] << ", " << vUp[2] << ")"
+		<< endl;
+	cout << "// clipping range: (" << clipRange[0] << ", " << clipRange[1] << ")"
+		<< endl; 
+	cout << "// parallel scale: " << parallelScale << endl;
+	cout << "////////////////////////////////////////////////////" << endl;
+}
+
+///SetCameraPosition////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::SetCameraPosition(double pos[3], double fp[3],
+	double vUp[3], double clip[2], double zoom)
+{
+	vtkCamera *cam = ren->GetActiveCamera();
+	cam->SetPosition(pos);
+	cam->SetFocalPoint(fp);  
+	cam->SetViewUp(vUp); 
+	cam->SetClippingRange(clip);
+	cam->SetParallelScale(1.0 / zoom);
+
+	caseSpaceRenWin->Render();
+}
+
+///SetCameraPosition////////////////////////////////////////////////////////////
+//
+// Setting camera position and orientation with azimuth defined by argument az.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::SetCameraPosition(double az)
+{
+  ren->GetActiveCamera()->Azimuth(-az);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::pickPatient()
+{
+	double pickPos[3];
+	picker->GetPickPosition(pickPos);
+
+	cout << "Patient at (" << pickPos[0] << ", " << pickPos[1] << ", "
+	<< pickPos[2] << ")" << endl;
+
+	vtkActor *pickedActor = picker->GetActor();
+
+	if (pickedActor)
+	{
+		double *center = new double[3];
+		center = pickedActor->GetCenter();
+
+		cout << "Center at (" << center[0] << ", " << center[1] << ", "
+		<< center[2] << ")" << endl;
+
+		selectedMatchPlotPosition->SetX(center[0]);
+		selectedMatchPlotPosition->SetY(center[1]);
+		identifyMatchCase();
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setXYView(bool /* checked = true */ )
+{
+	double pos[] = { xCenterQueryPt,
+					 yCenterQueryPt /*+ stdVertShift */,
+					 zCenterQueryPt + stdCamDist };
+	double fp[] = { xCenterQueryPt,
+					yCenterQueryPt /*+ stdVertShift */,
+					zCenterQueryPt };
+	double vUp[] = {0, 1, 0 };
+	double clip[] = { 1, 75760 };
+	double zoom = 1.0 / parallelScale;
+
+	SetCameraPosition(pos, fp, vUp, clip, zoom);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setXMIView(bool /* checked = true */ )
+{
+	double pos[] = { xCenterQueryPt,
+					 yCenterQueryPt - stdCamDist,
+					 zCenterQueryPt + stdVertShift };
+	double fp[] = { xCenterQueryPt,
+					yCenterQueryPt,
+					zCenterQueryPt + stdVertShift };
+	double vUp[] = {0, 0, 1 };
+	double clip[] = { 1, 75760 };
+	double zoom = 1.0 / parallelScale;
+
+	SetCameraPosition(pos, fp, vUp, clip, zoom);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setYMIView(bool /* checked = true */ )
+{
+	double pos[] = { stdCamDist + xCenterQueryPt,
+					 yCenterQueryPt,
+					 zCenterQueryPt + stdVertShift };
+	double fp[] = { xCenterQueryPt,
+					yCenterQueryPt,
+					zCenterQueryPt + stdVertShift };
+	double vUp[] = { 0, 0, 1 };
+	double clip[] = { 1, 75760 };
+	double zoom = 1.0 / parallelScale;
+
+	SetCameraPosition(pos, fp, vUp, clip, zoom);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setObliqueView(bool /* checked = true */ )
+{
+	// Normalized view vector, empricially determined:
+	double nVV[3] = { 0.759418157,	-0.628362612,	0.168655249 }; 
+
+	double pos[] = { nVV[0] * stdCamDist + xCenterQueryPt,
+					 nVV[1] * stdCamDist + yCenterQueryPt,
+					 (nVV[2] * stdCamDist + zCenterQueryPt) + stdVertShift };
+	double fp[] = { xCenterQueryPt, yCenterQueryPt,
+					zCenterQueryPt + stdVertShift };
+	double vUp[] = { 0, 0, 1 };
+	double clip[] = { 1, 75760 };
+	double zoom = 1.0 / parallelScale;
+
+	SetCameraPosition(pos, fp, vUp, clip, zoom);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setThresholdPlaneZVal(int val)
+{
+	double sliderRange = MIRangeSlider->maxValue() - MIRangeSlider->minValue();
+	MIThresholdVal = (MIMin + (MIRange * val / sliderRange));
+	thresholdPlaneZVal = MIThresholdVal * zMult;
+	cout << "MI threshold = " << MIThresholdVal
+		 << "; threshold plane z val = " << thresholdPlaneZVal << endl;
+	MIThresholdPlane->SetCenter(queryCase->getPTVPlusBladder(),
+								queryCase->getPTVPlusRectum(),
+								thresholdPlaneZVal);
+
+	for (int i = 0; i < numMICases; i++)
+	{
+		if (i == queryCaseIndex) continue;
+
+		double center[3];
+		dukePoint[i]->GetCenter(center);
+
+		bool belowThreshold = (center[2] < thresholdPlaneZVal);
+		dukePointActor[i]->GetProperty()->SetOpacity(belowThreshold ? 0.0 : 1.0);
+
+		if (belowThreshold) dukePointActor[i]->PickableOff();
+		else dukePointActor[i]->PickableOn();
+
+		QString thresholdAsText;
+		thresholdAsText.setNum(MIThresholdVal, 'g', 3);
+
+		MIRangeGroupBox->setTitle("MI threshold: " + thresholdAsText);
+	}
+
+	caseSpaceRenWin->Render();
+}
+

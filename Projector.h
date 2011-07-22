@@ -41,6 +41,8 @@ class vtkRenderer;
 class vtkRenderWindowInteractor;
 class vtkRenderWindow; 
 class vtkTextActor;
+class vtkAssembly;
+class vtkFollower;
 class QVTKWidget;
 
 class Projector
@@ -77,10 +79,11 @@ public:
 	void setNoFemoralHeads(bool value) { noFemoralHeads = value; };
 	void setTransparency(int transp);
 
-	void AddFollowingText(char *text, double x, double y, double z, double r,
+	static vtkFollower *AddFollowingText(char *text, double x, double y, double z, double r,
                       double g, double b, vtkRenderer *ren);
-	void AddOriginToRenWin(vtkRenderer *r);
-	void AddOrigin(void);
+	static vtkAssembly *AddOriginToRenWin(vtkRenderer *r);
+	static vtkAssembly *AddOrigin(vtkRenderer *r, double shaftLength = 20.0);
+	vtkRenderer *GetRenderer() { return renderer; };
 	void WindowInit(vtkRenderWindow *renWin, QVTKWidget *qVTKWidget);
 	void InitExtrema(void);
 	void PrintStructureName(eStructureType structureNum);

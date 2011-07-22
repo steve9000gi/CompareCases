@@ -23,7 +23,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-	:	versionNumber(123),
+	:	versionNumber(155),
 		queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
 		//dukeDir("C:/Duke_Cases_2011-06-13")
@@ -361,7 +361,14 @@ void MainWindow::about()
 	info.append("Steve Chall, Renaissance Computing Institute\n");
 	info.append("Shiva Das, Duke University\n");
 	info.append("Joseph Lo, Duke University\n");
-	info.append("Vorakarn Chanyavanich, Emory University\n");
+	info.append("Vorakarn Chanyavanich, Emory University\n\n");
+
+	info.append("The open source CompareCases application is implemented in\n");
+	info.append("Microsoft Visual C++ 2010\n");
+	info.append("Qt 4.71\n");
+	info.append("VTK 5.6.1\n");
+	info.append("CMake 2.8.3\n");
+	info.append("GitHub (https://github.com/steve9000gi/CompareCases)");   
 	QMessageBox::about(this, tr("About CompareCases"), info);
 }
 

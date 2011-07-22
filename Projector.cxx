@@ -35,6 +35,7 @@
 #include "vtkSmoothPolyDataFilter.h"
 #include "vtkAxes.h"
 #include "vtkWindowToImageFilter.h"
+#include "vtkAssembly.h"
 
 #include "Projector.h"
 
@@ -87,13 +88,14 @@ double minHack[Projector::kNumStructureTypes][3];
 //"C:/Duke_Cases_2011-06-13/structures/%03d/%s_%03d_%s.out";
 
 // Axes:
-vtkActor *oActor = NULL;
+/*vtkActor *oActor = NULL;
 vtkActor *xConeActor = NULL;
 vtkActor *yConeActor = NULL;
 vtkActor *zConeActor = NULL;
 vtkActor *xShaftActor = NULL;
 vtkActor *yShaftActor = NULL;
 vtkActor *zShaftActor = NULL;
+*/
 
 // Forward declaration:
 //static void Projector::ReportCameraPosition(vtkRenderer *renderer);
@@ -163,7 +165,7 @@ Projector::Projector(QString dataDir)
 // renderer.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void Projector::AddFollowingText(char *text, double x, double y, double z,
+vtkFollower *Projector::AddFollowingText(char *text, double x, double y, double z,
 	double r, double g, double b, vtkRenderer *ren)
 {
   vtkVectorText *xText = vtkVectorText::New();;
@@ -178,6 +180,8 @@ void Projector::AddFollowingText(char *text, double x, double y, double z,
   xTextActor->GetProperty()->SetColor(r, g, b);
   xTextActor->SetCamera(ren->GetActiveCamera());
   ren->AddActor(xTextActor);
+
+  return xTextActor;
 }
 
 void Projector::setTransparency(int transp)
@@ -195,9 +199,9 @@ void Projector::setTransparency(int transp)
 // and actors have been created and connected appropriately.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void Projector::AddOriginToRenWin(vtkRenderer *r)
+vtkAssembly *Projector::AddOriginToRenWin(vtkRenderer *r)
 {
-  char x[] = "+x";
+/*  char x[] = "+x";
   char y[] = "+y";
   char z[] = "+z";
 
@@ -212,6 +216,9 @@ void Projector::AddOriginToRenWin(vtkRenderer *r)
   AddFollowingText(x, 23, -1, 0, 1, 0, 0, r);
   AddFollowingText(y, -1, 23, 0, 0, 1, 0, r);
   AddFollowingText(z, 0, -1, 23, 0, 0, 1, r);
+*/
+  vtkAssembly *assembly = vtkAssembly::New();
+  return assembly;
 }
 
 ///AddOrigin////////////////////////////////////////////////////////////////////
@@ -220,19 +227,25 @@ void Projector::AddOriginToRenWin(vtkRenderer *r)
 // white cube.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void Projector:: AddOrigin(void)
+vtkAssembly *Projector::AddOrigin(vtkRenderer *renderer, double shaftLength /* = 20.0 */)
 {
-  const double kShaftLength = 20.0;
+  vtkActor *oActor = NULL;
+  vtkActor *xConeActor = NULL;
+  vtkActor *yConeActor = NULL;
+  vtkActor *zConeActor = NULL;
+  vtkActor *xShaftActor = NULL;
+  vtkActor *yShaftActor = NULL;
+  vtkActor *zShaftActor = NULL;
 
   vtkConeSource *xCone = vtkConeSource::New();
   vtkPolyDataMapper *xConeMapper = vtkPolyDataMapper::New();
   xConeActor = vtkActor::New();
   xCone->SetResolution(40);
-  xCone->SetHeight(2);
-  xCone->SetRadius(0.75);
+  xCone->SetHeight(shaftLength / 10.0);
+  xCone->SetRadius(shaftLength * 0.0375);
   xCone->SetDirection(1, 0, 0);
   xConeMapper->SetInputConnection(xCone->GetOutputPort());
-  xConeActor->SetPosition(kShaftLength, 0, 0);
+  xConeActor->SetPosition(shaftLength, 0, 0);
   xConeMapper->ScalarVisibilityOff();
   xConeActor->SetMapper(xConeMapper);
   xConeActor->GetProperty()->SetColor(1, 0, 0);
@@ -241,12 +254,12 @@ void Projector:: AddOrigin(void)
   vtkPolyDataMapper *xShaftMapper = vtkPolyDataMapper::New();
   xShaftActor = vtkActor::New();
   xShaft->SetResolution(40);
-  xShaft->SetHeight(kShaftLength);
-  xShaft->SetRadius(0.1);
+  xShaft->SetHeight(shaftLength);
+  xShaft->SetRadius(shaftLength / 200.0);
   xShaftMapper->SetInputConnection(xShaft->GetOutputPort());
   xShaftMapper->ScalarVisibilityOff();
   xShaftActor->RotateZ(90);
-  xShaftActor->SetPosition(kShaftLength / 2.0, 0, 0);
+  xShaftActor->SetPosition(shaftLength / 2.0, 0, 0);
   xShaftActor->SetMapper(xShaftMapper);
   xShaftActor->GetProperty()->SetColor(1, 0, 0);
 
@@ -254,11 +267,11 @@ void Projector:: AddOrigin(void)
   vtkPolyDataMapper *yConeMapper = vtkPolyDataMapper::New();
   yConeActor = vtkActor::New();
   yCone->SetResolution(40);
-  yCone->SetHeight(2);
-  yCone->SetRadius(0.75);
+  yCone->SetHeight(shaftLength / 10.0);
+  yCone->SetRadius(shaftLength * 0.0375);
   yCone->SetDirection(0, 1, 0);
   yConeMapper->SetInputConnection(yCone->GetOutputPort());
-  yConeActor->SetPosition(0, kShaftLength, 0);
+  yConeActor->SetPosition(0, shaftLength, 0);
   yConeMapper->ScalarVisibilityOff();
   yConeActor->SetMapper(yConeMapper);
   yConeActor->GetProperty()->SetColor(0, 1, 0);
@@ -267,11 +280,11 @@ void Projector:: AddOrigin(void)
   vtkPolyDataMapper *yShaftMapper = vtkPolyDataMapper::New();
   yShaftActor = vtkActor::New();
   yShaft->SetResolution(40);
-  yShaft->SetHeight(kShaftLength);
-  yShaft->SetRadius(0.1);
+  yShaft->SetHeight(shaftLength);
+  yShaft->SetRadius(shaftLength / 200.0);
   yShaftMapper->SetInputConnection(yShaft->GetOutputPort());
   yShaftMapper->ScalarVisibilityOff();
-  yShaftActor->SetPosition(0, kShaftLength / 2.0, 0);
+  yShaftActor->SetPosition(0, shaftLength / 2.0, 0);
   yShaftActor->SetMapper(yShaftMapper);
   yShaftActor->GetProperty()->SetColor(0, 1, 0);
 
@@ -279,11 +292,11 @@ void Projector:: AddOrigin(void)
   vtkPolyDataMapper *zConeMapper = vtkPolyDataMapper::New();
   zConeActor = vtkActor::New();
   zCone->SetResolution(40);
-  zCone->SetHeight(2);
-  zCone->SetRadius(0.75);
+  zCone->SetHeight(shaftLength / 10.0);
+  zCone->SetRadius(shaftLength * 0.0375);
   zCone->SetDirection(0, 0, 1);
   zConeMapper->SetInputConnection(zCone->GetOutputPort());
-  zConeActor->SetPosition(0, 0, kShaftLength);
+  zConeActor->SetPosition(0, 0, shaftLength);
   zConeMapper->ScalarVisibilityOff();
   zConeActor->SetMapper(zConeMapper);
   zConeActor->GetProperty()->SetColor(0, 0, 1);
@@ -292,27 +305,65 @@ void Projector:: AddOrigin(void)
   vtkPolyDataMapper *zShaftMapper = vtkPolyDataMapper::New();
   zShaftActor = vtkActor::New();
   zShaft->SetResolution(40);
-  zShaft->SetHeight(kShaftLength);
-  zShaft->SetRadius(0.1);
+  zShaft->SetHeight(shaftLength);
+  zShaft->SetRadius(shaftLength / 200.0);
   zShaftMapper->SetInputConnection(zShaft->GetOutputPort());
   zShaftMapper->ScalarVisibilityOff();
   zShaftActor->RotateX(90);
-  zShaftActor->SetPosition(0, 0, kShaftLength / 2.0);
+  zShaftActor->SetPosition(0, 0, shaftLength / 2.0);
   zShaftActor->SetMapper(zShaftMapper);
   zShaftActor->GetProperty()->SetColor(0, 0, 1);
   
   vtkCubeSource *origin = vtkCubeSource::New();
   vtkPolyDataMapper *oMapper = vtkPolyDataMapper::New();
   oActor = vtkActor::New();
-  origin->SetXLength(0.8);
-  origin->SetYLength(0.8);
-  origin->SetZLength(0.8);
+  origin->SetXLength(shaftLength * 0.025);
+  origin->SetYLength(shaftLength * 0.025);
+  origin->SetZLength(shaftLength * 0.025);
   oMapper->SetInputConnection(origin->GetOutputPort());
   oMapper->ScalarVisibilityOff();
   oActor->SetMapper(oMapper);
   oActor->GetProperty()->SetColor(1, 1, 1);
   
-  AddOriginToRenWin(renderer);
+  char x[] = "+x";
+  char y[] = "+y";
+  char z[] = "+z";
+/*
+  renderer->AddActor(xConeActor);
+  renderer->AddActor(yConeActor);
+  renderer->AddActor(zConeActor);
+  renderer->AddActor(xShaftActor);
+  renderer->AddActor(yShaftActor);
+  renderer->AddActor(zShaftActor);
+  renderer->AddActor(oActor);
+  AddFollowingText(x, 23, -1, 0, 1, 0, 0, renderer);
+  AddFollowingText(y, -1, 23, 0, 0, 1, 0, renderer);
+  AddFollowingText(z, 0, -1, 23, 0, 0, 1, renderer);
+*/
+
+  vtkFollower *xf = AddFollowingText(x, shaftLength, -shaftLength / 20.0, 0, 1, 0, 0, renderer);
+  vtkFollower *yf = AddFollowingText(y, -shaftLength / 20.0, shaftLength, 0, 0, 1, 0, renderer);
+  vtkFollower *zf = AddFollowingText(z, 0, -shaftLength / 20.0, shaftLength, 0, 0, 1, renderer);
+
+  xf->SetScale(shaftLength / 30.0);
+  yf->SetScale(shaftLength / 30.0);
+  zf->SetScale(shaftLength / 30.0);
+
+  vtkAssembly *assembly = vtkAssembly::New();
+	assembly->AddPart(xConeActor);
+	assembly->AddPart(yConeActor);
+	assembly->AddPart(zConeActor);
+	assembly->AddPart(xShaftActor);
+	assembly->AddPart(yShaftActor);
+	assembly->AddPart(zShaftActor);
+	assembly->AddPart(oActor);
+	assembly->AddPart(xf);
+	assembly->AddPart(yf);
+	assembly->AddPart(zf);
+
+  renderer->AddActor(assembly);
+
+  return assembly;
 }
 
 ///WindowInit//////////////////////////////////////////////////////////////////

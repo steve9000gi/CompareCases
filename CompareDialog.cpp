@@ -929,7 +929,7 @@ void CompareDialog::selectQueryProjection()
 
 	if (originCheckBox->isChecked())
 	{
-		queryProjector->AddOrigin();
+		queryProjector->AddOrigin(queryProjector->GetRenderer());
 	}
 
 	queryProjector->ComputeAvgZ();
@@ -953,7 +953,7 @@ void CompareDialog::selectMatchProjection()
 
 	if (originCheckBox->isChecked())
 	{
-		matchProjector->AddOrigin();
+		matchProjector->AddOrigin(matchProjector->GetRenderer());
 	}
 
 	matchProjector->ComputeAvgZ();

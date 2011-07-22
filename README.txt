@@ -1,5 +1,5 @@
-README file for CompareCases version 122
-2011/06/24
+README file for CompareCases development build 123
+2011/06/29
 
 Written by Steve Chall (stevec@renci.org), RENCI@Duke (www.renci.org)
 in collaboration with and based on the work of:
@@ -15,7 +15,7 @@ Additional work by
 
 CompareCases is an application that supports the exploration of several kinds of prostate cancer radiation therapy patient data, in particular examining similarities between a user-selected “query case” and one or several pre-existing “match cases.”  The goal is to maximize the similarity between query and match in order to use the match case as the best available starting point for treatment planning for the query case.
 
-The open source CompareCases application is implemented in Microsoft Visual C++ 2010, using the Qt 4.71 libraries for graphical user interface development, VTK (The Visualization ToolKit) 5.6.1 for graphics and visualization, CMake for build management, and GitHub for source code control (https://github.com/steve9000gi/CompareCases).   
+The open source CompareCases application is implemented in Microsoft Visual C++ 2010, using the Qt 4.71 libraries for graphical user interface development, VTK (The Visualization ToolKit) 5.6.1 for graphics and visualization, CMake 2.8.3 for build management, and GitHub for source code control (https://github.com/steve9000gi/CompareCases).   
 
 2. Graphical User Interface / Work Flow
 
@@ -23,12 +23,12 @@ The open source CompareCases application is implemented in Microsoft Visual C++ 
 
 There are three primary dialogs that comprise the CompareCases work flow: 1) the Main Window for selecting a query case; 2) the Case Space Dialog for selecting a match case; and 3) the Compare Dialog, for examining similarities and differences between the query and match cases that have been selected.
 
-2.2. The Main Window allows the user to select the top level directory or directories wherein reside the data used in the rest of the application (see section 3. below for details).  When one or more data directories have been selected, the user may choose from the corresponding dropdown lists to select a query case.  If a query case is selected, then the View Case Space button is enabled.  Clicking on this button opens the Case Space Dialog.
+2.2. The Main Window allows the user to select the top level directory or directories that hold the data used in the rest of the application (see section 3. below for details).  When one or more data directories have been selected, the user may choose from the corresponding dropdown lists to select a query case.  If a query case is selected, then the View Case Space button is enabled.  Clicking on this button opens the Case Space Dialog.
 
 Selecting input data paths
 
 When CompareCases starts, one of two things occurs:
-1) If the user has previously indicated to the application where to find the top-level directory for patient data, then there exists (in the . directory for the executable) a text file named PathToDukeData which contains as a character string the full pathname  for that top-level directory.  CompareCases then uses that pathname to look at the Duke data and to populate the Select Query Case popup lists.
+1) If the user has previously indicated to the application where to find the top-level directory for patient data, then there exists (in the ./ directory for the executable) a text file named PathToDukeData which contains as a character string the full pathname for that top-level directory.  CompareCases then uses that pathname to look at the Duke data and to populate the Select Query Case popup lists.
 
 2) If this is the first time this installation of CompareCases is run, the first thing the user will see is the “Select directory for Duke case data” dialog.  Completion of this selection process also creates the ./PathToDukeData file in which the selected data path is saved. Subsequent executions of the CompareCases application will look here, thus obviating the necessity of repeating the directory selection process.  
 
@@ -78,11 +78,9 @@ The “Flat-shaded” check box toggles projection surface shading characteristics.
 
 The “Axes” checkbox toggles the display of the standard xyz axes at the origin.
 
-2.4.3. “View Femoral Heads” 
+2.4.3. DVH Data View Controls
 
 The “View Femoral Heads” checkbox affects both Projection and DVH displays: it toggles visibility of the left and right femoral heads in the Projection display, and additionally the corresponding data curves in the DVH graphs. 
-
-2.4.4. Overlay
 
 The “Overlay” checkbox toggles whether or not to superimpose the match DVH plots as dashed lines on top of the query DVH display.
 
@@ -92,9 +90,9 @@ The “Overlay” checkbox toggles whether or not to superimpose the match DVH plots
 
 In order for the Compare Cases application to locate patient data, the subdirectories beneath the top-level directory (selected with the appropriate buttons under “Load Institutions:” in the Main Window dialog) must be organized as follows:
 
-Subdirectory “CT” contains a separate subdirectory for each case, named “Patient<XXX>” where <XXX> is a three-digit integer (left-padded with zeros where necessary, 000-999, e.g., “Patient007”).  Inside each “Patient<XXX>” directory must be a directory named “Primary” that contains only CT file sequences whose names are of the format “CT*.dcm” where “*” is a sequence of digits and ‘.’ characters.  There may be and currently are other directories and files in each “Patient<XXX>” directory, but they cannot be in the Primary directory for the CompareCases application to work correctly.
+Subdirectory “CT” contains a separate subdirectory for each case, named “Patient<XXX>” where <XXX> is a three-digit integer (left-padded with zeros where necessary, 000-999, e.g., “Patient007”).  Inside each “Patient<XXX>” directory must be a directory named “Primary” that contains only CT file sequences whose names are of the format “CT*.dcm” where “*” is a sequence of digits and ‘.’ Characters adhering to a standard DICOM file naming protocol.  There may be and currently are other directories and files in each “Patient<XXX>” directory, but they cannot be in the Primary directory for the CompareCases application to work correctly.
 
-Subdirectory “DVHdata” contains for each patient one text file whose name is of the format DVH<XXX>.txt where <XXX> is a three-digit integer (front-padded with zeros where necessary, 000-999, e.g., “DVH007.txt”).
+Subdirectory “DVHdata” contains for each patient one text file whose name is of the format DVH<XXX>.txt where <XXX> is a three-digit integer (front-padded with zeros where necessary), 000-999, e.g., “DVH007.txt”.
 
 Subdirectory “overlap” contains a text file named Duke_struct_overlap<XXX>.txt for each of the gantry angles 025, 075, 130, 180, 230, 280, and 330, where <XXX> is the corresponding (possibly front-padded with zeroes) three-digit gantry angle.   Each file contains positive integer values for its gantry angle for all available cases between 3-148 inclusive.
 
@@ -141,53 +139,57 @@ CERR (pronounced 'sir'), stands for Computational Environment for Radiotherapy R
 
 3.4. Dose Volume Histogram Data
 
+TBD
+
 4. Bugs
 
-Query projection view shifts upward the first time it’s user-modified.  
+4.1. Query projection view shifts upward the first time it’s user-modified.  
 
-If “Overlay” is on, changing the match case may not update the overlay on the query DVH display, even though the title may update.
+4.2. If “Overlay” is on, changing the match case may not update the overlay on the query DVH display, even though the title may update.
 
-If the user selects any directory for Pocono or High Point in the Main Window, then selects one of the dummy case numbers that are made available for that non-Duke institution, and then clicks on the “View Case Space” button, an exception is thrown and the program crashes.
+4.3. If the user selects any directory for Pocono or High Point in the Main Window, then selects one of the dummy case numbers that are made available for that non-Duke institution, and then clicks on the “View Case Space” button, an exception is thrown and the program crashes.
 
-If the user changes the view by dragging within a projection display and then subsequently selects an angle from the “Gantry angle” dropdown menu, some view parameters (e.g., distance from projection centroid) may not be restored to their default values.
+4.4. If the user changes the view by dragging within a projection display and then subsequently selects an angle from the “Gantry angle” dropdown menu, some view parameters (e.g., distance from projection centroid) may not be restored to their default values.
 
-Quitting the application may involve manually closing multiple dialogs.  Furthermore, the various “OK” and “Cancel” buttons are undifferentiated with respect to program behavior: “OK” saves nothing, “Cancel” cancels nothing.
+4.5. Quitting the application may involve manually closing multiple dialogs.  Furthermore, the various “OK” and “Cancel” buttons are undifferentiated with respect to program behavior: “OK” saves nothing, “Cancel” cancels nothing.
 
-A great deal of the data is still missing for many cases.  In particular, DVH data exists for only about 9 cases.  Therefore, if a match case is selected with missing data from the Case Space dialog, a “missing data” error message may appear when the Compare Cases button is clicked, or (if it’s DVH data that’s missing) the Compare dialog may open with a blank Match DVH display.  If structure data (i.e., one or more vertices or faces files), the Compare dialog may simply not open.
+4.6. A great deal of the data is still missing for many cases.  In particular, DVH data exists for only about 9 cases.  Therefore, if a match case is selected with missing data from the Case Space dialog, a “missing data” error message may appear when the Compare Cases button is clicked, or (if it’s DVH data that’s missing) the Compare dialog may open with a blank Match DVH display.  If structure data (i.e., one or more vertices or faces files), the Compare dialog may simply not open.
 
-During CT Display “Auto-play” (Compare dialog), neither the Slice spin box nor slider update values until the Auto-play animation is complete.
+4.7. During CT Display “Auto-play” (Compare dialog), neither the Slice spin box nor slider update values until the Auto-play animation is complete.
 
-Disfiguring display artifacts appear in the Projection displays for Transparency values > 0% (Compare dialog) due to errors in triangle depth sorting.  This is especially noticeable when “Flat shaded” is unchecked.
+4.8. Disfiguring display artifacts may appear in the Projection displays for Transparency values > 0% (Compare dialog) due to errors in triangle depth sorting.  This is especially noticeable when “Flat shaded” is unchecked.
 
-In the Compare Cases dialog, the “Selected case” icon always appears at the origin, wherever the selected case is actually located.
+4.9. In the Compare Cases dialog, the “Selected case” icon always appears at the origin, wherever the selected case is actually located.
+
+4.10. If a dummy query case is selected (any Pocono or High Point case, at this point), clicking on the “View Case Space” button will crash the application.
 
 5. Future Work
 
-Implement “crosshairs” or “white line” mechanism to link geometric positions between projections and CT displays
+5.1. Implement “crosshairs” or “white line” mechanism to link geometric positions between projections and CT displays
 
-Ensure that query and match CT displays are aligned with respect to PTV centers.
+5.2. Ensure that query and match CT displays are aligned with respect to PTV centers.
 
-Add 3rd dimension to Case Space dialog by adding slider[s] for selecting range of (average) MI values applied to selecting appropriate subset of patient data candidate points.
+5.3. Add 3rd dimension to Case Space dialog by adding slider[s] for selecting range of (average) MI values applied to selecting appropriate subset of patient data candidate points.
 
-Now have MI data for 100 Duke cases which need to be integrated into the application.
+5.4. Now have MI data for 100 Duke cases which need to be integrated into the application.
 
-Incorporate patient data from Pocono, High Point, and possibly other institutions.
+5.5. Incorporate patient data from Pocono, High Point, and possibly other institutions.
 
-Add PTV overlay to CT displays.
+5.6. Add PTV overlay to CT displays.
 
-Add dynamic recomputation of MI values when a new patient’s data is added to the database.
+5.7. Add dynamic recomputation of MI values when a new patient’s data is added to the database.
 
-Add dynamic generation of projections to support non-Duke gantry angles.
+5.8. Add dynamic generation of projections to support non-Duke gantry angles.
 
-Explore possible approaches to a higher dimensional (3+) display (for simultaneously evaluating a larger number of match case selection criteria) for Case Space Dialog.
+5.9. Explore possible approaches to a higher dimensional (3+) display (for simultaneously evaluating a larger number of match case selection criteria) for Case Space Dialog.
 
-Apply size or color as depth cues to indicate position in z for points on Case Space dialog. E.g., the redder and/or larger a point, the closer it is, the bluer and/or smaller it is, the more distant.
+5.10. Apply size or color as depth cues to indicate position in z for points on Case Space dialog. E.g., the redder and/or larger a point, the closer it is, the bluer and/or smaller it is, the more distant.
 
-Lock camera positions between match and query cases so that interactive camera manipulation in either also applies to the other.
+5.11. Lock camera positions between match and query cases so that interactive camera manipulation in either also applies to the other.
 
-Implement history of most recent (say, 5?) match cases, perhaps with a dropdown list, so that user may easily recall what previous match candidates s/he has visited and can return to any previous by simply selecting item.
+5.12. Implement history of most recent (say, 5?) match cases, perhaps with a dropdown list, so that user may easily recall what previous match candidates s/he has visited and can return to any previous by simply selecting item.
 
-Support overlay of multiple match candidates’ data for query DVH diagram.
+5.13. Support overlay of more than one match candidates’ data for query DVH diagram.
 
 6. Additional reading
 
