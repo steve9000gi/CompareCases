@@ -23,16 +23,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-	:	versionNumber(155),
+	:	versionNumber(196),
 		queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
-		//dukeDir("C:/Duke_Cases_2011-06-13")
 		dukeDir(""),
 		dukeDataDirectoryPath("./PathToDukeData")
 {
 	setupUi(this);
-
-	//QFile dukeDataDirectoryPath("./PathToDukeData");
 
 	if (!dukeDataDirectoryPath.open(QIODevice::ReadOnly))
 	{
@@ -47,7 +44,6 @@ MainWindow::MainWindow()
 	setupSelectQueryCaseComboBoxes();
 	createActions();
 
-	//dukeQueryCaseComboBox->setDisabled(true);
 	loadDukeLineEdit->setText(dukeDir);
 	dukeQueryCaseComboBox->setDisabled(false);
 	poconoQueryCaseComboBox->setDisabled(true);
@@ -61,8 +57,6 @@ MainWindow::MainWindow()
 void MainWindow::openCaseSpaceDialog()
 {
 	caseSpaceDialog = new CaseSpaceDialog(this);
-	caseSpaceDialog->setQueryCaseText(queryCaseNameLabel->text());
-	//caseSpaceDialog->setDukeOverlapDataPath(dukeOverlapDataPath);
 	caseSpaceDialog->show();
 }
 
@@ -81,7 +75,6 @@ void MainWindow::selectDukeDirectory()
 	if (!dukeDir.isEmpty())
 	{
 		setupDukeSelectQueryCaseComboBox();
-		//QFile dukeDataDirectoryPath("./PathToDukeData");
 
 		if (!dukeDataDirectoryPath.open(QIODevice::WriteOnly))
 		{
@@ -174,7 +167,6 @@ void MainWindow::createActions()
 
 	connect(actionAbout_CompareCases, SIGNAL(triggered()), this, SLOT(about()));
 	connect(action_View_documentation, SIGNAL(triggered()), this, SLOT(viewDocumentation()));
-	//cout << "A double takes " << sizeof(double) << " bytes." << endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -218,12 +210,6 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
 	file.close();
 
 	return true;
-/*
-	for (int i = 10; i < 19; i++)
-	{
-		dukeQueryCaseComboBox->addItem(QString::number(i)); 
-	}
-*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -274,7 +260,6 @@ void MainWindow::selectDukeQueryCase(int index)
 	if (index == 0)
 	{
 		queryCaseNameLabel->setText("<not selected>");
-		//return;
 	}
 
 	if (queryCaseSourceInstitution != kDuke)

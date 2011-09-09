@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CompareDialog.ui'
 **
-** Created: Mon Jul 18 10:49:44 2011
+** Created: Fri Sep 9 14:58:22 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -79,10 +79,6 @@ public:
     QVTKWidget *matchDVHWidget;
     QWidget *layoutWidget3;
     QGridLayout *gridLayout_3;
-    QWidget *layoutWidget4;
-    QHBoxLayout *horizontalLayout_4;
-    QPushButton *okPushButton;
-    QPushButton *cancelPushButton;
     QGroupBox *projectionDisplayGroupBox;
     QPushButton *gantryAnglePushButton;
     QCheckBox *flatShadedCheckBox;
@@ -95,8 +91,13 @@ public:
     QCheckBox *originCheckBox;
     QCheckBox *viewFemoralHeadsCheckBox;
     QCheckBox *overlayDVHCheckBox;
+    QPushButton *overlaySelectionPushButton;
     QStatusBar *statusbar;
     QPushButton *historyPushButton;
+    QWidget *layoutWidget_2;
+    QHBoxLayout *horizontalLayout_4;
+    QPushButton *okPushButton;
+    QPushButton *cancelPushButton;
 
     void setupUi(QDialog *CompareDialog)
     {
@@ -149,11 +150,13 @@ public:
 
         sliceSelectionSlider = new QSlider(layoutWidget);
         sliceSelectionSlider->setObjectName(QString::fromUtf8("sliceSelectionSlider"));
-        sliceSelectionSlider->setMinimum(1);
-        sliceSelectionSlider->setMaximum(141);
+        sliceSelectionSlider->setMinimum(0);
+        sliceSelectionSlider->setMaximum(100);
+        sliceSelectionSlider->setPageStep(10);
+        sliceSelectionSlider->setValue(0);
         sliceSelectionSlider->setOrientation(Qt::Horizontal);
         sliceSelectionSlider->setTickPosition(QSlider::TicksAbove);
-        sliceSelectionSlider->setTickInterval(16);
+        sliceSelectionSlider->setTickInterval(20);
 
         horizontalLayout->addWidget(sliceSelectionSlider);
 
@@ -164,12 +167,13 @@ public:
 
         autoPlayPushButton = new QPushButton(layoutWidget);
         autoPlayPushButton->setObjectName(QString::fromUtf8("autoPlayPushButton"));
+        autoPlayPushButton->setFocusPolicy(Qt::NoFocus);
 
         horizontalLayout->addWidget(autoPlayPushButton);
 
         dvhLabel = new QLabel(centralwidget);
         dvhLabel->setObjectName(QString::fromUtf8("dvhLabel"));
-        dvhLabel->setGeometry(QRect(1376, 24, 223, 25));
+        dvhLabel->setGeometry(QRect(1378, 25, 223, 25));
         QFont font;
         font.setPointSize(16);
         dvhLabel->setFont(font);
@@ -441,22 +445,6 @@ public:
         gridLayout_3 = new QGridLayout(layoutWidget3);
         gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
         gridLayout_3->setContentsMargins(0, 0, 0, 0);
-        layoutWidget4 = new QWidget(centralwidget);
-        layoutWidget4->setObjectName(QString::fromUtf8("layoutWidget4"));
-        layoutWidget4->setGeometry(QRect(1678, 16, 158, 25));
-        horizontalLayout_4 = new QHBoxLayout(layoutWidget4);
-        horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
-        horizontalLayout_4->setContentsMargins(0, 0, 0, 0);
-        okPushButton = new QPushButton(layoutWidget4);
-        okPushButton->setObjectName(QString::fromUtf8("okPushButton"));
-
-        horizontalLayout_4->addWidget(okPushButton);
-
-        cancelPushButton = new QPushButton(layoutWidget4);
-        cancelPushButton->setObjectName(QString::fromUtf8("cancelPushButton"));
-
-        horizontalLayout_4->addWidget(cancelPushButton);
-
         projectionDisplayGroupBox = new QGroupBox(centralwidget);
         projectionDisplayGroupBox->setObjectName(QString::fromUtf8("projectionDisplayGroupBox"));
         projectionDisplayGroupBox->setGeometry(QRect(623, 2, 495, 51));
@@ -488,10 +476,11 @@ public:
         transparencySlider->setObjectName(QString::fromUtf8("transparencySlider"));
         transparencySlider->setMinimum(0);
         transparencySlider->setMaximum(100);
+        transparencySlider->setPageStep(20);
         transparencySlider->setValue(0);
         transparencySlider->setOrientation(Qt::Horizontal);
         transparencySlider->setTickPosition(QSlider::TicksAbove);
-        transparencySlider->setTickInterval(10);
+        transparencySlider->setTickInterval(20);
 
         horizontalLayout_6->addWidget(transparencySlider);
 
@@ -505,16 +494,35 @@ public:
         originCheckBox->setGeometry(QRect(440, 24, 51, 17));
         viewFemoralHeadsCheckBox = new QCheckBox(centralwidget);
         viewFemoralHeadsCheckBox->setObjectName(QString::fromUtf8("viewFemoralHeadsCheckBox"));
-        viewFemoralHeadsCheckBox->setGeometry(QRect(1125, 26, 119, 17));
+        viewFemoralHeadsCheckBox->setGeometry(QRect(1126, 29, 119, 17));
         overlayDVHCheckBox = new QCheckBox(centralwidget);
         overlayDVHCheckBox->setObjectName(QString::fromUtf8("overlayDVHCheckBox"));
-        overlayDVHCheckBox->setGeometry(QRect(1250, 26, 61, 17));
+        overlayDVHCheckBox->setGeometry(QRect(1251, 29, 81, 17));
+        overlaySelectionPushButton = new QPushButton(centralwidget);
+        overlaySelectionPushButton->setObjectName(QString::fromUtf8("overlaySelectionPushButton"));
+        overlaySelectionPushButton->setGeometry(QRect(1666, 26, 110, 23));
         statusbar = new QStatusBar(CompareDialog);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
         statusbar->setGeometry(QRect(0, 4, 3, 18));
         historyPushButton = new QPushButton(CompareDialog);
         historyPushButton->setObjectName(QString::fromUtf8("historyPushButton"));
-        historyPushButton->setGeometry(QRect(14, 1096, 75, 23));
+        historyPushButton->setGeometry(QRect(16, 1098, 75, 23));
+        layoutWidget_2 = new QWidget(CompareDialog);
+        layoutWidget_2->setObjectName(QString::fromUtf8("layoutWidget_2"));
+        layoutWidget_2->setGeometry(QRect(1690, 1097, 158, 25));
+        horizontalLayout_4 = new QHBoxLayout(layoutWidget_2);
+        horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
+        horizontalLayout_4->setContentsMargins(0, 0, 0, 0);
+        okPushButton = new QPushButton(layoutWidget_2);
+        okPushButton->setObjectName(QString::fromUtf8("okPushButton"));
+
+        horizontalLayout_4->addWidget(okPushButton);
+
+        cancelPushButton = new QPushButton(layoutWidget_2);
+        cancelPushButton->setObjectName(QString::fromUtf8("cancelPushButton"));
+
+        horizontalLayout_4->addWidget(cancelPushButton);
+
 #ifndef QT_NO_SHORTCUT
         sliceSelectionLabel->setBuddy(sliceSelectionSpinBox);
 #endif // QT_NO_SHORTCUT
@@ -550,8 +558,6 @@ public:
         rightFemLabel->setText(QApplication::translate("CompareDialog", "right fem", 0, QApplication::UnicodeUTF8));
         matchGroupBox->setTitle(QApplication::translate("CompareDialog", "Match", 0, QApplication::UnicodeUTF8));
         matchInstitutionPushButton->setText(QApplication::translate("CompareDialog", "Duke", 0, QApplication::UnicodeUTF8));
-        okPushButton->setText(QApplication::translate("CompareDialog", "OK", 0, QApplication::UnicodeUTF8));
-        cancelPushButton->setText(QApplication::translate("CompareDialog", "Cancel", 0, QApplication::UnicodeUTF8));
         projectionDisplayGroupBox->setTitle(QApplication::translate("CompareDialog", "Projection Display", 0, QApplication::UnicodeUTF8));
         gantryAnglePushButton->setText(QApplication::translate("CompareDialog", "Gantry Angle", 0, QApplication::UnicodeUTF8));
         flatShadedCheckBox->setText(QApplication::translate("CompareDialog", "Flat shaded", 0, QApplication::UnicodeUTF8));
@@ -559,8 +565,11 @@ public:
         maxTransparencyLabel->setText(QApplication::translate("CompareDialog", "100", 0, QApplication::UnicodeUTF8));
         originCheckBox->setText(QApplication::translate("CompareDialog", "Axes", 0, QApplication::UnicodeUTF8));
         viewFemoralHeadsCheckBox->setText(QApplication::translate("CompareDialog", "View Femoral Heads", 0, QApplication::UnicodeUTF8));
-        overlayDVHCheckBox->setText(QApplication::translate("CompareDialog", "Overlay", 0, QApplication::UnicodeUTF8));
+        overlayDVHCheckBox->setText(QApplication::translate("CompareDialog", " Overlay On", 0, QApplication::UnicodeUTF8));
+        overlaySelectionPushButton->setText(QApplication::translate("CompareDialog", "Overlay Selection", 0, QApplication::UnicodeUTF8));
         historyPushButton->setText(QApplication::translate("CompareDialog", "History", 0, QApplication::UnicodeUTF8));
+        okPushButton->setText(QApplication::translate("CompareDialog", "OK", 0, QApplication::UnicodeUTF8));
+        cancelPushButton->setText(QApplication::translate("CompareDialog", "Cancel", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

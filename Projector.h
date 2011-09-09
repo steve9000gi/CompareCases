@@ -56,8 +56,6 @@ public:
 
 	static const int kNumInFileTypes; // = ekVertices + 1;
 
-	//const char inFileType[kNumInFileTypes][kMaxFileTypeChars] = {"faces", "vertices"};
-
 	enum eStructureType
 	{
 	  ekBladder = 0,
@@ -69,9 +67,6 @@ public:
 	  ekBody = 5
 	};
 
-	//const int kNumStructureTypes = ekRtFem + 1;
-	//static const int kNumStructureTypes; // = ekBody + 1;
-
 	Projector();
 	Projector(QString dataDir);
 	~Projector() {};
@@ -81,8 +76,7 @@ public:
 
 	static vtkFollower *AddFollowingText(char *text, double x, double y, double z, double r,
                       double g, double b, vtkRenderer *ren);
-	static vtkAssembly *AddOriginToRenWin(vtkRenderer *r);
-	static vtkAssembly *AddOrigin(vtkRenderer *r, double shaftLength = 20.0);
+	void AddOrigin(vtkRenderer *r, double shaftLength = 20.0);
 	vtkRenderer *GetRenderer() { return renderer; };
 	void WindowInit(vtkRenderWindow *renWin, QVTKWidget *qVTKWidget);
 	void InitExtrema(void);
@@ -120,21 +114,8 @@ public: // TEMP
 	vtkRenderer *renderer;
 
 private:
-	// To hold vertex extrema values (x, y, and z) for each of the structures read
-	// in/displayed:
-/*	double maxVal[kNumStructureTypes][3];
-	double minVal[kNumStructureTypes][3];
 
-	// Hack: make space to keep max- and minVal from overwriting adjacent memory:
-	double maxHack[kNumStructureTypes][3];
-	double minHack[kNumStructureTypes][3];
-*/
-	// Normalize camera placement in z:
 	double avgZ; 
-
-	// Write images to disk:
-	//vtkPNGWriter *pngWriter = NULL;
-	//vtkWindowToImageFilter *windowToImageFilter = NULL;
 };
 
 #endif // #ifndef PROJECTOR_H

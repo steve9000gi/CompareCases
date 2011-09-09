@@ -39,6 +39,9 @@ public:
 	int getNumber() { return number; };
 	void setNumber(int n) { number = n; };
 
+	int getIndex() { return index; };
+	void setIndex(int i) { index = i; };
+
 	int getSliceMin() { return sliceMin; };
 	void setSliceMin(int min) { sliceMin = min; };
 
@@ -77,7 +80,8 @@ public:
 	void setPTVPlusRectumPlusBladder(int pprpb) { PTVPlusRectumPlusBladder = pprpb; };
 
 protected:
-	int number;
+	int number;		// Patient number which is data-dependent
+	int index;		// Index into the list of patients for a given institution:  application dependent
 	int sliceMin;
 	int sliceMax;
 	SliceOrientation sliceOrientation;

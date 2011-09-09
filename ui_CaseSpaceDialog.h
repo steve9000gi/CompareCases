@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CaseSpaceDialog.ui'
 **
-** Created: Mon Jul 18 10:49:43 2011
+** Created: Fri Sep 9 14:58:21 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -42,15 +42,20 @@ public:
     QPushButton *compareCasesPushButton;
     QPushButton *testPushButton;
     QWidget *widget;
-    QHBoxLayout *horizontalLayout_3;
+    QHBoxLayout *horizontalLayout_2;
+    QGroupBox *backgroundColorGroupBox;
+    QHBoxLayout *horizontalLayout_4;
+    QRadioButton *backgroundBlackRadioButton;
+    QRadioButton *backgroundWhiteRadioButton;
+    QRadioButton *backgroundRampRadioButton;
     QGroupBox *selectViewGroupBox;
-    QHBoxLayout *horizontalLayout;
+    QHBoxLayout *horizontalLayout_5;
     QRadioButton *XYViewRadioButton;
     QRadioButton *XMIViewRadioButton;
     QRadioButton *YMIViewRadioButton;
     QRadioButton *obliqueViewRadioButton;
     QGroupBox *MIRangeGroupBox;
-    QHBoxLayout *horizontalLayout_2;
+    QHBoxLayout *horizontalLayout;
     QLabel *MIMinLabel;
     QSlider *MIRangeSlider;
     QLabel *MIMaxLabel;
@@ -70,7 +75,7 @@ public:
         queryCaseLabel->setGeometry(QRect(28, 20, 61, 16));
         queryCaseNameLabel = new QLabel(CaseSpaceDialog);
         queryCaseNameLabel->setObjectName(QString::fromUtf8("queryCaseNameLabel"));
-        queryCaseNameLabel->setGeometry(QRect(95, 20, 465, 16));
+        queryCaseNameLabel->setGeometry(QRect(95, 20, 628, 16));
         caseSpaceViewWidget = new QVTKWidget(CaseSpaceDialog);
         caseSpaceViewWidget->setObjectName(QString::fromUtf8("caseSpaceViewWidget"));
         caseSpaceViewWidget->setGeometry(QRect(27, 71, 1600, 996));
@@ -80,7 +85,7 @@ public:
         matchCaseLabel->setGeometry(QRect(28, 41, 60, 16));
         matchCaseNameLabel = new QLabel(CaseSpaceDialog);
         matchCaseNameLabel->setObjectName(QString::fromUtf8("matchCaseNameLabel"));
-        matchCaseNameLabel->setGeometry(QRect(94, 41, 141, 16));
+        matchCaseNameLabel->setGeometry(QRect(94, 41, 519, 16));
         layoutWidget = new QWidget(CaseSpaceDialog);
         layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
         layoutWidget->setGeometry(QRect(29, 1080, 166, 25));
@@ -99,62 +104,97 @@ public:
 
         widget = new QWidget(CaseSpaceDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(1198, 9, 429, 54));
-        horizontalLayout_3 = new QHBoxLayout(widget);
-        horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
-        horizontalLayout_3->setContentsMargins(0, 0, 0, 0);
+        widget->setGeometry(QRect(864, 11, 764, 54));
+        horizontalLayout_2 = new QHBoxLayout(widget);
+        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        horizontalLayout_2->setContentsMargins(0, 0, 0, 0);
+        backgroundColorGroupBox = new QGroupBox(widget);
+        backgroundColorGroupBox->setObjectName(QString::fromUtf8("backgroundColorGroupBox"));
+        horizontalLayout_4 = new QHBoxLayout(backgroundColorGroupBox);
+        horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
+        backgroundBlackRadioButton = new QRadioButton(backgroundColorGroupBox);
+        backgroundBlackRadioButton->setObjectName(QString::fromUtf8("backgroundBlackRadioButton"));
+        backgroundBlackRadioButton->setChecked(true);
+
+        horizontalLayout_4->addWidget(backgroundBlackRadioButton);
+
+        backgroundWhiteRadioButton = new QRadioButton(backgroundColorGroupBox);
+        backgroundWhiteRadioButton->setObjectName(QString::fromUtf8("backgroundWhiteRadioButton"));
+
+        horizontalLayout_4->addWidget(backgroundWhiteRadioButton);
+
+        backgroundRampRadioButton = new QRadioButton(backgroundColorGroupBox);
+        backgroundRampRadioButton->setObjectName(QString::fromUtf8("backgroundRampRadioButton"));
+
+        horizontalLayout_4->addWidget(backgroundRampRadioButton);
+
+
+        horizontalLayout_2->addWidget(backgroundColorGroupBox);
+
         selectViewGroupBox = new QGroupBox(widget);
         selectViewGroupBox->setObjectName(QString::fromUtf8("selectViewGroupBox"));
-        horizontalLayout = new QHBoxLayout(selectViewGroupBox);
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        horizontalLayout_5 = new QHBoxLayout(selectViewGroupBox);
+        horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
         XYViewRadioButton = new QRadioButton(selectViewGroupBox);
         XYViewRadioButton->setObjectName(QString::fromUtf8("XYViewRadioButton"));
 
-        horizontalLayout->addWidget(XYViewRadioButton);
+        horizontalLayout_5->addWidget(XYViewRadioButton);
 
         XMIViewRadioButton = new QRadioButton(selectViewGroupBox);
         XMIViewRadioButton->setObjectName(QString::fromUtf8("XMIViewRadioButton"));
 
-        horizontalLayout->addWidget(XMIViewRadioButton);
+        horizontalLayout_5->addWidget(XMIViewRadioButton);
 
         YMIViewRadioButton = new QRadioButton(selectViewGroupBox);
         YMIViewRadioButton->setObjectName(QString::fromUtf8("YMIViewRadioButton"));
 
-        horizontalLayout->addWidget(YMIViewRadioButton);
+        horizontalLayout_5->addWidget(YMIViewRadioButton);
 
         obliqueViewRadioButton = new QRadioButton(selectViewGroupBox);
         obliqueViewRadioButton->setObjectName(QString::fromUtf8("obliqueViewRadioButton"));
         obliqueViewRadioButton->setChecked(true);
 
-        horizontalLayout->addWidget(obliqueViewRadioButton);
+        horizontalLayout_5->addWidget(obliqueViewRadioButton);
 
 
-        horizontalLayout_3->addWidget(selectViewGroupBox);
+        horizontalLayout_2->addWidget(selectViewGroupBox);
 
         MIRangeGroupBox = new QGroupBox(widget);
         MIRangeGroupBox->setObjectName(QString::fromUtf8("MIRangeGroupBox"));
-        horizontalLayout_2 = new QHBoxLayout(MIRangeGroupBox);
-        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        horizontalLayout = new QHBoxLayout(MIRangeGroupBox);
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         MIMinLabel = new QLabel(MIRangeGroupBox);
         MIMinLabel->setObjectName(QString::fromUtf8("MIMinLabel"));
+        MIMinLabel->setMinimumSize(QSize(40, 0));
 
-        horizontalLayout_2->addWidget(MIMinLabel);
+        horizontalLayout->addWidget(MIMinLabel);
 
         MIRangeSlider = new QSlider(MIRangeGroupBox);
         MIRangeSlider->setObjectName(QString::fromUtf8("MIRangeSlider"));
+        MIRangeSlider->setMinimumSize(QSize(238, 0));
         MIRangeSlider->setMaximum(1000);
         MIRangeSlider->setOrientation(Qt::Horizontal);
 
-        horizontalLayout_2->addWidget(MIRangeSlider);
+        horizontalLayout->addWidget(MIRangeSlider);
 
         MIMaxLabel = new QLabel(MIRangeGroupBox);
         MIMaxLabel->setObjectName(QString::fromUtf8("MIMaxLabel"));
+        MIMaxLabel->setMinimumSize(QSize(40, 0));
 
-        horizontalLayout_2->addWidget(MIMaxLabel);
+        horizontalLayout->addWidget(MIMaxLabel);
 
 
-        horizontalLayout_3->addWidget(MIRangeGroupBox);
+        horizontalLayout_2->addWidget(MIRangeGroupBox);
 
+        buttonBox->raise();
+        queryCaseLabel->raise();
+        queryCaseNameLabel->raise();
+        caseSpaceViewWidget->raise();
+        matchCaseLabel->raise();
+        matchCaseNameLabel->raise();
+        layoutWidget->raise();
+        layoutWidget->raise();
+        selectViewGroupBox->raise();
 
         retranslateUi(CaseSpaceDialog);
         QObject::connect(buttonBox, SIGNAL(accepted()), CaseSpaceDialog, SLOT(accept()));
@@ -172,6 +212,10 @@ public:
         matchCaseNameLabel->setText(QApplication::translate("CaseSpaceDialog", "<not selected>", 0, QApplication::UnicodeUTF8));
         compareCasesPushButton->setText(QApplication::translate("CaseSpaceDialog", "Compare Cases", 0, QApplication::UnicodeUTF8));
         testPushButton->setText(QApplication::translate("CaseSpaceDialog", "Test", 0, QApplication::UnicodeUTF8));
+        backgroundColorGroupBox->setTitle(QApplication::translate("CaseSpaceDialog", "Background", 0, QApplication::UnicodeUTF8));
+        backgroundBlackRadioButton->setText(QApplication::translate("CaseSpaceDialog", "black", 0, QApplication::UnicodeUTF8));
+        backgroundWhiteRadioButton->setText(QApplication::translate("CaseSpaceDialog", "white", 0, QApplication::UnicodeUTF8));
+        backgroundRampRadioButton->setText(QApplication::translate("CaseSpaceDialog", "ramp", 0, QApplication::UnicodeUTF8));
         selectViewGroupBox->setTitle(QApplication::translate("CaseSpaceDialog", "Select View", 0, QApplication::UnicodeUTF8));
         XYViewRadioButton->setText(QApplication::translate("CaseSpaceDialog", "XY", 0, QApplication::UnicodeUTF8));
         XMIViewRadioButton->setText(QApplication::translate("CaseSpaceDialog", "X-MI", 0, QApplication::UnicodeUTF8));

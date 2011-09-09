@@ -535,7 +535,7 @@ TCL_LIBRARY:FILEPATH=
 TK_LIBRARY:FILEPATH=
 
 //The directory containing a CMake configuration file for VTK.
-VTK_DIR:PATH=C:/lib/VTK/VTK_BIN
+VTK_DIR:PATH=C:/lib/VTK
 
 
 ########################

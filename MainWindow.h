@@ -82,7 +82,7 @@ protected:
 
 public:
 	QString getDukeDir() { return dukeDir; };
-	 // TEMP hardwired pending introduction of data from other institutions:
+	 // TEMP hardwired to Duke pending introduction of data from other institutions:
 	QString getDataDir() { return dukeDir; };
 	QString &getDukeOverlapDataPath() { return dukeOverlapDataPath; };
 	SourceInstitution getQueryCaseSourceInstitution() { return queryCaseSourceInstitution; };

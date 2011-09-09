@@ -27,9 +27,9 @@ INCLUDE_DIRECTORIES(
 
 
 # Set your files and resources here  
-SET(CompareCasesSrcs main.cpp MainWindow.cpp CaseSpaceDialog.cpp CompareDialog.cpp Patient.cpp Projector.cxx ccChartXY.cxx)
+SET(CompareCasesSrcs main.cpp MainWindow.cpp CaseSpaceDialog.cpp CompareDialog.cpp Patient.cpp Projector.cxx Axes.cpp)
 SET(CompareCasesUI MainWindow.ui CaseSpaceDialog.ui CompareDialog.ui)
-SET(CompareCasesHeaders MainWindow.h CaseSpaceDialog.h CompareDialog.h Patient.h Projector.h ccChartXY.h)
+SET(CompareCasesHeaders MainWindow.h CaseSpaceDialog.h CompareDialog.h Patient.h Projector.h Axes.h)
 # SET(CompareCasesResources Icons/icons.qrc)
 
 # The rest should just work (sure...)

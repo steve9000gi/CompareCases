@@ -87,16 +87,6 @@ double minHack[Projector::kNumStructureTypes][3];
 //"C:/Users/Steve/Documents/IMRT/structures-2010-11-30/%03d/%s_%03d_%s.out";
 //"C:/Duke_Cases_2011-06-13/structures/%03d/%s_%03d_%s.out";
 
-// Axes:
-/*vtkActor *oActor = NULL;
-vtkActor *xConeActor = NULL;
-vtkActor *yConeActor = NULL;
-vtkActor *zConeActor = NULL;
-vtkActor *xShaftActor = NULL;
-vtkActor *yShaftActor = NULL;
-vtkActor *zShaftActor = NULL;
-*/
-
 // Forward declaration:
 //static void Projector::ReportCameraPosition(vtkRenderer *renderer);
 
@@ -181,6 +171,8 @@ vtkFollower *Projector::AddFollowingText(char *text, double x, double y, double 
   xTextActor->SetCamera(ren->GetActiveCamera());
   ren->AddActor(xTextActor);
 
+  xText->Delete();
+
   return xTextActor;
 }
 
@@ -189,181 +181,133 @@ void Projector::setTransparency(int transp)
 	transparency = transp;
 }
 
-
-///AddOriginToRenWin////////////////////////////////////////////////////////////
-//
-// Put the three colored arrows and the white cube at (0, 0, 0) from which they
-// emanate into the window whose renderer is pointed to by r.
-//
-// Assumes that all the various geometric objects and their associated mappers 
-// and actors have been created and connected appropriately.
-//
-////////////////////////////////////////////////////////////////////////////////
-vtkAssembly *Projector::AddOriginToRenWin(vtkRenderer *r)
-{
-/*  char x[] = "+x";
-  char y[] = "+y";
-  char z[] = "+z";
-
-  r->AddActor(xConeActor);
-  r->AddActor(yConeActor);
-  r->AddActor(zConeActor);
-  r->AddActor(xShaftActor);
-  r->AddActor(yShaftActor);
-  r->AddActor(zShaftActor);
-  r->AddActor(oActor);
-
-  AddFollowingText(x, 23, -1, 0, 1, 0, 0, r);
-  AddFollowingText(y, -1, 23, 0, 0, 1, 0, r);
-  AddFollowingText(z, 0, -1, 23, 0, 0, 1, r);
-*/
-  vtkAssembly *assembly = vtkAssembly::New();
-  return assembly;
-}
-
 ///AddOrigin////////////////////////////////////////////////////////////////////
 //
 // The standard three arrows -- red = x, green = y, blue = z -- emanating from a
 // white cube.
 //
 ////////////////////////////////////////////////////////////////////////////////
-vtkAssembly *Projector::AddOrigin(vtkRenderer *renderer, double shaftLength /* = 20.0 */)
+void Projector::AddOrigin(vtkRenderer *renderer, double shaftLength /* = 20.0 */)
 {
-  vtkActor *oActor = NULL;
-  vtkActor *xConeActor = NULL;
-  vtkActor *yConeActor = NULL;
-  vtkActor *zConeActor = NULL;
-  vtkActor *xShaftActor = NULL;
-  vtkActor *yShaftActor = NULL;
-  vtkActor *zShaftActor = NULL;
+	vtkActor *oActor = NULL;
+	vtkActor *xConeActor = NULL;
+	vtkActor *yConeActor = NULL;
+	vtkActor *zConeActor = NULL;
+	vtkActor *xShaftActor = NULL;
+	vtkActor *yShaftActor = NULL;
+	vtkActor *zShaftActor = NULL;
 
-  vtkConeSource *xCone = vtkConeSource::New();
-  vtkPolyDataMapper *xConeMapper = vtkPolyDataMapper::New();
-  xConeActor = vtkActor::New();
-  xCone->SetResolution(40);
-  xCone->SetHeight(shaftLength / 10.0);
-  xCone->SetRadius(shaftLength * 0.0375);
-  xCone->SetDirection(1, 0, 0);
-  xConeMapper->SetInputConnection(xCone->GetOutputPort());
-  xConeActor->SetPosition(shaftLength, 0, 0);
-  xConeMapper->ScalarVisibilityOff();
-  xConeActor->SetMapper(xConeMapper);
-  xConeActor->GetProperty()->SetColor(1, 0, 0);
+	vtkConeSource *xCone = vtkConeSource::New();
+	vtkPolyDataMapper *xConeMapper = vtkPolyDataMapper::New();
+	xConeActor = vtkActor::New();
+	xCone->SetResolution(40);
+	xCone->SetHeight(shaftLength / 10.0);
+	xCone->SetRadius(shaftLength * 0.0375);
+	xCone->SetDirection(1, 0, 0);
+	xConeMapper->SetInputConnection(xCone->GetOutputPort());
+	xConeActor->SetPosition(shaftLength, 0, 0);
+	xConeMapper->ScalarVisibilityOff();
+	xConeActor->SetMapper(xConeMapper);
+	xConeActor->GetProperty()->SetColor(1, 0, 0);
   
-  vtkCylinderSource *xShaft = vtkCylinderSource::New();
-  vtkPolyDataMapper *xShaftMapper = vtkPolyDataMapper::New();
-  xShaftActor = vtkActor::New();
-  xShaft->SetResolution(40);
-  xShaft->SetHeight(shaftLength);
-  xShaft->SetRadius(shaftLength / 200.0);
-  xShaftMapper->SetInputConnection(xShaft->GetOutputPort());
-  xShaftMapper->ScalarVisibilityOff();
-  xShaftActor->RotateZ(90);
-  xShaftActor->SetPosition(shaftLength / 2.0, 0, 0);
-  xShaftActor->SetMapper(xShaftMapper);
-  xShaftActor->GetProperty()->SetColor(1, 0, 0);
+	vtkCylinderSource *xShaft = vtkCylinderSource::New();
+	vtkPolyDataMapper *xShaftMapper = vtkPolyDataMapper::New();
+	xShaftActor = vtkActor::New();
+	xShaft->SetResolution(40);
+	xShaft->SetHeight(shaftLength);
+	xShaft->SetRadius(shaftLength / 200.0);
+	xShaftMapper->SetInputConnection(xShaft->GetOutputPort());
+	xShaftMapper->ScalarVisibilityOff();
+	xShaftActor->RotateZ(90);
+	xShaftActor->SetPosition(shaftLength / 2.0, 0, 0);
+	xShaftActor->SetMapper(xShaftMapper);
+	xShaftActor->GetProperty()->SetColor(1, 0, 0);
 
-  vtkConeSource *yCone = vtkConeSource::New();
-  vtkPolyDataMapper *yConeMapper = vtkPolyDataMapper::New();
-  yConeActor = vtkActor::New();
-  yCone->SetResolution(40);
-  yCone->SetHeight(shaftLength / 10.0);
-  yCone->SetRadius(shaftLength * 0.0375);
-  yCone->SetDirection(0, 1, 0);
-  yConeMapper->SetInputConnection(yCone->GetOutputPort());
-  yConeActor->SetPosition(0, shaftLength, 0);
-  yConeMapper->ScalarVisibilityOff();
-  yConeActor->SetMapper(yConeMapper);
-  yConeActor->GetProperty()->SetColor(0, 1, 0);
+	vtkConeSource *yCone = vtkConeSource::New();
+	vtkPolyDataMapper *yConeMapper = vtkPolyDataMapper::New();
+	yConeActor = vtkActor::New();
+	yCone->SetResolution(40);
+	yCone->SetHeight(shaftLength / 10.0);
+	yCone->SetRadius(shaftLength * 0.0375);
+	yCone->SetDirection(0, 1, 0);
+	yConeMapper->SetInputConnection(yCone->GetOutputPort());
+	yConeActor->SetPosition(0, shaftLength, 0);
+	yConeMapper->ScalarVisibilityOff();
+	yConeActor->SetMapper(yConeMapper);
+	yConeActor->GetProperty()->SetColor(0, 1, 0);
   
-  vtkCylinderSource *yShaft = vtkCylinderSource::New();
-  vtkPolyDataMapper *yShaftMapper = vtkPolyDataMapper::New();
-  yShaftActor = vtkActor::New();
-  yShaft->SetResolution(40);
-  yShaft->SetHeight(shaftLength);
-  yShaft->SetRadius(shaftLength / 200.0);
-  yShaftMapper->SetInputConnection(yShaft->GetOutputPort());
-  yShaftMapper->ScalarVisibilityOff();
-  yShaftActor->SetPosition(0, shaftLength / 2.0, 0);
-  yShaftActor->SetMapper(yShaftMapper);
-  yShaftActor->GetProperty()->SetColor(0, 1, 0);
+	vtkCylinderSource *yShaft = vtkCylinderSource::New();
+	vtkPolyDataMapper *yShaftMapper = vtkPolyDataMapper::New();
+	yShaftActor = vtkActor::New();
+	yShaft->SetResolution(40);
+	yShaft->SetHeight(shaftLength);
+	yShaft->SetRadius(shaftLength / 200.0);
+	yShaftMapper->SetInputConnection(yShaft->GetOutputPort());
+	yShaftMapper->ScalarVisibilityOff();
+	yShaftActor->SetPosition(0, shaftLength / 2.0, 0);
+	yShaftActor->SetMapper(yShaftMapper);
+	yShaftActor->GetProperty()->SetColor(0, 1, 0);
 
-  vtkConeSource *zCone = vtkConeSource::New();
-  vtkPolyDataMapper *zConeMapper = vtkPolyDataMapper::New();
-  zConeActor = vtkActor::New();
-  zCone->SetResolution(40);
-  zCone->SetHeight(shaftLength / 10.0);
-  zCone->SetRadius(shaftLength * 0.0375);
-  zCone->SetDirection(0, 0, 1);
-  zConeMapper->SetInputConnection(zCone->GetOutputPort());
-  zConeActor->SetPosition(0, 0, shaftLength);
-  zConeMapper->ScalarVisibilityOff();
-  zConeActor->SetMapper(zConeMapper);
-  zConeActor->GetProperty()->SetColor(0, 0, 1);
+	vtkConeSource *zCone = vtkConeSource::New();
+	vtkPolyDataMapper *zConeMapper = vtkPolyDataMapper::New();
+	zConeActor = vtkActor::New();
+	zCone->SetResolution(40);
+	zCone->SetHeight(shaftLength / 10.0);
+	zCone->SetRadius(shaftLength * 0.0375);
+	zCone->SetDirection(0, 0, 1);
+	zConeMapper->SetInputConnection(zCone->GetOutputPort());
+	zConeActor->SetPosition(0, 0, shaftLength);
+	zConeMapper->ScalarVisibilityOff();
+	zConeActor->SetMapper(zConeMapper);
+	zConeActor->GetProperty()->SetColor(0, 0, 1);
   
-  vtkCylinderSource *zShaft = vtkCylinderSource::New();
-  vtkPolyDataMapper *zShaftMapper = vtkPolyDataMapper::New();
-  zShaftActor = vtkActor::New();
-  zShaft->SetResolution(40);
-  zShaft->SetHeight(shaftLength);
-  zShaft->SetRadius(shaftLength / 200.0);
-  zShaftMapper->SetInputConnection(zShaft->GetOutputPort());
-  zShaftMapper->ScalarVisibilityOff();
-  zShaftActor->RotateX(90);
-  zShaftActor->SetPosition(0, 0, shaftLength / 2.0);
-  zShaftActor->SetMapper(zShaftMapper);
-  zShaftActor->GetProperty()->SetColor(0, 0, 1);
+	vtkCylinderSource *zShaft = vtkCylinderSource::New();
+	vtkPolyDataMapper *zShaftMapper = vtkPolyDataMapper::New();
+	zShaftActor = vtkActor::New();
+	zShaft->SetResolution(40);
+	zShaft->SetHeight(shaftLength);
+	zShaft->SetRadius(shaftLength / 200.0);
+	zShaftMapper->SetInputConnection(zShaft->GetOutputPort());
+	zShaftMapper->ScalarVisibilityOff();
+	zShaftActor->RotateX(90);
+	zShaftActor->SetPosition(0, 0, shaftLength / 2.0);
+	zShaftActor->SetMapper(zShaftMapper);
+	zShaftActor->GetProperty()->SetColor(0, 0, 1);
   
-  vtkCubeSource *origin = vtkCubeSource::New();
-  vtkPolyDataMapper *oMapper = vtkPolyDataMapper::New();
-  oActor = vtkActor::New();
-  origin->SetXLength(shaftLength * 0.025);
-  origin->SetYLength(shaftLength * 0.025);
-  origin->SetZLength(shaftLength * 0.025);
-  oMapper->SetInputConnection(origin->GetOutputPort());
-  oMapper->ScalarVisibilityOff();
-  oActor->SetMapper(oMapper);
-  oActor->GetProperty()->SetColor(1, 1, 1);
+	vtkCubeSource *origin = vtkCubeSource::New();
+	vtkPolyDataMapper *oMapper = vtkPolyDataMapper::New();
+	oActor = vtkActor::New();
+	origin->SetXLength(shaftLength * 0.025);
+	origin->SetYLength(shaftLength * 0.025);
+	origin->SetZLength(shaftLength * 0.025);
+	oMapper->SetInputConnection(origin->GetOutputPort());
+	oMapper->ScalarVisibilityOff();
+	oActor->SetMapper(oMapper);
+	oActor->GetProperty()->SetColor(1, 1, 1);
   
-  char x[] = "+x";
-  char y[] = "+y";
-  char z[] = "+z";
-/*
-  renderer->AddActor(xConeActor);
-  renderer->AddActor(yConeActor);
-  renderer->AddActor(zConeActor);
-  renderer->AddActor(xShaftActor);
-  renderer->AddActor(yShaftActor);
-  renderer->AddActor(zShaftActor);
-  renderer->AddActor(oActor);
-  AddFollowingText(x, 23, -1, 0, 1, 0, 0, renderer);
-  AddFollowingText(y, -1, 23, 0, 0, 1, 0, renderer);
-  AddFollowingText(z, 0, -1, 23, 0, 0, 1, renderer);
-*/
+	char x[] = "+x";
+	char y[] = "+y";
+	char z[] = "+z";
 
-  vtkFollower *xf = AddFollowingText(x, shaftLength, -shaftLength / 20.0, 0, 1, 0, 0, renderer);
-  vtkFollower *yf = AddFollowingText(y, -shaftLength / 20.0, shaftLength, 0, 0, 1, 0, renderer);
-  vtkFollower *zf = AddFollowingText(z, 0, -shaftLength / 20.0, shaftLength, 0, 0, 1, renderer);
+	double textLabelOffset = shaftLength / 20.0; 
+	vtkFollower *xf = AddFollowingText(x, shaftLength + textLabelOffset, -textLabelOffset, 0, 1, 0, 0, renderer);
+	vtkFollower *yf = AddFollowingText(y, -textLabelOffset, shaftLength + textLabelOffset, 0, 0, 1, 0, renderer);
+	vtkFollower *zf = AddFollowingText(z, 0, -textLabelOffset, shaftLength + 2 *textLabelOffset, 0, 0, 1, renderer);
 
-  xf->SetScale(shaftLength / 30.0);
-  yf->SetScale(shaftLength / 30.0);
-  zf->SetScale(shaftLength / 30.0);
+	xf->SetScale(shaftLength / 30.0);
+	yf->SetScale(shaftLength / 30.0);
+	zf->SetScale(shaftLength / 30.0);
 
-  vtkAssembly *assembly = vtkAssembly::New();
-	assembly->AddPart(xConeActor);
-	assembly->AddPart(yConeActor);
-	assembly->AddPart(zConeActor);
-	assembly->AddPart(xShaftActor);
-	assembly->AddPart(yShaftActor);
-	assembly->AddPart(zShaftActor);
-	assembly->AddPart(oActor);
-	assembly->AddPart(xf);
-	assembly->AddPart(yf);
-	assembly->AddPart(zf);
-
-  renderer->AddActor(assembly);
-
-  return assembly;
+  	renderer->AddActor(xConeActor);
+  	renderer->AddActor(yConeActor);
+	renderer->AddActor(zConeActor);
+	renderer->AddActor(xShaftActor);
+	renderer->AddActor(yShaftActor);
+	renderer->AddActor(zShaftActor);
+	renderer->AddActor(oActor);
+	renderer->AddActor(xf);
+	renderer->AddActor(yf);
+	renderer->AddActor(zf);
 }
 
 ///WindowInit//////////////////////////////////////////////////////////////////

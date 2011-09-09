@@ -19,6 +19,7 @@
 Patient::Patient()
 	:	dataDir("."),
 		number(defaultPatientNumber),
+		index(-1),
 		sliceMin(-1),
 		sliceMax(-1),
 		sliceOrientation(Z)
@@ -31,6 +32,7 @@ Patient::Patient()
 Patient::Patient(int n)
 	:	dataDir("."),
 		number(n),
+		index(-1),
 		sliceMin(-1),
 		sliceMax(-1),
 		sliceOrientation(Z)

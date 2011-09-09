@@ -43,6 +43,7 @@
 
 
 static const int numDVHPoints = 103; // Based on DVH input data format
+static const int maxMatchHistoryNum = 200;
 
 // Forward declarations:
 class vtkPNGReader;
@@ -58,6 +59,7 @@ class vtkChartXY;
 class Patient;
 class CaseSpaceDialog;
 class Projector;
+class QSignalMapper;
 
 class CompareDialog : public QDialog, public Ui_CompareDialog
 {
@@ -87,6 +89,9 @@ public:
 
 	bool dataExistsFor(Patient *patient);
 
+signals:
+	void historyMenuItemSelected(int number);
+
 private slots:
 	void selectQuery(int patientNum);				// For query CT, projection, DVH displays
 	void selectMatch(int patientNum);				// For match CT, projection, DVH displays
@@ -106,6 +111,8 @@ private slots:
 	void toggleOrigin(bool checked);
 	void toggleFemoralHeads(bool checked);			// For projection and DVH data. q. and m.
 	void toggleOverlayDVH(bool checked);
+	void itemTriggered(bool checked);
+	void selectHistoryMatch(QString text);
 
 private:
 	// General setup methods:
@@ -131,11 +138,18 @@ private:
 	bool readMatchDVHData(Patient &patient);
 	void setupQueryDVHChart(vtkChartXY *chart, char *title);
 	void setupMatchDVHChart(vtkChartXY *chart, char *title);
-	void clearDVHPlots(vtkChartXY *chart);
 
 	void displayQueryDVHData();
 	void displayMatchDVHData();
 	void setDVHYAxisTicks(vtkChartXY *chart);
+
+	// Match history methods:
+	void setupMatchHistoryMenu();
+	void addMatchHistoryItem();
+	bool removeRedundantHistoryItem(QString text);
+
+	// Overlay selection methods:
+	void setupOverlaySelectionMenu();
 
 	// Objects:
 	Patient *queryPatient;
@@ -174,19 +188,30 @@ private:
 	vtkContextView *queryDVHView;
 	vtkContextView *matchDVHView;
 
-	float dose[numDVHPoints];					// x-axis DVH values 	
+	float dose[numDVHPoints];							// x-axis DVH values 	
 	float *volumes;	// y-axis DVH values
 	float queryVolumes[numStructures][numDVHPoints];	// y-axis DVH values
 	float matchVolumes[numStructures][numDVHPoints];	// y-axis DVH values
 
-	static const int xDVHWidget;				// DVH display width
-	static const int yDVHWidget;				// DVH display height
+	static const int xDVHWidget;						// DVH display width
+	static const int yDVHWidget;						// DVH display height
 
 	CaseSpaceDialog *caseSpaceDialog;
 
+	// Match history:
+	QMenu *matchHistoryMenu;
+	int currMatchHistoryNum;							// # matches currently in history menu
+	int currHistoryActionNum;							// How many matches have been created
+	QAction *matchHistoryAction[maxMatchHistoryNum];
+
+	// DVH overlay selection:
+	QMenu *overlaySelectionMenu;
+	int overlaySelectionIndex;
+	bool matchDVHDataExists;							// Don't overlay nonexistent match data
+
 private:
 	CompareDialog(const CompareDialog&);				// Not implemented.
-	void operator=(const CompareDialog&);			// Not implemented.
+	void operator=(const CompareDialog&);				// Not implemented.
 };
 
 #endif
