@@ -44,6 +44,7 @@ class vtkTextActor;
 class vtkAssembly;
 class vtkFollower;
 class QVTKWidget;
+class vtkCubeSource;
 
 class Projector
 {
@@ -72,6 +73,7 @@ public:
 	~Projector() {};
 	void setFlatShaded(bool value) { flatShaded = value; };
 	void setNoFemoralHeads(bool value) { noFemoralHeads = value; };
+	void setDrawStructure(int sNum, bool value) { drawStructure[sNum] = value; };
 	void setTransparency(int transp);
 
 	static vtkFollower *AddFollowingText(char *text, double x, double y, double z, double r,
@@ -81,17 +83,20 @@ public:
 	void WindowInit(vtkRenderWindow *renWin, QVTKWidget *qVTKWidget);
 	void InitExtrema(void);
 	void PrintStructureName(eStructureType structureNum);
-	void ComputeAvgZ(void);
-	void WriteExtremaToFile(ofstream &outf, int patientNum);
+	void ComputeAverages(void);
 	static void ReportCameraPosition(vtkRenderer *renderer);
 	void SetCameraPosition(vtkRenderer *renderer, double pos[3], double fp[3], double vUp[3]);
 	void SetCameraPosition(double az);
 	void UpdateExtrema(eStructureType structure, double v[3]);
 	bool BuildStructure(int patientNum, eStructureType st);
-	bool BuildStructuresForPatient(int patientNum);
+	bool BuildStructuresForPatient(int patientNum, bool isDifferentPatient = false);
 	void InitAxes(void);
 	void TextInit(void);
+	void InitLegend(void);
 	void SetProjection(int patientNum, int queryAngle);
+	void InitSlicePlane();
+	void PositionSlicePlane(int orientation, int slice, double *spacing);
+	void PositionSlicePlane(int orientation, int slice, int numSlices);
 
 private:
 	vtkPolyData *structure;
@@ -103,18 +108,32 @@ private:
 	vtkRenderWindowInteractor *renderWindowInteractor;
 	vtkRenderWindow *renWin; 
 	vtkTextActor *textActor;
+	//vtkTextActor *legendTextActor[kNumStructureTypes]; Structures don't show up in release build
 
+	vtkCubeSource *slicePlane;
+	vtkPolyDataMapper *sliceMapper;
+	vtkActor *sliceActor;
+
+	bool isPatientChanged;
 	bool flatShaded;
 	bool noFemoralHeads;
+	bool drawStructure[kNumStructureTypes];
 	int transparency; // percentage
 
 	QString inPathFormat;
 
-public: // TEMP
+//public: // TEMP
 	vtkRenderer *renderer;
 
 private:
-
+	double minX;
+	double maxX;
+	double avgX; 
+	double minY;
+	double maxY;
+	double avgY; 
+	double minZ;
+	double maxZ;
 	double avgZ; 
 };
 

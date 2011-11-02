@@ -12,7 +12,7 @@
 #define PATIENT_H
 
 
-#include <QString>
+#include <qstring.h>
 
 
 class Patient

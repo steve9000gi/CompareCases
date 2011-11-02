@@ -23,7 +23,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-	:	versionNumber(196),
+	:	versionNumber(311),
 		queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
 		dukeDir(""),
@@ -182,12 +182,17 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
 
 	// for each Duke patient for which we have overlap data, create a combo box
 	// item:
-	dukeOverlapDataPath = dukeDir + "/overlap/Duke_struct_overlap180.txt";
-	QFile file(dukeOverlapDataPath);
+	//dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlap180.txt";
+	//dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlapAvg.txt";
+	dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlap";
+	QString defaultPath = dukeXYDataPath + "Avg.txt";
+
+	//QFile file(dukeXYDataPath);
+	QFile file(defaultPath);
 
 	if (!file.open(QIODevice::ReadOnly))
 	{
-		QString warn = "Failed to open \"" + dukeOverlapDataPath + "\"";
+		QString warn = "Failed to open \"" + defaultPath + "\"";
 		QMessageBox::warning(this, tr("File Open Failed"), warn);
 		return false;
 	}
@@ -348,10 +353,10 @@ void MainWindow::about()
 	info.append("Joseph Lo, Duke University\n");
 	info.append("Vorakarn Chanyavanich, Emory University\n\n");
 
-	info.append("The open source CompareCases application is implemented in\n");
+	info.append("The open source CompareCases application is implemented using\n");
 	info.append("Microsoft Visual C++ 2010\n");
 	info.append("Qt 4.71\n");
-	info.append("VTK 5.6.1\n");
+	info.append("VTK 5.8.0\n");
 	info.append("CMake 2.8.3\n");
 	info.append("GitHub (https://github.com/steve9000gi/CompareCases)");   
 	QMessageBox::about(this, tr("About CompareCases"), info);
