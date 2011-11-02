@@ -37,9 +37,9 @@ using namespace std;
 //
 ////////////////////////////////////////////////////////////////////////////////
 Axes::Axes()
-:	vText(NULL),
-	vTextMapper(NULL),
-	vTextActor(NULL),
+:	//vText(NULL),
+	//vTextMapper(NULL),
+	//vTextActor(NULL),
 	oActor(NULL),
 	xConeActor(NULL),
 	yConeActor(NULL),
@@ -54,9 +54,9 @@ Axes::Axes()
 ////////////////////////////////////////////////////////////////////////////////
 Axes::~Axes()
 {
-	if (vText) vText->Delete();
-	if (vTextMapper) vTextMapper->Delete();
-	if (vTextActor) vTextActor->Delete();
+	//if (vText) vText->Delete();
+	//if (vTextMapper) vTextMapper->Delete();
+	//if (vTextActor) vTextActor->Delete();
 	if (oActor) oActor->Delete();
 	if (xConeActor) xConeActor->Delete();
 	if (yConeActor) yConeActor->Delete();
@@ -73,22 +73,23 @@ Axes::~Axes()
 // renderer.
 //
 ////////////////////////////////////////////////////////////////////////////////
-vtkFollower *Axes::AddFollowingText(char *text, double x, double y, double z,
-	double r, double g, double b, vtkRenderer *ren)
+vtkFollower *Axes::AddFollowingText(AxisType axis, char *text, double x, 
+	double y, double z, double r, double g, double b, double scale,
+	vtkRenderer *ren)
 {
-	vText = vtkVectorText::New();;
-	vTextMapper = vtkPolyDataMapper::New();
-	vTextActor = vtkFollower::New();
+	vText[axis] = vtkVectorText::New();
+	vTextMapper[axis] = vtkPolyDataMapper::New();
+	vTextActor[axis] = vtkFollower::New();
 
-	vText->SetText(text);
-	vTextMapper->SetInputConnection(vText->GetOutputPort());
-	vTextActor->SetMapper(vTextMapper);
-	//vTextActor->SetScale(2, 2, 2);
-	vTextActor->AddPosition(x, y, z);
-	vTextActor->GetProperty()->SetColor(r, g, b);
-	vTextActor->SetCamera(ren->GetActiveCamera());
+	vText[axis]->SetText(text);
+	vTextMapper[axis]->SetInputConnection(vText[axis]->GetOutputPort());
+	vTextActor[axis]->SetMapper(vTextMapper[axis]);
+	vTextActor[axis]->SetScale(scale, scale, scale);
+	vTextActor[axis]->AddPosition(x, y, z);
+	vTextActor[axis]->GetProperty()->SetColor(r, g, b);
+	vTextActor[axis]->SetCamera(ren->GetActiveCamera());
 
-	return vTextActor;
+	return vTextActor[axis];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -211,3 +212,20 @@ vtkAssembly *Axes::InsertThis(vtkRenderer *r, double shaftLen /*= 20.0 */,
 
 	return assembly;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void Axes::setAxisLabel(AxisType axis, char *label)
+{
+	vText[axis]->SetText(label);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void Axes::setAxisLabelPosition(AxisType axis, double x, double y, double z)
+{
+	vTextActor[axis]->SetPosition(x, y, z);
+}
+

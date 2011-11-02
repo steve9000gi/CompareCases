@@ -65,15 +65,6 @@ static const double structureColor[Projector::kNumStructureTypes][3] =
 //		0.961, 0.8, 0.69		// flesh F5CCB0 = 245, 204, 176 = 0.961, 0.8, 0.69
 };
 
-// To hold vertex extrema values (x, y, and z) for each of the structures read
-// in/displayed:
-double maxVal[Projector::kNumStructureTypes][3];
-double minVal[Projector::kNumStructureTypes][3];
-
-// Hack: make space to keep max- and minVal from overwriting adjacent memory:
-double maxHack[Projector::kNumStructureTypes][3];
-double minHack[Projector::kNumStructureTypes][3];
-
 // The Carl Zhang/Vorakarn Chanyavanich convention for naming structure 
 // geometry input files:
 //
@@ -86,9 +77,6 @@ double minHack[Projector::kNumStructureTypes][3];
 //"C:/Users/Steve/Documents/IMRT/Zhang-test/PMC069_body_included/%s_PMC%03d_%s.out"; // test case for body
 //"C:/Users/Steve/Documents/IMRT/structures-2010-11-30/%03d/%s_%03d_%s.out";
 //"C:/Duke_Cases_2011-06-13/structures/%03d/%s_%03d_%s.out";
-
-// Forward declaration:
-//static void Projector::ReportCameraPosition(vtkRenderer *renderer);
 
 class RendererCallback : public vtkCommand
 {
@@ -103,6 +91,10 @@ public:
   virtual void Execute(vtkObject *caller, unsigned long, void *)
   {
     vtkRenderer *r = vtkRenderer::SafeDownCast(caller);
+	double clip[2];
+	r->GetActiveCamera()->GetClippingRange(clip);
+	cout << "RendererCallback::Execute(...) clip: " << clip[0] << ", " << clip[1] << endl;
+
     //Projector::ReportCameraPosition(r);
   }
 };
@@ -121,10 +113,24 @@ Projector::Projector()
 		renWin(NULL), 
 		textActor(NULL),
 		renderer(NULL),
+		isPatientChanged(true),
 		flatShaded(true),
 		noFemoralHeads(false),
-		avgZ(0.0)
+		avgX(0.0),
+		minX(kMinInit),
+		maxX(kMaxInit),
+		avgY(0.0),
+		minY(kMinInit),
+		maxY(kMaxInit),
+		avgZ(0.0),
+		minZ(kMinInit),
+		maxZ(kMaxInit),
+		slicePlane(NULL)
 {
+	for (int i = ekBladder; i < kNumStructureTypes; i++)
+	{
+		drawStructure[i] = true;
+	}
 }
 
 ///ctor/////////////////////////////////////////////////////////////////////////
@@ -141,11 +147,26 @@ Projector::Projector(QString dataDir)
 		renWin(NULL), 
 		textActor(NULL),
 		renderer(NULL),
+		isPatientChanged(true),
 		flatShaded(true),
 		noFemoralHeads(false),
-		avgZ(0.0)
+		avgX(0.0),
+		minX(kMinInit),
+		maxX(kMaxInit),
+		avgY(0.0),
+		minY(kMinInit),
+		maxY(kMaxInit),
+		avgZ(0.0),
+		minZ(kMinInit),
+		maxZ(kMaxInit),
+		slicePlane(NULL)
 {
 	inPathFormat = dataDir + "/structures/%03d/%s_%03d_%s.out";
+
+	for (int i = ekBladder; i < kNumStructureTypes; i++)
+	{
+		drawStructure[i] = true;
+	}
 }
 
 ///AddFollowingText/////////////////////////////////////////////////////////////
@@ -340,16 +361,13 @@ void Projector::WindowInit(vtkRenderWindow *renWin, QVTKWidget *qVTKWidget)
 //
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::InitExtrema(void)
-{
-  for (int structure = ekBladder; structure <= kNumStructureTypes; structure++)
-  {
-    maxVal[structure][0] = maxVal[structure][1] = maxVal[structure][2]
-	= kMaxInit;
-    minVal[structure][0] = minVal[structure][1] = minVal[structure][2]
-	= kMinInit;
-  }
-  
-  avgZ = 0.0;
+{  
+  minX = kMinInit;
+  maxX = kMaxInit;
+  minY = kMinInit;
+  maxY = kMaxInit;
+  minZ = kMinInit;
+  maxZ = kMaxInit;
 }
 
 ///PrintStructureName///////////////////////////////////////////////////////////
@@ -360,93 +378,17 @@ void Projector::PrintStructureName(eStructureType structureNum)
   cout << structureType[structureNum] << ". ";
 }  
 
-///ComputeAvgZ///////////////////////////////////////////////////////////////
+///ComputeAverages///////////////////////////////////////////////////////////////
 //
 // avgZ is used to set the camera's position and focal point, so this method
 // is therefore not an optional diagnostic function.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void Projector::ComputeAvgZ(void)
+void Projector::ComputeAverages(void)
 {
-  int builtStructNum = 0;
-  avgZ = 0.0;
-     
-  //cout << "\nVertex Extrema: " << endl;
-  
-  for (int structure = (int)ekBladder; structure < (int)kNumStructureTypes;
-	  structure++)
-  {
-    if (maxVal[structure][0] == kMaxInit)
-    {
-      continue; // Don't print/process numeric data on unbuilt structures
-    }
-    
-    builtStructNum++;
-    
-/*    PrintStructureName((eStructureType)structure);
-    cout << "\n\tmax = " << maxVal[structure][0]
-             << ", " << maxVal[structure][1]
-             << ", " << maxVal[structure][2] << endl;
-    cout << "\tmin = " << minVal[structure][0]
-             << ", " << minVal[structure][1]
-             << ", " << minVal[structure][2] << endl;
-*/           
-    double bdBoxCtr[3];
-    bdBoxCtr[0] = (minVal[structure][0] + maxVal[structure][0]) / 2.0; 
-    bdBoxCtr[1] = (minVal[structure][1] + maxVal[structure][1]) / 2.0; 
-    bdBoxCtr[2] = (minVal[structure][2] + maxVal[structure][2]) / 2.0; 
- 
-/*
-    cout << "\tbounding box center = " << bdBoxCtr[0]
-         << ", " << bdBoxCtr[1]
-         << ", " << bdBoxCtr[2] << endl;
-*/         
-    avgZ += bdBoxCtr[2];
-  }
-  
-  avgZ /= builtStructNum;
-//  cout << endl;
-}
-
-///WriteExtremaToFile///////////////////////////////////////////////////////////
-//
-// Assumes that ComputeAvgZ() has already completed, so that the value for
-// avgZ has been set.
-//
-////////////////////////////////////////////////////////////////////////////////
-void Projector::WriteExtremaToFile(ofstream &outf, int patientNum)
-{
-  outf << "Patient #" << patientNum << "---------------------------------" 
-       << endl;
-  
-  for (int structure = ekBladder; structure < kNumStructureTypes; structure++)
-  {
-    outf << structureType[structure] << ":";
-    
-    if (maxVal[structure][0] == kMaxInit)
-    {
-      outf << "\n\tunbuilt.\n" << endl;
-      continue; // Don't print/process numeric data on unbuilt structures
-    }
-        
-    outf << "\n\tmax = " << maxVal[structure][0]
-             << ", " << maxVal[structure][1]
-             << ", " << maxVal[structure][2] << endl;
-    outf << "\tmin = " << minVal[structure][0]
-             << ", " << minVal[structure][1]
-             << ", " << minVal[structure][2] << endl;
-            
-    double bdBoxCtr[3];
-    bdBoxCtr[0] = (minVal[structure][0] + maxVal[structure][0]) / 2.0; 
-    bdBoxCtr[1] = (minVal[structure][1] + maxVal[structure][1]) / 2.0; 
-    bdBoxCtr[2] = (minVal[structure][2] + maxVal[structure][2]) / 2.0; 
-    
-    outf << "\tbounding box center = " << bdBoxCtr[0]
-         << ", " << bdBoxCtr[1]
-         << ", " << bdBoxCtr[2] << endl;
-  }
-  
-  outf << "avgZ: " << avgZ << "\n" << endl;
+  avgX = (minX + maxX) / 2.0;
+  avgY = (minY + maxY) / 2.0;
+  avgZ = (minZ + maxZ) / 2.0;
 }
 
 ///ReportCameraPosition/////////////////////////////////////////////////////////
@@ -491,7 +433,7 @@ void Projector::SetCameraPosition(double az)
 	double posY = -150; // 1/28/11 changed from -250
 	//double posY = -210; // 04/13/11 so the body is entirely visible
 
-  renderer->GetActiveCamera()->SetPosition(64.5, posY, avgZ);   // campos in Matlab
+	renderer->GetActiveCamera()->SetPosition(64.5, posY, avgZ);   // campos in Matlab
   renderer->GetActiveCamera()->SetFocalPoint(64, 64, avgZ);     // camtarget "
   renderer->GetActiveCamera()->SetViewUp(0, 0, -1);             // camup     "
   renderer->GetActiveCamera()->Azimuth(-az);                    // [az,el] = view "
@@ -502,16 +444,12 @@ void Projector::SetCameraPosition(double az)
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::UpdateExtrema(eStructureType structure, double v[3])
 {
-  if (v[0] > maxVal[structure][0]) maxVal[structure][0] = v[0]; 
-  if (v[1] > maxVal[structure][1]) maxVal[structure][1] = v[1]; 
-  if (v[2] > maxVal[structure][2]) maxVal[structure][2] = v[2];
-  if (v[0] < minVal[structure][0]) minVal[structure][0] = v[0]; 
-  if (v[1] < minVal[structure][1]) minVal[structure][1] = v[1]; 
-  if (v[2] < minVal[structure][2])
-  {
-	  minVal[structure][2] = v[2]; 
-	  double minBin = minVal[structure][2];
-  }
+  if (v[0] < minX) minX = v[0];
+  if (v[0] > maxX) maxX = v[0];
+  if (v[1] < minY) minY = v[1];
+  if (v[1] > maxY) maxY = v[1];
+  if (v[2] < minZ) minZ = v[2];
+  if (v[2] > maxZ) maxZ = v[2];
 }
 
 ///BuildStructure///////////////////////////////////////////////////////////////
@@ -568,7 +506,7 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
     vfs.ignore(kMaxChars, '\n');
     //cout << "vertex[" << vNum << "]: " << v[0] << ", " << v[1] << ", " << v[2] << endl;
     points->InsertPoint(vNum, v);
-    UpdateExtrema(st, v);   
+    if (isPatientChanged) UpdateExtrema(st, v);   
   }
   
   vfs.close();
@@ -704,18 +642,30 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
 /*  } */
 
   renderer->AddActor(actor);
+  int numActors = renderer->GetActors()->GetNumberOfItems();
   
   return true;
 }
 
+double MAX(double a, double b, double c)
+{
+	return (a > b) ? ((a > c) ? a : c) : ((b > c) ? b : c);
+}
+
 ///BuildStructuresForPatient////////////////////////////////////////////////////
 //
-// Build all the structures for patientNum.  If none were built return false, 
-// else return true.
+// Build all the requested structures for patientNum.  If none were built return
+// false, else return true.
+//
+// If it's a first or different patient, initialize and recompute extrema and 
+// averages.  If it's the same patient with different structures, don't
+// recompute, to avoid the stuctures moving around in the render window.
 //
 ////////////////////////////////////////////////////////////////////////////////
-bool Projector::BuildStructuresForPatient(int patientNum)
+bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatient /* = false */)
 {
+  isPatientChanged = isDifferentPatient;
+
   renderer->RemoveAllViewProps();
 
   bool wasAtLeastOneStructureBuilt = false;
@@ -723,16 +673,26 @@ bool Projector::BuildStructuresForPatient(int patientNum)
   for (int s = ekBladder; s < kNumStructureTypes; s++)
   {
 
-	if (noFemoralHeads)
-	{
-	  if ((s == ekLtFem) || (s == ekRtFem)) continue;
-	}
+	if (!drawStructure[s]) continue;
 
     if (BuildStructure(patientNum, (eStructureType)s))
 	{
 		wasAtLeastOneStructureBuilt = true;
 	}
   }
+ 
+  InitSlicePlane();
+  renderer->GetActiveCamera()->SetClippingRange(1.0, MAX(maxX, maxY, maxZ) * 3.0);
+
+  if (isPatientChanged)
+  {
+	  cout << "Projector::BuildStructuresForPatient(...) patient #" << patientNum << " extrema: " 
+	   << minX << ", " << maxX << "; "
+	   << minY << ", " << maxY << "; "
+	   << minZ << ", " << maxZ << endl;
+  }
+
+  isPatientChanged = false;
 
   return wasAtLeastOneStructureBuilt;
 }
@@ -785,4 +745,118 @@ void Projector::SetProjection(int patientNum, int angle)
   renderer->AddActor(textActor); // Need to do this every time to see text
   textActor->SetInput(txt);    
   renWin->Render();
+  //ReportCameraPosition(renderer);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void Projector::InitSlicePlane()
+{
+	if (slicePlane)
+	{
+		slicePlane->Delete();
+		sliceMapper->Delete();
+		sliceActor->Delete();
+	}
+
+	slicePlane = vtkCubeSource::New();
+	sliceMapper = vtkPolyDataMapper::New();
+	sliceActor = vtkActor::New();
+ 
+
+	sliceMapper->SetInputConnection(slicePlane->GetOutputPort());
+	sliceMapper->ScalarVisibilityOff();
+	sliceActor->SetMapper(sliceMapper);
+	sliceActor->GetProperty()->SetOpacity(0.2);
+
+	renderer->AddActor(sliceActor);  
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void Projector::PositionSlicePlane(int orientation, int slice, double *spacing)
+{
+	slicePlane->SetCenter(avgX, avgY, avgZ);
+
+	slicePlane->SetXLength(maxX - minX);
+	slicePlane->SetYLength(maxY - minY);
+	slicePlane->SetZLength(maxZ - minZ);
+
+	const double thinDimension = 1.0;
+
+	switch(orientation)
+	{
+	case 0: // Sagittal
+		slicePlane->SetXLength(spacing[0]);
+		slicePlane->SetCenter(slice * spacing[0], avgY, avgZ);
+		break;
+	case 1: // Coronal
+		slicePlane->SetYLength(spacing[1]);
+		slicePlane->SetCenter(avgX, slice * spacing[1], avgZ);
+		break;
+	case 2: // Axial
+		slicePlane->SetZLength(spacing[2]);
+		slicePlane->SetCenter(avgX, avgY, slice * spacing[2]);
+		break;
+	default:
+		cout << "Projector::PositionSlicePlane(...): Invalid orientation: " << endl;		
+		break;
+	}
+
+	renWin->Render();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// TEMP hack 
+//
+////////////////////////////////////////////////////////////////////////////////
+void Projector::PositionSlicePlane(int orientation, int slice, int numSlices)
+{
+	slicePlane->SetCenter(avgX, avgY, avgZ);
+
+	slicePlane->SetXLength(maxX - minX);
+	slicePlane->SetYLength(maxY - minY);
+	slicePlane->SetZLength(maxZ - minZ);
+
+	const double thinDimension = 1.0;
+
+	double rangeXMin = avgX - 2 * (avgX - minX);
+	double rangeYMin = avgY - 2 * (avgY - minY);
+	double rangeZMin = avgZ - 2 * (avgZ - minZ);
+	double rangeXMax = avgX + 2 * (maxX - avgX);
+	double rangeYMax = avgY + 2 * (maxY - avgY);
+	double rangeZMax = avgZ + 2 * (maxZ - avgZ);
+
+	double xSliceSize = (rangeXMax - rangeXMin) / numSlices;
+	double ySliceSize = (rangeYMax - rangeYMin) / numSlices;
+	double zSliceSize = (rangeZMax - rangeZMin) / numSlices;
+
+	switch(orientation)
+	{
+	case 0: // Sagittal
+		slicePlane->SetXLength(thinDimension);
+		//slicePlane->SetXLength(spacing[0]);
+		//slicePlane->SetCenter(slice * spacing[0], avgY, avgZ);
+		//slicePlane->SetCenter(rangeXMin + (xSliceSize * slice), avgY, avgZ);
+		slicePlane->SetCenter(rangeXMax - (xSliceSize * slice), avgY, avgZ);
+		break;
+	case 1: // Coronal
+		slicePlane->SetYLength(thinDimension);
+		//slicePlane->SetYLength(spacing[1]);
+		slicePlane->SetCenter(avgX, rangeYMax - (ySliceSize * slice), avgZ);
+		break;
+	case 2: // Axial
+		slicePlane->SetZLength(thinDimension);
+		//slicePlane->SetZLength(spacing[2]);
+		slicePlane->SetCenter(avgX, avgY, rangeZMin + (zSliceSize * slice));
+		break;
+	default:
+		cout << "Projector::PositionSlicePlane(...): Invalid orientation: " << endl;		
+		break;
+	}
+
+	renWin->Render();
 }

@@ -69,7 +69,7 @@ protected:
 	QFile dukeDataDirectoryPath;
 
 	QString dukeDir;
-	QString dukeOverlapDataPath;
+	QString dukeXYDataPath;
 	QString poconoDir;
 	QString highPointDir;
 
@@ -84,7 +84,7 @@ public:
 	QString getDukeDir() { return dukeDir; };
 	 // TEMP hardwired to Duke pending introduction of data from other institutions:
 	QString getDataDir() { return dukeDir; };
-	QString &getDukeOverlapDataPath() { return dukeOverlapDataPath; };
+	QString &getDukeXYDataPath() { return dukeXYDataPath; };
 	SourceInstitution getQueryCaseSourceInstitution() { return queryCaseSourceInstitution; };
 	int getQueryCasePatientNumber() { return queryCasePatientNumber; };
 

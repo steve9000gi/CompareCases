@@ -1,14 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// CompareDialog.cpp: Qt-based GUI for prostate cancer radiotherapy planning 
-// tool. This window displays two horizontal "panels": the top displays data
+// CompareDialog.cpp: Qt-based GUI for prostate cancer radiation therapy  
+// planning tool. This window displays six panels: the left-top two display data
 // for the "query" patient, i.e., the current patient for whom treatment is 
-// being planned.  The lower "panel" displays data for the "match" patient,
+// being planned. The lower three display data for the "match" patient,
 // that is, data associated with a prior case who has completed a successful
 // program of radiation therapy and has been selected by an algorithm external
 // to this code as one of the cases in the database most like the query case.
 //
-// Each "panel" consists of three widgets, in order left to right: 1) a CT 
+// Each row of panels consists of three widgets, in order left to right: 1) a CT 
 // (Computerized Tomography) image data display, including controls for axis
 // selection, slice selection, and auto-play (image animation along the current
 // slice axis); 2) a projection display, which shows an image projection of the
@@ -18,7 +18,11 @@
 // namely the Eclipse treatment planning system from Palo Alto-based Varian
 // Medical Systems); and 3) Dose Volume Histogram (DVH) data as a cartesian
 // graph for the selected anatomical structures (femoral head data display
-// may be toggled on or off for projection and DVH displays).  
+// may be toggled on or off for projection and DVH displays). The match DVH 
+// panel displays DVH data for the match patient.  The overlay DVH panel 
+// departs from the general approach of top row for query, bottom row for 
+// match, by showing the match DVH with an optional overlay of DVH data for
+// one of the previously selected match cases, selected from an overlay menu.
 //
 // The various user-selectable display options are synchronized so that both 
 // query and match data are shown with identical options set (e.g., CT display
@@ -30,7 +34,8 @@
 // exploit that separability.
 //
 // author:  Steve Chall, RENCI
-// primary collaborator: Vorakarn Chanyavanich, Duke Medical Center
+// primary collaborators: Joseph Lo, Shiva Das, and Vorakarn Chanyavanich,
+//						  Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -74,7 +79,7 @@ int max(int a, int b)
 	return (a > b) ? a : b;
 }
 
-// rgb values, 0.0-1.0 range:
+// rgb values, 0.0-1.0 range (used by Projector class):
 static const double structureColor[CompareDialog::numStructures][3] =
 {
 	0.9, 0.0, 0.0,			// PTV red     
@@ -82,16 +87,16 @@ static const double structureColor[CompareDialog::numStructures][3] =
 	1.0, 0.84, 0.0,			// bladder "golden yellow"
 	//0.33, 0.33, 0.4,		// left femoral head blue-gray
 	//0.67, 0.67, 0.67		// right femoral head lite gray
-	0.5, 0.5, 0.6,		// left femoral head blue-gray
+	0.5, 0.5, 0.6,			// left femoral head blue-gray
 	0.75, 0.75, 0.75		// right femoral head lite gray
 };
 
 // rgb values equivalent to those in structureColor, but in the 0-255 range:
 static const double color[CompareDialog::numStructures][3] =
 {
-	230, 0.0, 0.0,			// PTV red     
+	230, 0, 0,				// PTV red     
 	139, 69, 19,			// rectum "saddle brown"
-	255, 215, 0.0,			// bladder "golden yellow"
+	255, 215, 0,			// bladder "golden yellow"
 	//85, 85, 102,			// left femoral head blue-gray
 	//171, 171, 171			// right femoral head lite gray
 	127, 127, 153,			// left femoral head blue-gray
@@ -118,6 +123,7 @@ CompareDialog::CompareDialog()
 		matchAngle(Patient::defaultGantryAngle),
 		queryPatient(NULL),
 		matchPatient(NULL),
+		overlayPatient(NULL),
 		queryDICOMReader(NULL),
 		matchDICOMReader(NULL),
 		queryCTImageFlip(NULL),
@@ -126,9 +132,9 @@ CompareDialog::CompareDialog()
 		matchCTImageViewer(NULL),
 		gantryAngleMenu(NULL),
 		gantryAngleActionGroup(NULL),
-		queryDVH(NULL),
+		overlayDVH(NULL),
 		matchDVH(NULL),
-		queryDVHView(NULL),
+		overlayDVHView(NULL),
 		matchDVHView(NULL),
 		caseSpaceDialog(NULL),
 		queryProjector(NULL),
@@ -136,19 +142,45 @@ CompareDialog::CompareDialog()
 		queryProjectionRenWin(NULL),
 		matchProjectionRenWin(NULL),
 		matchHistoryMenu(NULL),
-		currMatchHistoryNum(0),
-		currHistoryActionNum(0),
 		overlaySelectionMenu(NULL),
-		matchDVHDataExists(false)
+		matchDVHDataExists(false),
+		matchXYDataExists(true)
 {
 	setupUi(this);
 	setupVTKUI();
+	initScrollArea();
 	setupProjectionGantryAngleMenu();
 	setupMatchHistoryMenu();
 	setupOverlaySelectionMenu();
 	createActions();
 
+	viewStructureCheckBox[PTV] = viewPTVCheckBox;
+	viewStructureCheckBox[rectum] = viewRectumCheckBox;
+	viewStructureCheckBox[bladder] = viewBladderCheckBox;
+	viewStructureCheckBox[leftFem] = viewFemoralHeadsCheckBox;
+	viewStructureCheckBox[rightFem] = viewFemoralHeadsCheckBox;
+
+	setViewCheckboxColors();
+
+
+	viewRectumCheckBox->setChecked(true);
+	viewBladderCheckBox->setChecked(true);
+	viewPTVCheckBox->setChecked(true);
 	viewFemoralHeadsCheckBox->setChecked(true);
+	flatShadedCheckBox->setChecked(true);
+	historyPushButton->setEnabled(false);
+	removeCurrentMatchPushButton->setEnabled(false);
+	overlaySelectionPushButton->setEnabled(false);
+	removeSelectedOverlayPushButton->setEnabled(false);
+	overlayDVHCheckBox->setEnabled(false);
+	querySelectSpinBox->setHidden(true);
+	queryInstitutionPushButton->setHidden(true);
+	originCheckBox->setHidden(true);
+
+	sliceSelectionSpinBox->setKeyboardTracking(false);
+	querySelectSpinBox->setKeyboardTracking(false);
+	matchSelectSpinBox->setKeyboardTracking(false);
+	transparencySpinBox->setKeyboardTracking(false);
 
 	legendGroupBox->setStyleSheet("QGroupBox { color: solid black; }");
 	legendGroupBox->setStyleSheet("QGroupBox { border: 2px solid black; }");
@@ -162,6 +194,7 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 		matchAngle(Patient::defaultGantryAngle),
 		queryPatient(NULL),
 		matchPatient(NULL),
+		overlayPatient(NULL),
 		queryDICOMReader(NULL),
 		matchDICOMReader(NULL),
 		queryCTImageFlip(NULL),
@@ -170,9 +203,9 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 		matchCTImageViewer(NULL),
 		gantryAngleMenu(NULL),
 		gantryAngleActionGroup(NULL),
-		queryDVH(NULL),
+		overlayDVH(NULL),
 		matchDVH(NULL),
-		queryDVHView(NULL),
+		overlayDVHView(NULL),
 		matchDVHView(NULL),
 		caseSpaceDialog(csDlog),
 		queryProjector(NULL),
@@ -180,24 +213,46 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 		queryProjectionRenWin(NULL),
 		matchProjectionRenWin(NULL),
 		matchHistoryMenu(NULL),
-		currMatchHistoryNum(0),
-		currHistoryActionNum(0),
 		overlaySelectionMenu(NULL),
-		matchDVHDataExists(false)
+		matchDVHDataExists(false),
+		matchXYDataExists(true)
 {
 	setupUi(this);
 	setupVTKUI();
+	initScrollArea();
 	setupProjectionGantryAngleMenu();
 	createActions();
 
+	viewStructureCheckBox[PTV] = viewPTVCheckBox;
+	viewStructureCheckBox[rectum] = viewRectumCheckBox;
+	viewStructureCheckBox[bladder] = viewBladderCheckBox;
+	viewStructureCheckBox[leftFem] = viewFemoralHeadsCheckBox;
+	viewStructureCheckBox[rightFem] = viewFemoralHeadsCheckBox;
+
+	setViewCheckboxColors();
+
+	viewRectumCheckBox->setChecked(true);
+	viewBladderCheckBox->setChecked(true);
+	viewPTVCheckBox->setChecked(true);
 	viewFemoralHeadsCheckBox->setChecked(true);
 	flatShadedCheckBox->setChecked(true);
+	historyPushButton->setEnabled(false);
+	removeCurrentMatchPushButton->setEnabled(false);
+	overlaySelectionPushButton->setEnabled(false);
+	removeSelectedOverlayPushButton->setEnabled(false);
+	overlayDVHCheckBox->setEnabled(false);
+	querySelectSpinBox->setHidden(true);
+	queryInstitutionPushButton->setHidden(true);
+	originCheckBox->setHidden(true);
+
+	sliceSelectionSpinBox->setKeyboardTracking(false);
+	querySelectSpinBox->setKeyboardTracking(false);
+	matchSelectSpinBox->setKeyboardTracking(false);
+	transparencySpinBox->setKeyboardTracking(false);
 
 	legendGroupBox->setStyleSheet("QGroupBox { color: solid black; }");
 	legendGroupBox->setStyleSheet("QGroupBox { border: 2px solid black; }");
 }
-
-
 
 CompareDialog::~CompareDialog()
 {
@@ -251,9 +306,9 @@ CompareDialog::~CompareDialog()
 		delete gantryAngleActionGroup;
 	}
 		
-	if (queryDVH)
+	if (overlayDVH)
 	{
-		queryDVH->Delete();
+		overlayDVH->Delete();
 	}
 		
 	if (matchDVH)
@@ -261,9 +316,9 @@ CompareDialog::~CompareDialog()
 		matchDVH->Delete();
 	}
 	
-	if (queryDVHView)
+	if (overlayDVHView)
 	{
-		queryDVHView->Delete();
+		overlayDVHView->Delete();
 	}
 	
 	if (matchDVHView)
@@ -304,14 +359,50 @@ CompareDialog::~CompareDialog()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::initScrollArea()
+{
+/*	QScrollArea *scrollArea = new QScrollArea(this);
+	scrollArea->setBackgroundRole(QPalette::Dark);
+	QWidget *viewport = new QWidget(this);
+	QHBoxLayout *dialog_layout = new QHBoxLayout(this);
+    dialog_layout->addWidget(scroll); // add scroll to the QDialog's layout
+    setLayout(dialog_layout);
+	viewport->setLayout(this->layout());
+	scrollArea->setWidget(viewport);
+	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+*/
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::accept()
+{
+	caseSpaceDialog->enableCompareCasesButton(true);
+	QDialog::accept();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::reject()
+{
+	caseSpaceDialog->enableCompareCasesButton(true);
+	QDialog::reject();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setQuery(Patient *patient)
 {
 	queryPatient = patient;
+	QString text = "patient #"
+				 + QString::number(queryPatient->getNumber());
+	queryCaseNumberLabel->setText(text);
 	querySelectSpinBox->setValue(queryPatient->getNumber());
 	selectQueryCTSlice(sliceSelectionSlider->value());
 	setSliceAxis();
-	selectQueryProjection();
-	displayQueryDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -326,8 +417,6 @@ void CompareDialog::setMatch(Patient *patient)
 	matchSelectSpinBox->setValue(matchPatient->getNumber());
 	selectMatchCTSlice(sliceSelectionSlider->value());
 	setSliceAxis();
-	selectMatchProjection();
-	displayMatchDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -339,19 +428,22 @@ void CompareDialog::setMatch(Patient *patient)
 // within those directories.
 //
 ////////////////////////////////////////////////////////////////////////////////
-bool CompareDialog::dataExistsFor(Patient *patient)
+bool CompareDialog::CTDataExistsFor(Patient *patient)
 {
 	QFile CTDir(patient->getPathToCTData());
+
+	QString path = patient->getPathToCTData();
+
+	const char *s = path.ascii();
+
+	cout << "CompareDialog::CTDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
 
 	if (!CTDir.exists())
 	{
 		return false;
-
 	}
 
-// Because there's currently (2011/06/24) still such a paucity of DVH data,
-// don't check for its existence.  That way the Compare dialog can still open:
-#undef CHECKFORDVHDATA
+#define CHECKFORDVHDATA
 
 #ifdef CHECKFORDVHDATA
 	QFile DVHDataFile(patient->getPathToDVHData());
@@ -364,26 +456,45 @@ bool CompareDialog::dataExistsFor(Patient *patient)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// NOTE:  Currently checks for the existence of the file that is expected to
+// hold the DVH data, but not for the presence of correct data within that file.
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CompareDialog::DVHDataExistsFor(Patient *patient)
+{
+#define CHECKFORDVHDATA
+
+#ifdef CHECKFORDVHDATA
+	QFile DVHDataFile(patient->getPathToDVHData());
+
+	QString path = patient->getPathToCTData();
+
+	const char *s = path.ascii();
+
+	cout << "CompareDialog::DVHDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
+
+
+	return (DVHDataFile.exists());
+#else
+	return true;
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Sets up CT, projection, and DVH displays for query patient with id == param
 // patientNumber.
-//
-// 2do: Need to select the patient from pointer/reference to array[s] of
-// patients from way back in the MainWindow.  This method just changes the
-// number on the Query Patient passed in from CaseSpaceDialog.  That may not
-// matter at this point (2011/03/29) because everything currently being used
-// for displaying patient data is accessed based on globally set paths plus
-// the patient number, but all the other data values accumulated earlier in
-// the Patient object are almost certainly not correct for a Patient with a
-// changed number.
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQuery(int patientNumber)
 {
+	if (!caseSpaceDialog) return;
+
+	queryPatient = caseSpaceDialog->getDukePatientFrom(patientNumber);
 	queryPatient->setNumber(patientNumber);
 	selectQueryCTSlice(sliceSelectionSlider->value());
 	setSliceAxis();
-	selectQueryProjection();
-	displayQueryDVHData();
+	selectQueryProjection(true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -415,6 +526,8 @@ void CompareDialog::selectMatch(int patientNumber)
 	Patient *matchPatientCandidate =
 		caseSpaceDialog->getDukePatientFrom(patientNumber);
 
+	matchXYDataExists = matchXYDataExists && (matchPatientCandidate != NULL);
+
 	if (!matchPatientCandidate)
 	{
 		QString warn =
@@ -439,24 +552,28 @@ void CompareDialog::selectMatch(int patientNumber)
 
 	selectMatchCTSlice(sliceSelectionSlider->value());
 	setSliceAxis();
-	selectMatchProjection();
+	selectMatchProjection(true);
 
 	if (!matchHistoryMenu)
 	{
 		setupMatchHistoryMenu();
-		setupOverlaySelectionMenu();
 	}
-	else
+	else if (matchXYDataExists)
 	{
 		addMatchHistoryItem();
 	}
 
-	displayMatchDVHData();
-
-	if (overlayDVHCheckBox->isChecked())
+	if (!overlaySelectionMenu)
 	{
-		displayQueryDVHData();
+		setupOverlaySelectionMenu();
 	}
+	else if (matchXYDataExists)
+	{
+		addOverlaySelectionItem();
+	}
+	else matchXYDataExists = true;
+
+	displayMatchDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -501,6 +618,8 @@ void CompareDialog::selectMatch(int patientNumber)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setSliceAxis(bool val /* = true */)
 {
+	int orientation; 
+
 	if (axialRadioButton->isChecked()) 
 	{
 		sliceSelectionLabel->setText(tr("Z slice:"));
@@ -511,6 +630,7 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 		matchCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
 		queryCTImageViewer->SetSliceOrientationToXY();
 		matchCTImageViewer->SetSliceOrientationToXY();
+		orientation = 2;
 	}
 	else if (sagittalRadioButton->isChecked())
 	{
@@ -521,6 +641,7 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 		matchCTImageFlip->SetFilteredAxis(2); // Flip about z
 		queryCTImageViewer->SetSliceOrientationToYZ();
 		matchCTImageViewer->SetSliceOrientationToYZ();
+		orientation = 0;
 	}
 	else if (coronalRadioButton->isChecked())
 	{
@@ -531,6 +652,7 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 		matchCTImageFlip->SetFilteredAxis(2); // Flip about z
 		queryCTImageViewer->SetSliceOrientationToXZ();
 		matchCTImageViewer->SetSliceOrientationToXZ();
+		orientation = 1;
 	}
 
 	int qSliceMin = queryCTImageViewer->GetSliceMin();
@@ -544,6 +666,22 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 	sliceSelectionSpinBox->setMinValue(min(qSliceMin, mSliceMin));
 	sliceSelectionSlider->setValue(max(qSliceMax, mSliceMax) / 2); // ~ middle
 	maxSliceLabel->setText(QString::number(max(qSliceMax, mSliceMax)));
+
+	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
+	float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
+
+	cout << "qImagePosition: " << qImagePosition[0] << ", " << qImagePosition[1] << ", " << qImagePosition[2] << endl;
+	cout << "mImagePosition: " << mImagePosition[0] << ", " << mImagePosition[1] << ", " << mImagePosition[2] << endl;
+
+	queryProjector->PositionSlicePlane(orientation,
+		queryCTImageViewer->GetSlice(), qSliceMax - qSliceMin);
+	matchProjector->PositionSlicePlane(orientation,
+		matchCTImageViewer->GetSlice(), mSliceMax - mSliceMin);
+/*	queryProjector->PositionSlicePlane(orientation,
+		queryCTImageViewer->GetSlice(), queryDICOMReader->GetDataSpacing());
+	matchProjector->PositionSlicePlane(orientation,
+		matchCTImageViewer->GetSlice(), matchDICOMReader->GetDataSpacing());
+*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -554,7 +692,27 @@ void CompareDialog::changeSlice(int slice)
 	queryCTImageViewer->SetSlice(slice);
 	matchCTImageViewer->SetSlice(slice);
 
-	//extractQueryDICOMFileMetaData();
+	if (queryPatient && queryDICOMReader)
+	{
+		queryProjector->PositionSlicePlane(queryPatient->getSliceOrientation(),
+			queryCTImageViewer->GetSlice(), 
+			queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin());
+	}
+
+	if (matchPatient && matchDICOMReader)
+	{
+		matchProjector->PositionSlicePlane(matchPatient->getSliceOrientation(),
+			matchCTImageViewer->GetSlice(), 
+			matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin());
+	}
+
+	//float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
+	//float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
+
+	//cout << "slice " << slice << " qImagePosition: " << qImagePosition[0] << ", " << qImagePosition[1] << ", " << qImagePosition[2] << endl;
+	//cout << "slice " << slice << " mImagePosition: " << mImagePosition[0] << ", " << mImagePosition[1] << ", " << mImagePosition[2] << endl;
+
+	//extractQueryDICOMData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -681,6 +839,8 @@ void CompareDialog::setGantryAngle335()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// 
+// Slot for transparencySlider, to match argless valueChanged(int) signal.
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::changeTransparency(int transp)
@@ -693,7 +853,16 @@ void CompareDialog::changeTransparency(int transp)
 
 	transparencySlider->setValue(transp);
 	transparencySpinBox->setValue(transp);
+}
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Slot for transparencySpinBox, to match argless editingFinished() signal.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::changeTransparency()
+{
+	changeTransparency(transparencySpinBox->value());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -722,20 +891,34 @@ void CompareDialog::toggleOrigin(bool checked)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Affects projection and DVH displays for both query and match.
+// Force update of structure projections and DVH displays.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::toggleFemoralHeads(bool checked)
+void CompareDialog::toggleViewStructure(bool checked)
 {
-	queryPatient->setIsShowingFemoralHeads(checked);
-	matchPatient->setIsShowingFemoralHeads(checked);
+	queryProjector->setDrawStructure(Projector::ekBladder,
+		viewBladderCheckBox->isChecked());
+	queryProjector->setDrawStructure(Projector::ekRectum,
+		viewRectumCheckBox->isChecked());
+	queryProjector->setDrawStructure(Projector::ekPTV,
+		viewPTVCheckBox->isChecked());
+	queryProjector->setDrawStructure(Projector::ekLtFem,
+		viewFemoralHeadsCheckBox->isChecked());
+	queryProjector->setDrawStructure(Projector::ekRtFem,
+		viewFemoralHeadsCheckBox->isChecked());
 
-	queryProjector->setNoFemoralHeads(!checked);
-	matchProjector->setNoFemoralHeads(!checked);
+	matchProjector->setDrawStructure(Projector::ekBladder,
+		viewBladderCheckBox->isChecked());
+	matchProjector->setDrawStructure(Projector::ekRectum,
+		viewRectumCheckBox->isChecked());
+	matchProjector->setDrawStructure(Projector::ekPTV,
+		viewPTVCheckBox->isChecked());
+	matchProjector->setDrawStructure(Projector::ekLtFem,
+		viewFemoralHeadsCheckBox->isChecked());
+	matchProjector->setDrawStructure(Projector::ekRtFem,
+		viewFemoralHeadsCheckBox->isChecked());
 
 	selectQueryProjection();
-	displayQueryDVHData();
-
 	selectMatchProjection();
 	displayMatchDVHData();
 }
@@ -755,6 +938,9 @@ void CompareDialog::setupVTKUI()
 	queryProjectionRenWin = vtkRenderWindow::New();
 	matchProjectionRenWin = vtkRenderWindow::New();
 
+	// TEMP SAC:
+	originCheckBox->setChecked(true);
+
 	queryProjector->WindowInit(queryProjectionRenWin, queryProjectionWidget);
 	matchProjector->WindowInit(matchProjectionRenWin, matchProjectionWidget);
 
@@ -764,10 +950,13 @@ void CompareDialog::setupVTKUI()
 	queryProjector->TextInit();
 	matchProjector->TextInit();
 
+	queryProjector->InitSlicePlane();
+	matchProjector->InitSlicePlane();
+
 	queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
 	matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
 
-	initQueryDVHObjects();
+	initOverlayDVHObjects();
 	initMatchDVHObjects();
 }
 
@@ -794,8 +983,15 @@ void CompareDialog::createActions()
 		SLOT(changeSlice(int)));
 	connect(autoPlayPushButton, SIGNAL(clicked()), this, SLOT(autoplay()));
 
+	connect(viewBladderCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleViewStructure(bool)));
+	connect(viewRectumCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleViewStructure(bool)));
+	connect(viewPTVCheckBox, SIGNAL(clicked(bool)), this, 
+		SLOT(toggleViewStructure(bool)));
 	connect(viewFemoralHeadsCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleFemoralHeads(bool)));
+		SLOT(toggleViewStructure(bool)));
+	
 	connect(flatShadedCheckBox, SIGNAL(clicked(bool)), this, 
 		SLOT(toggleFlatShadedStructures(bool)));
 	connect(originCheckBox, SIGNAL(clicked(bool)), this, 
@@ -803,15 +999,39 @@ void CompareDialog::createActions()
 
 	connect(transparencySlider, SIGNAL(valueChanged(int)), this, 
 		SLOT(changeTransparency(int)));
-	connect(transparencySpinBox, SIGNAL(valueChanged(int)), this, 
-		SLOT(changeTransparency(int)));
+	connect(transparencySpinBox, SIGNAL(editingFinished()), this, 
+		SLOT(changeTransparency()));
+
+	connect(removeCurrentMatchPushButton, SIGNAL(released()), this,
+		SLOT(removeCurrentMatch()));
 
 	connect(overlayDVHCheckBox, SIGNAL(clicked(bool)), this, 
 		SLOT(toggleOverlayDVH(bool)));
+	connect(removeSelectedOverlayPushButton, SIGNAL(released()), this,
+		SLOT(removeSelectedOverlayMenuItem()));
 
-	connect(okPushButton, SIGNAL(clicked()), this, SLOT(accept()));
-	connect(cancelPushButton, SIGNAL(clicked()), this, SLOT(reject()));
+	//connect(okPushButton, SIGNAL(clicked()), this, SLOT(accept()));
+	//connect(cancelPushButton, SIGNAL(clicked()), this, SLOT(reject()));
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Call *after* the viewStructureCheckBox array has been set up
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::setViewCheckboxColors()
+{
+	for (int s = PTV; s < rightFem; s++)
+	{
+		QColor clr((int)(color[s][0]), (int)(color[s][1]), (int)(color[s][2]));
+		viewStructureCheckBox[s]->setPaletteForegroundColor(clr);
+	}
+
+	QColor shadowClr((int)(color[bladder][0]) / 2, (int)(color[bladder][1]) / 2,
+					 (int)(color[bladder][2]) / 2);
+	viewBladderCheckboxShadowLabel->setPaletteForegroundColor(shadowClr);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -881,24 +1101,6 @@ void CompareDialog::initMatchCTPipeLine()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::accept()
-{
-	caseSpaceDialog->enableCompareCasesButton(true);
-	QDialog::accept();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::reject()
-{
-	caseSpaceDialog->enableCompareCasesButton(true);
-	QDialog::reject();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
 // Set the slice for the query patient's CT image display.
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -923,8 +1125,12 @@ void CompareDialog::selectQueryCTSlice(int slice)
 		//QMessageBox::warning(this, tr("File Open Failed"), warn);
 		queryDICOMReader = NULL;
 	}
+
+	queryCTImageViewer->GetRenderWindow()->Render();
 	
-	queryCTImageViewer->Render();
+	//extractQueryDICOMData();
+
+	//queryCTImageViewer->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -965,8 +1171,32 @@ void CompareDialog::selectMatchCTSlice(int slice)
 // Diagnostics for debug.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::extractQueryDICOMFileMetaData()
+void CompareDialog::extractQueryDICOMData()
 {
+	cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
+	int dataExtent[6];
+	double dataSpacing[3];
+	double dataOrigin[3];
+	queryDICOMReader->GetDataExtent(dataExtent);
+	queryDICOMReader->GetDataSpacing(dataSpacing);
+	queryDICOMReader->GetDataOrigin(dataOrigin);
+	cout << "CT slice #" << queryCTImageViewer->GetSlice() << ": " << endl;
+	cout << "orientation: " << queryCTImageViewer->GetSliceOrientation() << endl;
+	cout << "extent: " << dataExtent[0] << ", "
+					   << dataExtent[1] << ", "
+					   << dataExtent[2] << ", "
+					   << dataExtent[3] << ", "
+					   << dataExtent[4] << ", "
+					   << dataExtent[5] << endl;
+	cout << "spacing: " << dataSpacing[0] << ", "
+					    << dataSpacing[1] << ", "
+					    << dataSpacing[2] << endl;
+	cout << "origin: " << dataOrigin[0] << ", "
+					    << dataOrigin[1] << ", "
+					    << dataOrigin[2] << endl;
+	cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
+	
+
 	double *pixelSpacing = queryDICOMReader->GetPixelSpacing();
 	const char *xferSyntaxUID = queryDICOMReader->GetTransferSyntaxUID();
 	const char *patientName = queryDICOMReader->GetPatientName();
@@ -982,16 +1212,16 @@ void CompareDialog::extractQueryDICOMFileMetaData()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::selectQueryProjection()
+void CompareDialog::selectQueryProjection(bool newQuery /* = false */)
 {
 	int pNum = queryPatient->getNumber();
 
-    if (!queryProjector->BuildStructuresForPatient(pNum))
+    if (!queryProjector->BuildStructuresForPatient(pNum, newQuery))
 	{	
 		QString warn =
 			"CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
 			+ QString::number(pNum);
-		QMessageBox::warning(this, tr("File Open Failed"), warn);		
+		//QMessageBox::warning(this, tr("File Open Failed"), warn);		
 	}
 
 	if (originCheckBox->isChecked())
@@ -999,31 +1229,61 @@ void CompareDialog::selectQueryProjection()
 		queryProjector->AddOrigin(queryProjector->GetRenderer());
 	}
 
-	queryProjector->ComputeAvgZ();
+	// Don't compute a new avgZ value if all you're doing is showing or hiding 
+	// structures, because then the collection of visible structures is likely
+	// to move around:
+	if (newQuery)
+	{
+		queryProjector->ComputeAverages();
+	}
+
+	queryProjector->PositionSlicePlane(
+		queryCTImageViewer->GetSliceOrientation(),
+		queryCTImageViewer->GetSlice(),
+		queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin()); // TEMP
+//		queryDICOMReader->GetDataSpacing());
+
 	queryProjector->SetProjection(pNum, queryAngle);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::selectMatchProjection()
+void CompareDialog::selectMatchProjection(bool newMatch /* = false */ )
 {
 	int pNum = matchPatient->getNumber();
 
-    if (!matchProjector->BuildStructuresForPatient(pNum))
+	if (newMatch)
+	{
+		matchProjector->InitExtrema();
+	}
+
+    if (!matchProjector->BuildStructuresForPatient(pNum, newMatch))
 	{	
 		QString warn =
 			"CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
 			+ QString::number(pNum);
-		QMessageBox::warning(this, tr("File Open Failed"), warn);		
+		//QMessageBox::warning(this, tr("File Open Failed"), warn);		
 	}
 
 	if (originCheckBox->isChecked())
 	{
 		matchProjector->AddOrigin(matchProjector->GetRenderer());
 	}
+	
+	// Don't compute a new avgZ value if all you're doing is showing or hiding 
+	// structures, because then the collection of visible structures is likely
+	// to move around:
+	if (newMatch)
+	{
+		matchProjector->ComputeAverages();
+	}
 
-	matchProjector->ComputeAvgZ();
+	matchProjector->PositionSlicePlane(
+		matchCTImageViewer->GetSliceOrientation(),
+		matchCTImageViewer->GetSlice(),
+		matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin()); // TEMP 
+		//matchDICOMReader->GetDataSpacing());
 	matchProjector->SetProjection(pNum, matchAngle);
 }
 
@@ -1073,32 +1333,32 @@ void CompareDialog::setupProjectionGantryAngleMenu()
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::initQueryDVHObjects()
+void CompareDialog::initOverlayDVHObjects()
 {
-	if (queryDVH) queryDVH->Delete();
-	queryDVH = vtkChartXY::New();
-	setDVHYAxisTicks(queryDVH);
+	if (overlayDVH) overlayDVH->Delete();
+	overlayDVH = vtkChartXY::New();
+	setDVHYAxisTicks(overlayDVH);
 
-	queryDVH->GetAxis(vtkAxis::LEFT)->GetLabelProperties()->SetColor(1, 1, 1);
-	queryDVH->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetColor(1, 1, 1);
+	overlayDVH->GetAxis(vtkAxis::LEFT)->GetLabelProperties()->SetColor(1, 1, 1);
+	overlayDVH->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetColor(1, 1, 1);
 
-	queryDVH->GetAxis(vtkAxis::BOTTOM)->GetLabelProperties()->SetColor(1, 1, 1);
-	queryDVH->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetColor(1, 1, 1);
+	overlayDVH->GetAxis(vtkAxis::BOTTOM)->GetLabelProperties()->SetColor(1, 1, 1);
+	overlayDVH->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetColor(1, 1, 1);
 
-	queryDVH->GetTitleProperties()->SetColor(1, 1, 1);
+	overlayDVH->GetTitleProperties()->SetColor(1, 1, 1);
 
-	vtkChartLegend *l = queryDVH->GetLegend();
+	vtkChartLegend *l = overlayDVH->GetLegend();
 	l->GetBrush()->SetColorF(0, 0, 0, 0.67);
 	l->GetLabelProperties()->SetColor(1, 1, 1);
 
-	if (queryDVHView) queryDVHView->Delete();
-	queryDVHView = vtkContextView::New();
-	queryDVHView->GetRenderer()->SetBackground(0, 0, 0);
+	if (overlayDVHView) overlayDVHView->Delete();
+	overlayDVHView = vtkContextView::New();
+	overlayDVHView->GetRenderer()->SetBackground(0, 0, 0);
 
-	queryDVHView->GetScene()->AddItem(queryDVH);
-	queryDVHView->SetInteractor(queryDVHWidget->GetInteractor());
-	queryDVHWidget->SetRenderWindow(queryDVHView->GetRenderWindow());
-	queryDVHView->GetRenderWindow()->SetSize(xDVHWidget, yDVHWidget);
+	overlayDVHView->GetScene()->AddItem(overlayDVH);
+	overlayDVHView->SetInteractor(overlayDVHWidget->GetInteractor());
+	overlayDVHWidget->SetRenderWindow(overlayDVHView->GetRenderWindow());
+	overlayDVHView->GetRenderWindow()->SetSize(xDVHWidget, yDVHWidget);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1134,43 +1394,63 @@ void CompareDialog::initMatchDVHObjects()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Assumes that each DVH data file has two lines of (discardable) title and
-// column header info, followed by exactly numDVHPoints rows of data (although
-// there is a check for premature end of file, overall program behavior is
-// unpredictable if it occurs).
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::initVolumesArray(
+	float volumes[numStructures][maxNumDVHPoints])
+{
+
+	for (int i = 0; i < numStructures; i++)
+	{
+		for (int j = 0; j < maxNumDVHPoints; j++)
+		{
+			volumes[i][j] = 0.0;
+		}
+	}
+}
+
+///readDVHData///////////////////////////////////////////////////////////////////
+//
+// File format (as of 2011-09-20):
+//	1. bladder:
+//		30 lines to skip over;
+//		variable number of lines of numeric data for bladder; each line:
+//			1) relative dose (%) in 0.1% increments: x axis;
+//			2) dose (cGy == centi-Grays): we're not using this here;
+//			3) ratio of total structure volume (%): y-axis;
+//		last line of data followed by blank line (carriage return only).
+//  2, 3, 4, 5. rectum, left femoral head, right femoral head, PTV:
+//		18 lines to skip over (not including blank line that terminated data for
+//			previous structure)
+//		data as above
 //
 ////////////////////////////////////////////////////////////////////////////////
-bool CompareDialog::readQueryDVHData(Patient &patient)
+bool CompareDialog::readDVHData(Patient &patient,
+	float volumes[numStructures][maxNumDVHPoints], int &numPoints)
 {
 	QString path = patient.getPathToDVHData();
 	QFile file(path);
 
-	// Silently fail if the data isn't available: at this point (2/06/11) it
-	// often isn't, that may continue to be the case indefinitely into the
-	// future, and announcing the fact is an annoying interruption in workflow.
-	//
 	if (!file.open(QIODevice::ReadOnly))
 	{
-		//QString warn = "Failed to open \"" + path + "\"";
-		//QMessageBox::warning(this, tr("File Open Failed"), warn);
+		QString warn = "Failed to open \"" + path + "\"";
+		QMessageBox::warning(this, tr("File Open Failed"), warn);
 		return false;
 	}
 
 	QTextStream in(&file);
-
-	// Skip over the first two lines (title and column headers):
-	in.readLine();
-	in.readLine();
-
-	int i = 0;
-
-	while ((!in.atEnd()) && (i < numDVHPoints))
+	QString line;
+	
+	for (int i = 0; i < 12; i++) // Skip 12 lines of file header
 	{
-		in >> dose[i] >> queryVolumes[PTV][i] >> queryVolumes[rectum][i] 
-		   >> queryVolumes[bladder][i]  >> queryVolumes[leftFem][i] 
-		   >> queryVolumes[rightFem][i];
-		i++;  // Hack: won't work unless incremented as separate statement [?]
+		line = in.readLine();
 	}
+
+	initVolumesArray(volumes);
+	numPoints = readDVHStructureData(in, bladder, volumes);
+	readDVHStructureData(in, rectum, volumes);
+	readDVHStructureData(in, leftFem, volumes);
+	readDVHStructureData(in, rightFem, volumes);
+	readDVHStructureData(in, PTV, volumes);
 
 	in.flush();
 	file.close();
@@ -1179,63 +1459,78 @@ bool CompareDialog::readQueryDVHData(Patient &patient)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// 
+// Returns the number of data points read from file.
 //
-// Assumes that each DVH data file has two lines of (discardable) title and
-// column header info, followed by exactly numDVHPoints rows of data (although
-// there is a check for premature end of file, overall program behavior is
-// unpredictable if it occurs).
+// Assumes parameter "in" connects to an open file of the correct format.
 //
 ////////////////////////////////////////////////////////////////////////////////
-bool CompareDialog::readMatchDVHData(Patient &patient)
+int CompareDialog::readDVHStructureData(QTextStream &in, int structureNum,
+		float volumes[numStructures][maxNumDVHPoints])
 {
-	QString path = patient.getPathToDVHData();
-	QFile file(path);
+	QString line;
+	const static int numStructureHeaderLines = 18;
 
-	// Silently fail if the data isn't available: at this point (2/06/11) it
-	// often isn't, that may continue to be the case indefinitely into the
-	// future, and modally announcing the fact is an annoying interruption
-	// in workflow.
-	//
-	if (!file.open(QIODevice::ReadOnly))
+	for (int i = 0; i < numStructureHeaderLines; i++) // Skip structure header
 	{
-		//QString warn = "Failed to open \"" + path + "\"";
-		//QMessageBox::warning(this, tr("File Open Failed"), warn);
-		return false;
+		line = in.readLine();
 	}
 
-	QTextStream in(&file);
+	line = in.readLine(); // Initialize line for the while loop
+	int lineNum = 0;
+	QStringList list;
 
-	// Skip over the first two lines (title and column headers):
-	in.readLine();
-	in.readLine();
-
-	int i = 0;
-
-	while ((!in.atEnd()) && (i < numDVHPoints))
+	// readLine() trims endline chars so returns empty QString for blank line:
+	while ((!line.isEmpty()) && (lineNum < maxNumDVHPoints)) 
 	{
-		in >> dose[i] >> matchVolumes[PTV][i] >> matchVolumes[rectum][i] 
-		   >> matchVolumes[bladder][i]  >> matchVolumes[leftFem][i] 
-		   >> matchVolumes[rightFem][i];
-		i++;  // Hack: won't work unless incremented as separate statement [?]
+		list = line.split(" ", QString::SkipEmptyParts);
+		//list = line.split(QRegExp("\\s+"));
+
+		if (!list.at(0).contains(QChar('.'))) // Skip fractional % doses
+		{
+			dose[lineNum] = list.at(0).toDouble();
+			int size = list.size();
+			float vol = list.at(2).toDouble();
+			volumes[structureNum][lineNum++] = list.at(2).toDouble();
+		}
+
+		line = in.readLine();
 	}
 
-	in.flush();
-	file.close();
-
-	return true;
+	return lineNum - 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Assumes that parameter chart points to a previously instantiated vtkChartXY
+// Assumes that parameter "chart" points to a previously instantiated vtkChartXY
 // object.
 //
+// Also assumes that match DVH data has already been read in.
+//
+// Note: vtkChartXY requires that all the arrays that are used to construct 
+// plots have the same number of elements.  However, in the DVH data acquired
+// 2011/09/19, different cases have different numbers of values.  The current
+// hack is to set the number of plot points for both match and overlay to the
+// number of match points.  The volumes array elements are all set to 0.0 before
+// each read, so that if the match case has more points than the overlay case,
+// the extra overlay values will just be 0.0 since the initialization for those
+// elements will not have been overwritten during file read.  If the overlay
+// case has more points than the match case, then those "extras" will simply
+// not be displayed.  This should not be more than a very few points, judging
+// from the data I've looked at, and this way there won't be any discrepancy
+// in the sizes and formats of the two DVH graphs.  An alternative would be 
+// to set both to the max of the two numbers of points, but that could entail
+// resizing the match DVH depending on which overlay case is selected, which
+// I'd rather avoid unless someone misses the few data points lopped off the
+// nds of the overlay curves in some cases.  Everything tends to be at or near
+// 0.0 out there in any case.
+//
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::setupQueryDVHChart(vtkChartXY *chart, char *title)
+void CompareDialog::setupOverlayDVHChart(vtkChartXY *chart, char *title)
 {
 	chart->ClearPlots();
 
-	chart->SetTitle(title);
+	if (title) chart->SetTitle(title);
 	chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
 	chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
 	chart->SetShowLegend(true);
@@ -1245,58 +1540,63 @@ void CompareDialog::setupQueryDVHChart(vtkChartXY *chart, char *title)
 	vtkTable *table = vtkTable::New();
 	vtkPlot *line;
 
-	xCoords->SetArray(dose, numDVHPoints, 1);
+	xCoords->SetArray(dose, numMatchDVHPoints, 1);
 	xCoords->SetName("% dose");
 	table->AddColumn(xCoords);
-	table->SetNumberOfRows(numDVHPoints);
+	table->SetNumberOfRows(numMatchDVHPoints);
 
-	int numStructuresToDisplay = viewFemoralHeadsCheckBox->isChecked() 
-							   ? numStructures : 3;
+	int currStructureCount = 0;
 
-	for (int i = 0; i < numStructuresToDisplay; i++)
+	for (int i = 0; i < numStructures; i++)
 	{
-		yCoords[i] = vtkFloatArray::New();
-		yCoords[i]->SetArray(queryVolumes[i], numDVHPoints, 1);
+		if (!viewStructureCheckBox[i]->isChecked()) continue;
+
+		yCoords[currStructureCount] = vtkFloatArray::New();
+		yCoords[currStructureCount]->SetArray(matchVolumes[i], numMatchDVHPoints, 1);
 
 		if (overlayDVHCheckBox->isChecked())
 		{
-			QString name = "query ";
+			QString name = "match ";
 			name.append(structureName[i]);
-			yCoords[i]->SetName(name);
+			yCoords[currStructureCount]->SetName(name);
 		}
 		else
 		{
-			yCoords[i]->SetName(structureName[i]);
+			yCoords[currStructureCount]->SetName(structureName[i]);
 		}
 
-		table->AddColumn(yCoords[i]);
+		table->AddColumn(yCoords[currStructureCount]);
 		table->Update();
 		line = chart->AddPlot(vtkChart::LINE);
-		int numCols = table->GetNumberOfColumns();
-		line->SetInput(table, 0, i + 1);
+		line->SetInput(table, 0, currStructureCount + 1);
 		line->SetColor(color[i][0], color[i][1], color[i][2], 255);
-		yCoords[i]->Delete();
+		yCoords[currStructureCount++]->Delete();
 	}
 
-	if (overlayDVHCheckBox->isChecked() &&	matchDVHDataExists)
+	if (overlayDVHCheckBox->isChecked() && overlayPatient)
 	{
-		vtkFloatArray *matchYCoords[numStructures];
+		vtkFloatArray *overlayYCoords[numStructures];
+		currStructureCount = 0;
 
-		for (int i = 0; i < numStructuresToDisplay; i++)
+		for (int i = 0; i < numStructures; i++)
 		{
-			matchYCoords[i] = vtkFloatArray::New();
-			matchYCoords[i]->SetArray(matchVolumes[i], numDVHPoints, 1);
-			QString name = "match ";
+			if (!viewStructureCheckBox[i]->isChecked()) continue;
+
+			overlayYCoords[currStructureCount] = vtkFloatArray::New();
+
+			overlayYCoords[currStructureCount]->SetArray(overlayVolumes[i],
+				numMatchDVHPoints, 1);
+			QString name = "overlay ";
 			name.append(structureName[i]);
-			matchYCoords[i]->SetName(name);
-			table->AddColumn(matchYCoords[i]);
+			overlayYCoords[currStructureCount]->SetName(name);
+			table->AddColumn(overlayYCoords[currStructureCount]);
 			table->Update();
 			line = chart->AddPlot(vtkChart::LINE);
 			line->SetInput(table, 0, table->GetNumberOfColumns() - 1);
 			line->SetColor(color[i][0], color[i][1], color[i][2], 255);
 			line->GetPen()->SetLineType(vtkPen::DASH_LINE);
 			line->GetPen()->SetWidth(4.0);
-			matchYCoords[i]->Delete();
+			overlayYCoords[currStructureCount++]->Delete();
 		}
 	}
 
@@ -1308,7 +1608,7 @@ void CompareDialog::setupQueryDVHChart(vtkChartXY *chart, char *title)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Assumes that parameter chart points to a previously instantiated vtkChartXY
+// Assumes that parameter "chart" points to a previously instantiated vtkChartXY
 // object.
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -1316,7 +1616,7 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 {
 	chart->ClearPlots();
 
-	chart->SetTitle(title);
+	if (title) chart->SetTitle(title);
 	chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
 	chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
 	chart->SetShowLegend(true);
@@ -1326,25 +1626,26 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 	vtkTable *table = vtkTable::New();
 	vtkPlot *line;
 
-	xCoords->SetArray(dose, numDVHPoints, 1);
+	xCoords->SetArray(dose, numMatchDVHPoints, 1);
 	xCoords->SetName("% dose");
 	table->AddColumn(xCoords);
-	table->SetNumberOfRows(numDVHPoints);
+	table->SetNumberOfRows(numMatchDVHPoints);
 
-	int numStructuresToDisplay = viewFemoralHeadsCheckBox->isChecked() 
-							   ? numStructures : 3;
+	int currStructureCount = 0;
 
-	for (int i = 0; i < numStructuresToDisplay; i++)
+	for (int i = 0; i < numStructures; i++)
 	{
-		yCoords[i] = vtkFloatArray::New();
-		yCoords[i]->SetArray(matchVolumes[i], numDVHPoints, 1);
-		yCoords[i]->SetName(structureName[i]);
-		table->AddColumn(yCoords[i]);
+		if (!viewStructureCheckBox[i]->isChecked()) continue;
+
+		yCoords[currStructureCount] = vtkFloatArray::New();
+		yCoords[currStructureCount]->SetArray(matchVolumes[i], numMatchDVHPoints, 1);
+		yCoords[currStructureCount]->SetName(structureName[i]);
+		table->AddColumn(yCoords[currStructureCount]);
 		table->Update();
 		line = chart->AddPlot(vtkChart::LINE);
-		line->SetInput(table, 0, i + 1);
+		line->SetInput(table, 0, currStructureCount + 1);
 		line->SetColor(color[i][0], color[i][1], color[i][2], 255);
-		yCoords[i]->Delete();
+		yCoords[currStructureCount++]->Delete();
 	}
 
 	chart->Update();
@@ -1353,22 +1654,19 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 	xCoords->Delete();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+///displayOverlayDVHData////////////////////////////////////////////////////////
 //
 // Proposed: new and modified functionality for the Compare dialog (based on a
 // conversation with Shiva Das and Joseph Lo on 8/30/11):
 //
-// 1. An item is deleted from the Match History menu by control-clicking on it.
-// 
-// 2. New DVH display behavior:
+// New DVH display behavior:
 //
-// What has been "Query DVH" (top right panel in Compare dialog) becomes 
-// "Match candidate DVH overlays" (so therefore what was "Match" in the Compare
-// dialog becomes "Match candidate"). In the larger scheme the Query case can't
-// be expected to *have* a DVH prior to the completion of his treatment plan.
+// What had been "Query DVH" (top right panel in Compare dialog) has become
+// the "Overlay DVH".  In the larger scheme the Query case can't be expected to
+// *have* a DVH prior to the completion of his treatment plan.
 //
 // When the Compare dialog first appears, the Match candidate's DVH appears in 
-// both DVH panels.  Then, as each additional Match candidates is selected for
+// both DVH panels.  Then, as each additional Match candidate is selected for
 // viewing its identifying institution/case number is displayed as a new menu
 // item in the history menu, ordered with the most recently selected at the top.
 //
@@ -1376,22 +1674,22 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 // Case Space dialog; 2) by typing or spinning in a value using the
 // matchSelectSpinBox; or 3) by selecting from the Match History menu.
 //
-// As each match candidate selection is made, its DVH is displayed in the lower
-// DVH panel.  The upper DVH panel still shows the initial Match candidate's
-// DVH until the user clicks on the Overlay button, at which point the current
-// Match candidate's DVH is overlaid on what's currently displayed in the
-// Overlay DVH panel.
+// As each match candidate selection is made, its DVH is displayed in both
+// DVH panels.  If the Overlay button is checked and an item is selected in the
+// overlay menu, that item's DVH is overlaid on the match DVH currently 
+// displayed in the Overlay DVH panel.
 //
-// Maximum number of overlays option #1: max 5:
+// Maximum number of overlays option #1: max 5 (rejected):
 //
 // There is also an Overlay History menu that displays the sequence of Match
 // candidate DVH's whose DVH's have been added to the Overlay panel, also 
 // ordered with the most recent first.  
 //
-// For both of these menus, control-clicking on an item removes it.  If an item
-// is removed from the History menu, it's also removed from the Overlay History
-// menu.  If an item is removed from the Overlay History menu, however, it's not
-// removed from the Match History menu.
+// For both of these menus, clicking on the associated "Remove selected"
+// button rmoves the selected item (and selects the topmost item remaining?).  
+// If an item is removed from the History menu, it's also removed from the
+// Overlay menu.  If an item is removed from the Overlay menu, however,
+// it's not removed from the Match History menu. [???]
 //
 // There is a maximum of 5 overlaid DVH's that will be displayed simultaneously.
 // There are two options for handling a user attempt to add a 6th: 1) the
@@ -1400,7 +1698,7 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 // the remaining items all move down to make room for the new selection.  The
 // Overlay panel is updated accordingly.
 //
-// Maximum number of overlays option #2: max 2:
+// Maximum number of overlays 2 (option #2: implemented starting 2011/09/21):
 //
 // Either one or two DVH's are displayed in the Overlay Panel. One is always the
 // DVH associated with the Match candidate currently displayed in the lower half
@@ -1408,47 +1706,55 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 // identical to the History menu, except that selecting an item determines the
 // second DVH displayed in the DVH Overlay panel.
 // 
-// There are two check boxes, one of which is disabled if there are fewer than
-// two Match candidates (there will always be at least one).  If one or both is
-// checked, then the DVH is displayed for the Match candidate corresponding to
-// the label for that check box.  The labels for the two check boxes are set to 
-// match the most recently selected items in the Match History and Overlay
-// menus.
+// Algorithm:  
+// 
+// If it's a new dialog, overlayPatient is NULL and the overlayDVHCheckBox isn't
+// checked: just display the match DVH.
+//
+// If the overlayDVHCheckBox isn't checked, if no item in the overlay menu is
+// selected, or if the overlay menu is empty, just display the match DVH in
+// the overlay DVH display.
+//
+// If the overlayPatient has a value, an item is selected by the user in the
+// overlay menu, and the overlayDVHCheckBox is checked, then read the DVH data
+// for the overlay patient and, if successful (as it should be: every item in
+// the overlay menu has already been displayed as a match. However, I'm
+// reluctant to go without checking for success) then display the match and
+// overlay data, the overlay data shoown with dashed lines.  if not successful,
+// report the error and just display the match DVH.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::displayQueryDVHData()
+void CompareDialog::displayOverlayDVHData()
 {
-	if (readQueryDVHData(*queryPatient))
-	{	
-		QString title;
+	QString title;
 
-		if ((overlayDVHCheckBox->isChecked()) && matchDVHDataExists)
+	if (overlayPatient && overlayDVHCheckBox->isChecked())
+	{	
+		if (readDVHData(*overlayPatient, overlayVolumes, numOverlayDVHPoints))
 		{
-			title = "Query DVH: query patient " + 
-			QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'))
-			+ " + match patient " +
+			title = "DVH: match -- Duke patient #" + 
 			QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
-			+ " overlay";
+			+ " + overlay -- Duke patient #" +
+			QString(("%1")).arg(overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
 		}
 		else
 		{
-			title = "Query DVH: patient " + 
-			QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'));
-		}
+			cout << "Failed to read DVH data for patient #"
+				 << overlayPatient->getNumber() << endl;
 
-		QByteArray ba = title.toLatin1();
-		setupQueryDVHChart(queryDVH, ba.data());
+			initOverlayDVHObjects();
+			return;
+		}
 	}
 	else
 	{
-		cout << "Failed to read DVH data for patient #"
-			 << queryPatient->getNumber() << endl;
-
-		initQueryDVHObjects();
+		title = "Match DVH: Duke patient " + 
+		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
 	}
-	
-	queryDVHView->Render();
 
+	QByteArray ba = title.toLatin1();
+	setupOverlayDVHChart(overlayDVH, ba.data());
+	overlayDVHView->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1456,7 +1762,8 @@ void CompareDialog::displayQueryDVHData()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::displayMatchDVHData()
 {
-	if (matchDVHDataExists = readMatchDVHData(*matchPatient))
+	if (matchDVHDataExists = readDVHData(*matchPatient, matchVolumes, 
+		numMatchDVHPoints))
 	{
 		QString title = "Match DVH: patient " + 
 		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
@@ -1472,52 +1779,88 @@ void CompareDialog::displayMatchDVHData()
 
 		initMatchDVHObjects();
 
-		if (overlayDVHCheckBox->isChecked())
-		{
-			displayQueryDVHData();
-		}
-
 		matchDVHView->Render();
 	}
+
+	displayOverlayDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//
-// 
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::toggleOverlayDVH(bool checked)
 {
+	if (!overlayPatient || !matchPatient) return;
+
 	QString title;
 
 	if (overlayDVHCheckBox->isChecked())
 	{
-		title = "Query DVH: query patient " + 
-		QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'))
-		+ " + match patient " +
+		title = "DVH: match -- Duke patient " + 
 		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
-		+ " overlay";
+		+ " + overlay -- Duke patient " +
+		QString(("%1")).arg(overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
 	}
 	else
 	{
-		title = "Query DVH: patient " + 
-		QString(("%1")).arg(queryPatient->getNumber(), 3, 10, QLatin1Char('0'));
+		title = "Match DVH: Duke patient " + 
+		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
 	}
 
 	QByteArray ba = title.toLatin1();
-	setupQueryDVHChart(queryDVH, ba.data());
-	queryDVHView->Render();
+
+	setupOverlayDVHChart(overlayDVH, ba.data());
+	overlayDVHView->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Using the dangerous (because of the cast) "sender" approach.  
+// Using the "sender" approach, considered dangerous because of the cast.  
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::itemTriggered(bool checked)
+void CompareDialog::historyItemTriggered(bool checked)
 {
 	QAction *action = (QAction *)sender();
 	emit selectHistoryMatch(action->text());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Remove the current match and replace it with the top (most recently viewed)
+// item in the match history menu.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::removeCurrentMatch()
+{
+	if (!matchHistoryMenu || matchHistoryMenu->actions().isEmpty()) return;
+
+	// Replace the current match with the item on top of the history menu;
+	QAction *action = matchHistoryMenu->actions().first();
+	selectHistoryMatch(action->text());
+
+	// Now the new item on top of the history menu is the former match that
+	// we want to remove:
+	action = matchHistoryMenu->actions().first();
+	matchHistoryMenu->removeAction(action);
+
+	removeCurrentMatchPushButton->setEnabled(
+		!matchHistoryMenu->actions().isEmpty());
+
+	historyPushButton->setEnabled(!matchHistoryMenu->actions().isEmpty());
+
+	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Using the "sender" approach, considered dangerous because of the cast.  
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::overlayItemTriggered(bool checked)
+{
+	QAction *action = (QAction *)sender();
+	emit selectOverlay(action->text());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1527,14 +1870,109 @@ void CompareDialog::selectHistoryMatch(QString text)
 {
 	caseSpaceDialog->setIsNewMatchCaseSelectedHere(false);
 
-	QByteArray a = text.toLatin1();
-	//cout << "selectHistoryMatch(" << a.data() << ")" << endl;
-
 	QString nAsText = text.section('#', 1);
 	int num = nAsText.toInt();
 	matchSelectSpinBox->setValue(num);
 
-	removeRedundantHistoryItem(text);
+	removeRedundantMenuItem(matchHistoryMenu, text);
+
+	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// 2011/09/21:  Behavior wrt the DVH overlay pane:
+//
+// Option 1: the overlay is from the overlay menu, the underlay is the match:
+//
+// When the Compare Dialog is opened, the DVH overlay pane displays a 
+// duplicate of the match DVH. The overlay check box is unchecked and disabled.
+// Both the match and overlay DVH titles read: "DVH for match <institution>
+// patient<number>".
+//
+// When the user changes the match, the DVH underlay stays (goes) with the  
+// current match, the previous match is added to the top of both match history 
+// and overlay menus, and the overlay check box is enabled.
+//
+// By default, no item in the overlay menu is checked.  The user may select an
+// in the overlay menu by clicking on it.  When the user has made a selection
+// in the overlay menu, the overlay checkbox is automatically checked, the 
+// corresponding DVH overlay is displayed, and that item remains selected
+// until it's deleted or until the user chooses another overlay menu item.
+//
+// Checking the overlay check box overlays the DVH for the currently selected
+// item in the overlay menu onto the match DVH.  The overlay DVH title reads
+// "DVH for match <institution> patient<number>; overlay: <institution>
+// patient<number>".
+//
+// The match history menu includes the current overlay selection, but not the 
+// current match.  The overlay menu does not include the current match either.
+//
+// The selected item may be removed from the overlay menu by clicking on the
+// corresponding "Remove Current" button.  When that happens, no overlay item is
+// selected, no overlay is displayed, and the overlay checkbox is unchecked.
+// If the overlay menu is empty, the overlay check box is disabled.
+//
+// If the user selects from the overlay menu, the overlay check box is checked
+// automatically.  Why else would a user select an overlay item except to
+// display it.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::selectOverlay(QString text)
+{
+	QByteArray a = text.toLatin1();
+	QString nAsText = text.section('#', 1);
+	int num = nAsText.toInt();
+	overlayPatient = caseSpaceDialog->getDukePatientFrom(num);
+	int numItems = overlaySelectionMenu->actions().size();
+
+	for (int i = 0; i < numItems; i++)
+	{
+		QAction *currAction = overlaySelectionMenu->actions().at(i);
+		QString currText = currAction->text();
+		currAction->setChecked(!text.compare(currText));
+	}
+
+	overlaySelectionPushButton->setEnabled(true);
+	removeSelectedOverlayPushButton->setEnabled(true);
+	overlayDVHCheckBox->setEnabled(true);
+	overlayDVHCheckBox->setChecked(true);
+	displayOverlayDVHData();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::removeSelectedOverlayMenuItem()
+{
+	if (!overlaySelectionMenu || overlaySelectionMenu->isEmpty()) return;
+
+	bool deleted = false;
+	
+	QList<QAction *> actions = overlaySelectionMenu->actions(); 
+	QList<QAction *>::Iterator i;
+
+	for (i = actions.begin(); i != actions.end(); ++i)
+	{
+		if ((*i)->isChecked())
+		{
+			overlaySelectionMenu->removeAction(*i);
+		}
+	}
+
+	if (overlaySelectionMenu->isEmpty())
+	{
+		overlaySelectionPushButton->setEnabled(false);
+		overlayDVHCheckBox->setEnabled(false);
+	}
+
+	removeSelectedOverlayPushButton->setEnabled(false); // Nothing selected
+
+	overlayDVHCheckBox->setChecked(false);
+	overlayPatient = NULL;
+	toggleOverlayDVH(false);
+	displayOverlayDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1571,13 +2009,6 @@ void CompareDialog::setupMatchHistoryMenu()
 {
 	matchHistoryMenu = new QMenu(this);
 	historyPushButton->setMenu(matchHistoryMenu);
-
-	currMatchHistoryNum = 0;
-
-	for (int i = 0; i < maxMatchHistoryNum; i++)
-	{
-		matchHistoryAction[i] = NULL;
-	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1601,19 +2032,19 @@ void CompareDialog::addMatchHistoryItem()
 	if ((!matchHistoryMenu) || (!caseSpaceDialog)) return;
 
 	// If the new match (an old history item?) is in the history, remove it:
-	int oldHistoryPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
+	int maybeRedundantPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
 
-	QString oldHistoryItemText = /* matchPatient->getInstitution() + */
-		"Duke Patient #" + QString::number(oldHistoryPatientNum);
+	QString maybeRedundantItemText = /* matchPatient->getInstitution() + */
+		"Duke Patient #" + QString::number(maybeRedundantPatientNum);
 
-	removeRedundantHistoryItem(oldHistoryItemText);
+	removeRedundantMenuItem(matchHistoryMenu, maybeRedundantItemText);
 
 	int newHistoryPatientNum = caseSpaceDialog->getLastMatchCase()->getNumber();
 
-	QString newHistoryItemText = /* matchPatient->getInstitution() + */
+	newHistoryItemText = /* matchPatient->getInstitution() + */
 		"Duke Patient #" + QString::number(newHistoryPatientNum);
 
-	currMatchHistoryNum = matchHistoryMenu->actions().size();
+	int currMatchHistoryNum = matchHistoryMenu->actions().size();
 
 	for (int i = 0; i < currMatchHistoryNum; i++)
 	{
@@ -1626,10 +2057,9 @@ void CompareDialog::addMatchHistoryItem()
 		}
 	}
 
-	matchHistoryAction[currHistoryActionNum] =
-		new QAction(newHistoryItemText, this);
-	connect(matchHistoryAction[currHistoryActionNum], SIGNAL(triggered(bool)),
-		    this, SLOT(itemTriggered(bool)));
+	QAction *matchHistoryAction = new QAction(newHistoryItemText, this);
+	connect(matchHistoryAction, SIGNAL(triggered(bool)),
+		this, SLOT(historyItemTriggered(bool)));
 
 	QAction *firstAction = NULL;
 
@@ -1638,33 +2068,108 @@ void CompareDialog::addMatchHistoryItem()
 		firstAction = matchHistoryMenu->actions().first();
 	}
 
-	matchHistoryMenu->insertAction(firstAction,
-		matchHistoryAction[currHistoryActionNum++]);
-	currMatchHistoryNum = matchHistoryMenu->actions().size();
+	matchHistoryMenu->insertAction(firstAction, matchHistoryAction);
+	
+	historyPushButton->setEnabled(!matchHistoryMenu->actions().isEmpty());
+
+	removeCurrentMatchPushButton->setEnabled(
+		!matchHistoryMenu->actions().isEmpty());
+
+	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Look through the items in the match history menu.  For each that has the same
+// Make sure addMatchHistoryItem() is called before calling this method so that
+// newHistoryItemText is current.
+//
+// Don't add if the current match candidate is already in the list.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::addOverlaySelectionItem()
+{
+	if ((!overlaySelectionMenu) || (!caseSpaceDialog)) return;
+
+	// If the new match is in the overlay menu, remove it:
+	int maybeRedundantPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
+
+	QString maybeRedundantItemText = /* matchPatient->getInstitution() + */
+		"Duke Patient #" + QString::number(maybeRedundantPatientNum);
+
+	removeRedundantMenuItem(overlaySelectionMenu, maybeRedundantItemText);
+
+	int newHistoryPatientNum = caseSpaceDialog->getLastMatchCase()->getNumber();
+
+	int currNumOverlayMenuItems = overlaySelectionMenu->actions().size();
+
+	for (int i = 0; i < currNumOverlayMenuItems; i++)
+	{
+		QAction *currAction = overlaySelectionMenu->actions().at(i);
+		QString currText = currAction->text();
+
+		if (!newHistoryItemText.compare(currText))	// If they are the same...
+		{
+			return;	 // ...don't add (because it's already there)
+		}
+	}
+
+	QAction *overlaySelectionAction = new QAction(newHistoryItemText, this);
+	overlaySelectionAction->setCheckable(true);
+	connect(overlaySelectionAction, SIGNAL(triggered(bool)),
+		this, SLOT(overlayItemTriggered(bool)));
+
+	QAction *firstAction = NULL;
+
+	if (!overlaySelectionMenu->isEmpty())
+	{
+		firstAction = overlaySelectionMenu->actions().first();
+	}
+
+	overlaySelectionMenu->insertAction(firstAction, overlaySelectionAction);
+
+	overlayDVHCheckBox->setEnabled(!overlaySelectionMenu->isEmpty());
+	overlaySelectionPushButton->setEnabled(!overlaySelectionMenu->isEmpty());
+
+	/* No, no autoselection.  If an item is selected it's because the user did it.
+	// Select the first item:
+	overlaySelectionMenu->actions().first()->setChecked(true);
+
+	currNumOverlayMenuItems = overlaySelectionMenu->actions().size();
+
+	// And deselect all the others:
+	for (int i = 1; i < currNumOverlayMenuItems; i++)
+	{
+		QAction *currAction = overlaySelectionMenu->actions().at(i);
+		currAction->setChecked(false);
+	}
+
+	displayOverlayDVHData();
+	*/
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Look through the items in the menu.  Remove each that has the same
 // text field as the text input parameter.  Return true if any actions were
 // removed from the menu, else return false.
 //
 ////////////////////////////////////////////////////////////////////////////////
-bool CompareDialog::removeRedundantHistoryItem(QString text)
+bool CompareDialog::removeRedundantMenuItem(QMenu *menu, QString text)
 {
 	bool wasActionRemoved = false;
-	currMatchHistoryNum = matchHistoryMenu->actions().size();
+	int numMenuItems = menu->actions().size();
 
-	for (int i = 0; i < currMatchHistoryNum; i++)
+	int i = 0;
+
+	while (i < numMenuItems)
 	{
-		QAction *currAction = matchHistoryMenu->actions().at(i);
+		QAction *currAction = menu->actions().at(i++);
 		QString currText = currAction->text();
 
-		if (!text.compare(currText))
+		if (!text.compare(currText)) // if they're the same...
 		{
-			matchHistoryMenu->removeAction(currAction);
-			currMatchHistoryNum = matchHistoryMenu->actions().size();
-
+			menu->removeAction(currAction);
+			numMenuItems--;
 			wasActionRemoved = true;
 		}
 	}

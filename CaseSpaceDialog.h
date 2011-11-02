@@ -20,32 +20,28 @@
 
 #include <QDialog>
 
-#include "ui_CaseSpaceDialog.h"  // auto generated from XML output from QT Designer
+// auto generated from XML output from QT Designer:
+#include "ui_CaseSpaceDialog.h"
 
 // TEMP hardwired based on size of MI data files:
 static const int numMICases = 100;
+static const int maxNumMICases = 200; // Just in case we get more
 
-static const int numGlowLevels = 20;
+static const int numMatchIconLevels = 25;
 static const double cubeSize = 100.0;
 
 static const double colorMult = 1.2;
-
-
 
 // Forward declarations:
 class vtkContextView;
 class vtkPlot;
 class vtkTable;
 class vtkVector2f;
-class MainWindow;
-class Patient;
-class CompareDialog;
-class Axes;
-
 class vtkRenderWindow;
 class vtkRenderWindowInteractor;
 class vtkRenderer;
 class vtkCubeSource;
+class vtkSphereSource;
 class vtkPolyDataMapper;
 class vtkActor;
 class vtkAssembly;
@@ -53,6 +49,12 @@ class vtkBalloonWidget;
 class vtkBalloonRepresentation;
 class vtkScalarBarActor;
 class vtkLookupTable;
+class vtkPolyDataAlgorithm;
+
+class MainWindow;
+class Patient;
+class CompareDialog;
+class Axes;
 
 
 class CaseSpaceDialog : public QDialog, public Ui_CaseSpaceDialog
@@ -60,19 +62,30 @@ class CaseSpaceDialog : public QDialog, public Ui_CaseSpaceDialog
 	Q_OBJECT
 
 public:
+	enum XYValueType
+	{
+		PTVSize = 0,
+		rectumSize,
+		bladderSize,
+		PTVPlusRectum,
+		PTVPlusBladder,
+		PTVPlusRectumPlusBladder,
+		numXYValueTypes
+	};
+
 	CaseSpaceDialog(MainWindow *mw);
 	~CaseSpaceDialog();
 
 	void setQueryCaseText(QString &text);
-	void setSelectedMatchPlot(vtkPlot *plot) { selectedMatchPlot = plot; };
 	void setSelectedMatchPlotPos(vtkVector2f *pos);
-	void setDukeOverlapDataPath(QString &path) { dukeOverlapDataPath = path; };
+	void setDukeXYDataPath(QString &path) { dukeXYDataPath = path; };
 	void identifyMatchCase();
-	Patient *getPatientFromCoodinates(double *xArray, double *yArray, double x, double y);
 	void setMatchCaseFromCompareDialog(int patientNumber);
 	int getIndexFrom(Patient *p);
 	Patient *getDukePatientFromCoodinates(double posX, double posY);
 	Patient *getDukePatientFrom(int patientNumber);
+	Patient *getPatientFromCoodinates(
+		double *xArray, double *yArray, double x, double y);
 	int getNumDukePatients() { return numDukePatients; };
 	MainWindow *getMainWindow() { return mainWindow; };
 
@@ -80,32 +93,16 @@ public:
 	Patient *getMatchCase() { return matchCase; };
 	void setLastMatchCase(Patient *lmc) { lastMatchCase = lmc; };
 	bool isNewMatchCaseSelectedHere();
-	void setIsNewMatchCaseSelectedHere(bool here) { newMatchCaseSelectedHere = here; };
+	void setIsNewMatchCaseSelectedHere(bool here)
+		{ newMatchCaseSelectedHere = here; };
 
 	void enableCompareCasesButton(bool isEnabled)
 	{
 		compareCasesPushButton->setEnabled(isEnabled);
 	};
 
-	const static void ReportCameraPosition(vtkRenderer *r);
-	void SetCameraPosition(double pos[3], double fp[3], double vUp[3], double clip[2], double zoom);
-	void SetCameraPosition(double az);
-
 	bool pickPatient();
-
-	int minPTVSize;
-	int minRectumSize;
-	int minBladderSize;
-	int minPTVPlusRectum;
-	int minPTVPlusBladder;
-	int minPTVPlusRectumPlusBladder;
-
-	int maxPTVSize;
-	int maxRectumSize;
-	int maxBladderSize;
-	int maxPTVPlusRectum;
-	int maxPTVPlusBladder;
-	int maxPTVPlusRectumPlusBladder;
+	const static void ReportCameraPosition(vtkRenderer *r);
 
 private slots:
 	void compareCases();
@@ -114,10 +111,71 @@ private slots:
 	void setXMIView(bool checked = true);
 	void setYMIView(bool checked = true);
 	void setObliqueView(bool checked = true);
-	void setThresholdPlaneZVal(int val);
+	void resetView();
+	void setThresholdPlanePosition(int zVal);
 	void setBackgroundBlack(bool checked = true);
 	void setBackgroundWhite(bool checked = true);
 	void setBackgroundRamped(bool checked = true);
+	void XYDataAngleItemTriggered(bool checked);
+	void selectXYDataAngle(QString text);
+	void XValuesItemTriggered(bool checked);
+	void selectXValues(QString text);
+	void YValuesItemTriggered(bool checked);
+	void selectYValues(QString text);
+
+private: // methods
+	void SetCameraPosition(double pos[3], double fp[3], double vUp[3],
+		double clip[2], double zoom);
+	void SetCameraPosition(double az);
+
+	void createActions();
+	void setupCaseSpaceRenWin();
+	void addQueryCase();
+
+	void initializeBalloonStuff();
+	void addBalloon(int index);
+	void updateBalloon(int i, int xVal, int yVal);
+
+	void initializeMatchIcon();
+	void setMatchIconLocation(double x, double y, double z);
+
+	void initializeMILegend();
+	void getColorCorrespondingToMIvalue(
+		double MIVal, double &r, double &g, double &b);
+
+	void initXYValExtrema();
+	bool readDukeXYData();
+	void addDukeDataToGraph();
+
+	void makeSphereIfCube(int ix);
+	void makeCubeIfSphere(int ix);
+	void setGeometryAccordingToMatchHistory(int ix);
+	void resetAppurtenances();
+
+public:
+	void resetDukeDataPositions(bool needToRead = false);
+
+private:
+	double getXYValueFromIndex(int index, XYValueType valueType);
+	double getXYValueFromNumber(int patientNum, XYValueType valueType);
+	void averageDukeXYData();
+
+	// Axis values selection menus:
+	void setupXYDataAngleMenu();
+	void setupXValuesMenu();
+	void setupYValuesMenu();
+
+	void addPoconoDataToGraph();
+	void addHighPointDataToGraph();
+
+	void displayQueryCaseData();
+	void displayMatchCaseData();
+
+	bool readMIData();
+	bool averageMIData();
+	void prepareMIDisplay();
+	void addMIThresholdPlane();
+
 
 private: // Objects
 	vtkContextView *caseSpaceView;
@@ -127,12 +185,10 @@ private: // Objects
 	vtkPlot *selectedMatchPlot;
 	vtkVector2f *selectedMatchPlotPosition;
 
-	// Stucture overlap data for chart display.  NOTE: this
-	// values are shifted by the Query Case values so that
-	// the Query Case will be at the origin.
-	double *dX;	// Duke
+	// Stucture XY data for chart display:
+	double *dX;		// Duke
 	double *dY;
-	double *pX;	// Pocono
+	double *pX;		// Pocono
 	double *pY;
 	double *hpX;	// High Point
 	double *hpY;
@@ -140,14 +196,15 @@ private: // Objects
 	vtkRenderWindow *caseSpaceRenWin;
 	vtkRenderWindowInteractor *renderWindowInteractor;
 	vtkRenderer *ren;
-	vtkCubeSource *dukePoint[numMICases];
-	vtkPolyDataMapper *dukePointMapper[numMICases];
-	vtkActor *dukePointActor[numMICases];
+	vtkPolyDataAlgorithm *dukePoint[maxNumMICases];
+	vtkPolyDataMapper *dukePointMapper[maxNumMICases];
+	vtkActor *dukePointActor[maxNumMICases];
+	vtkCubeSource *queryPoint;
 	vtkActor *queryPointActor;
 
-	vtkCubeSource *matchGlow[numGlowLevels];
-	vtkPolyDataMapper *matchGlowMapper[numGlowLevels];
-	vtkActor *matchGlowActor[numGlowLevels];
+	vtkSphereSource *matchIcon[numMatchIconLevels];
+	vtkPolyDataMapper *matchIconMapper[numMatchIconLevels];
+	vtkActor *matchIconActor[numMatchIconLevels];
 
 	// Tell us about the patient over which we're hovering:
 	vtkBalloonWidget *balloonWidget;
@@ -159,6 +216,7 @@ private: // Objects
 	double zMult;
 	Axes *axes;
 	vtkAssembly *axesAssembly;
+	double axisTextOffset;
 
 	QString matchInstitution;
 	QString queryInstitution;
@@ -177,7 +235,6 @@ private: // Objects
 	int numHighPointPatients;
 
 	double *MIval[numMICases];
-	double MIFraction[numMICases];
 	double MIMax;
 	double MIMin;
 	double MIRange;
@@ -185,6 +242,8 @@ private: // Objects
 	double MIThresholdVal;
 	double thresholdPlaneZVal;
 	double thresholdPlaneThickness;
+
+	static const double numMIColors;
 
 	vtkTable *dukeTable;
 	vtkTable *poconoTable;
@@ -196,50 +255,36 @@ private: // Objects
 
 	MainWindow *mainWindow;
 
-	// Path to data for structure overlaps: used for placing patient 
+	// Path to data for structure XY values: used for placing patient 
 	// points in Case Space:
-	QString dukeOverlapDataPath;	
+	QString dukeXYDataPath;
+	QString dukeXYDataSuffix;
+
+	// XY Values:
+	QMenu *XYDataAngleMenu;
+	QMenu *XValuesMenu;
+	QMenu *YValuesMenu;
+	int XYValue[numXYValueTypes];
+	int minVal[numXYValueTypes];
+	int maxVal[numXYValueTypes];
+	XYValueType xValueType;
+	XYValueType yValueType;
 
 	Patient *dukePatientList;
 	Patient *queryCase;
 	Patient *matchCase;
 	Patient *lastMatchCase;
 
-	int lastMatchCaseIndex;
-	int currMatchCaseIndex;
 	bool newMatchCaseSelectedHere;
 
-	// Zero-based index into array of Patients: the first position
-	// is 0 even though the first patient number is 3 or something;
-	// Also, patient numbers do not have to be sequential:
+	// Zero-based indices into array of Patients: the first position
+	// is of course 0 even though the first patient number is 3 or
+	// something. Also, there may be gaps between patient numbers.
 	int queryCaseIndex; 
+	int lastMatchCaseIndex;
+	int currMatchCaseIndex;
 
 	CompareDialog *compareDialog;
-
-private:
-	void createActions();
-	void setupCaseSpaceRenWin();
-	void addQueryCase();
-
-	void initializeBalloonStuff();
-	void addBalloon(int index);
-
-	void initializeMatchGlow();
-	void setMatchGlowLocation(double x, double y, double z);
-
-	void initializeMILegend();
-
-	void addDukeDataToGraph();
-	void addPoconoDataToGraph();
-	void addHighPointDataToGraph();
-
-	void displayQueryCaseData();
-	void displayMatchCaseData();
-
-	bool readMIData();
-	bool averageMIData();
-	void prepareMIDisplay();
-	void addMIThresholdPlane();
 
 private:
 	CaseSpaceDialog(const CaseSpaceDialog&);		// Not implemented.

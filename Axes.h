@@ -19,29 +19,33 @@ class vtkFollower;
 class Axes
 {
 public:
+	enum AxisType
+	{
+		xAxis = 0,
+		yAxis,
+		zAxis,
+		numAxes
+	};
+
 	Axes();
 	~Axes();
 
-	vtkFollower *AddFollowingText(char *text, double x, double y, double z,
-		double r, double g, double b, vtkRenderer *ren);
+	vtkFollower *AddFollowingText(AxisType axis, char *text, double x, double y,
+		double z, double r, double g, double b, double scale, vtkRenderer *ren);
 	vtkAssembly *InsertThis(vtkRenderer *r, double shaftLen = 20.0,
 		double x = 0.0, double y = 0.0, double z = 0.0);
-	void Insert(vtkRenderer *r, double shaftLen = 20.0,
-		double x = 0.0, double y = 0.0, double z = 0.0);
+//	void Insert(vtkRenderer *r, double shaftLen = 20.0,
+//		double x = 0.0, double y = 0.0, double z = 0.0);
 
-	void setXAxislabel(char *label) { xAxisLabel = label; };
-	void setYAxislabel(char *label) { yAxisLabel = label; };
-	void setZAxislabel(char *label) { zAxisLabel = label; };
+	void setAxisLabel(AxisType axis, char *label);
+	void setAxisLabelPosition(AxisType axis, double x, double y, double z);
 
 protected:
 	double shaftLength;
-	QString xAxisLabel;
-	QString yAxisLabel;
-	QString zAxisLabel;
 
-	vtkVectorText *vText;
-	vtkPolyDataMapper *vTextMapper;
-	vtkFollower *vTextActor;
+	vtkVectorText *vText[numAxes];
+	vtkPolyDataMapper *vTextMapper[numAxes];
+	vtkFollower *vTextActor[numAxes];
 
 	vtkActor *oActor;
 	vtkActor *xConeActor;
