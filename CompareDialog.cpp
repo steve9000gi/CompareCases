@@ -637,7 +637,7 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 	sliceSelectionSlider->setTickInterval(max(qSliceMax, mSliceMax) / 5);
 
 	maxSliceLabel->setText(QString::number(max(qSliceMax, mSliceMax)));
-
+/*
 	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
 	float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
 
@@ -648,6 +648,7 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 		queryCTImageViewer->GetSlice(), qSliceMax - qSliceMin);
 	matchProjector->PositionSlicePlane(orientation,
 		matchCTImageViewer->GetSlice(), mSliceMax - mSliceMin);
+*/
 /*	queryProjector->PositionSlicePlane(orientation,
 		queryCTImageViewer->GetSlice(), queryDICOMReader->GetDataSpacing());
 	matchProjector->PositionSlicePlane(orientation,
@@ -663,6 +664,7 @@ void CompareDialog::changeSlice(int slice)
 	queryCTImageViewer->SetSlice(slice);
 	matchCTImageViewer->SetSlice(slice);
 
+#if USE_PROJECTOR_SLICE_PLANE
 	if (queryPatient && queryDICOMReader)
 	{
 		queryProjector->PositionSlicePlane(queryPatient->getSliceOrientation(),
@@ -676,12 +678,13 @@ void CompareDialog::changeSlice(int slice)
 			matchCTImageViewer->GetSlice(), 
 			matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin());
 	}
+#endif
 
-		sliceSelectionSlider->setSliderPosition(slice);
-		sliceSelectionSlider->setValue(slice);
-		sliceSelectionSlider->update();
-		sliceSelectionSpinBox->setValue(slice);
-		sliceSelectionSpinBox->update();
+	sliceSelectionSlider->setSliderPosition(slice);
+	sliceSelectionSlider->setValue(slice);
+	sliceSelectionSlider->update();
+	sliceSelectionSpinBox->setValue(slice);
+	sliceSelectionSpinBox->update();
 
 	//float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
 	//float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
@@ -929,8 +932,10 @@ void CompareDialog::setupVTKUI()
 
 	queryProjector->InitLegend();
 
+#if USE_PROJECTOR_SLICE_PLANE
 	queryProjector->InitSlicePlane();
 	matchProjector->InitSlicePlane();
+#endif
 
 	queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
 	matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
@@ -1329,13 +1334,18 @@ void CompareDialog::initOverlayDVHObjects()
 	vtkChartLegend *l = overlayDVH->GetLegend();
 	l->GetBrush()->SetColorF(0, 0, 0, 0.67);
 	l->GetLabelProperties()->SetColor(1, 1, 1);
-
-	//float x, y;
-	//l->GetPoint(x, y);
-	//l->SetPoint(x + 20, y + 2);
-
 #ifdef XVGA_RESOLUTION
 	l->SetLabelSize(xvgaLegendLabelSize); // default is 12
+/*
+	l->SetHorizontalAlignment(vtkChartLegend::CUSTOM);
+	//l->SetVerticalAlignment(vtkChartLegend::CUSTOM);
+	//l->SetPoint(xDVHWidget - 130, yDVHWidget - 41);
+	//l->SetPoint(xDVHWidget * 0.9, yDVHWidget * 0.4);
+	float x, y;
+	l->GetPoint(x, y);
+	//l->SetPoint(xDVHWidget * 1.15, yDVHWidget * 0.48);
+	l->SetPoint(xDVHWidget * 1.15, y);
+*/
 #endif
 
 	if (overlayDVHView) overlayDVHView->Delete();
@@ -1738,9 +1748,9 @@ void CompareDialog::displayOverlayDVHData()
 	{	
 		if (readDVHData(*overlayPatient, overlayVolumes, numOverlayDVHPoints))
 		{
-			title = "DVH: match=Duke patient #" + 
+			title = "DVH: match: Duke #" + 
 			QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
-			+ " + overlay=Duke patient #" +
+			+ " + overlay: Duke #" +
 			QString(("%1")).arg(overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
 		}
 		else
@@ -1754,7 +1764,7 @@ void CompareDialog::displayOverlayDVHData()
 	}
 	else
 	{
-		title = "Match DVH: Duke patient " + 
+		title = "Match DVH: Duke #" + 
 		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
 	}
 
@@ -1771,7 +1781,7 @@ void CompareDialog::displayMatchDVHData()
 	if (matchDVHDataExists = readDVHData(*matchPatient, matchVolumes, 
 		numMatchDVHPoints))
 	{
-		QString title = "Match DVH: patient " + 
+		QString title = "Match DVH: Duke #" + 
 		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
 
 		QByteArray ba = title.toLatin1();

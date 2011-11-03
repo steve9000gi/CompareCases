@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>973</width>
-    <height>706</height>
+    <width>962</width>
+    <height>692</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,16 +25,16 @@
      <widget class="QWidget" name="scrollAreaWidgetContents">
       <property name="geometry">
        <rect>
-        <x>-3</x>
+        <x>0</x>
         <y>0</y>
-        <width>1100</width>
-        <height>1122</height>
+        <width>942</width>
+        <height>672</height>
        </rect>
       </property>
       <property name="minimumSize">
        <size>
-        <width>1100</width>
-        <height>1122</height>
+        <width>935</width>
+        <height>660</height>
        </size>
       </property>
       <widget class="QVTKWidget" name="caseSpaceViewWidget" native="true">
@@ -430,11 +430,12 @@
         </property>
        </widget>
       </widget>
-      <zorder>layoutWidget</zorder>
+      <zorder>selectOverlapDataGroupBox</zorder>
+      <zorder>backgroundColorGroupBox</zorder>
+      <zorder>MIRangeGroupBox</zorder>
+      <zorder>selectViewGroupBox</zorder>
       <zorder>caseSpaceViewWidget</zorder>
-      <zorder>splitter</zorder>
       <zorder>layoutWidget</zorder>
-      <zorder>horizontalSpacer</zorder>
      </widget>
     </widget>
    </item>

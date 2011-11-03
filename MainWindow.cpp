@@ -23,7 +23,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-	:	versionNumber(311),
+	:	versionNumber(314),
 		queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
 		dukeDir(""),

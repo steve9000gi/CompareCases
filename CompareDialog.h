@@ -43,7 +43,6 @@
 #define COMPARE_DIALOG_H
 
 #include <QDialog>
-
 #include "ui_CompareDialog.h"  // auto generated from XML output from QT Designer
 
 

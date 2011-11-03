@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1008</width>
-    <height>682</height>
+    <width>991</width>
+    <height>667</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -36,14 +36,14 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1858</width>
-        <height>1122</height>
+        <width>971</width>
+        <height>647</height>
        </rect>
       </property>
       <property name="minimumSize">
        <size>
-        <width>1858</width>
-        <height>1122</height>
+        <width>955</width>
+        <height>634</height>
        </size>
       </property>
       <widget class="QGroupBox" name="viewGroupBox">
@@ -124,24 +124,6 @@
         </property>
        </widget>
       </widget>
-      <widget class="QLabel" name="dvhLabel">
-       <property name="geometry">
-        <rect>
-         <x>1376</x>
-         <y>24</y>
-         <width>223</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Dose Volume Histogram</string>
-       </property>
-      </widget>
       <widget class="QGroupBox" name="projectionDisplayGroupBox">
        <property name="geometry">
         <rect>
@@ -193,7 +175,7 @@
          <string>Axes</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -254,10 +236,7 @@
          </item>
         </layout>
        </widget>
-       <zorder>transparencyLabel</zorder>
-       <zorder>transparencySpinBox</zorder>
-       <zorder>transparencySlider</zorder>
-       <zorder>maxTransparencyLabel</zorder>
+       <zorder>layoutWidget</zorder>
        <zorder>originCheckBox</zorder>
        <zorder>gantryAnglePushButton</zorder>
        <zorder>flatShadedCheckBox</zorder>
@@ -332,7 +311,7 @@
          <string>Auto-play</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>176</x>
@@ -461,7 +440,7 @@
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>74</x>
@@ -487,7 +466,6 @@
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
-          <zorder>queryGroupBox</zorder>
          </widget>
         </item>
         <item>
@@ -677,7 +655,7 @@
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>74</x>
@@ -800,13 +778,13 @@
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>804</x>
          <y>593</y>
          <width>158</width>
-         <height>24</height>
+         <height>25</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -826,13 +804,13 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>8</x>
          <y>593</y>
          <width>170</width>
-         <height>24</height>
+         <height>25</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_4">

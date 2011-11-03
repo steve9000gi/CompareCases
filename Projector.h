@@ -14,6 +14,7 @@
 
 #define STRAIGHTPIPE 0 // Skip decimation and smoothing if non-zero
 #define DISPLAY_AXES 0
+#define USE_PROJECTOR_SLICE_PLANE 0
 
 // To initialize variables for holding geometric extrema:
 const double kMinInit = DBL_MAX;

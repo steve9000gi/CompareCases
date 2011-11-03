@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CompareDialog.ui'
 **
-** Created: Wed Nov 2 15:03:11 2011
+** Created: Thu Nov 3 16:04:49 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -43,12 +43,11 @@ public:
     QCheckBox *viewPTVCheckBox;
     QCheckBox *viewBladderCheckBox;
     QCheckBox *viewFemoralHeadsCheckBox;
-    QLabel *dvhLabel;
     QGroupBox *projectionDisplayGroupBox;
     QPushButton *gantryAnglePushButton;
     QCheckBox *flatShadedCheckBox;
     QCheckBox *originCheckBox;
-    QWidget *widget;
+    QWidget *layoutWidget;
     QHBoxLayout *horizontalLayout_6;
     QLabel *transparencyLabel;
     QSpinBox *transparencySpinBox;
@@ -59,7 +58,7 @@ public:
     QRadioButton *sagittalRadioButton;
     QRadioButton *coronalRadioButton;
     QPushButton *autoPlayPushButton;
-    QWidget *widget1;
+    QWidget *layoutWidget1;
     QHBoxLayout *horizontalLayout_5;
     QLabel *sliceSelectionLabel;
     QSpinBox *sliceSelectionSpinBox;
@@ -69,7 +68,7 @@ public:
     QPushButton *removeSelectedOverlayPushButton;
     QPushButton *overlaySelectionPushButton;
     QCheckBox *overlayDVHCheckBox;
-    QWidget *widget2;
+    QWidget *layoutWidget2;
     QHBoxLayout *horizontalLayout;
     QVTKWidget *queryCTImageWidget;
     QVTKWidget *queryProjectionWidget;
@@ -79,7 +78,7 @@ public:
     QSpinBox *querySelectSpinBox;
     QPushButton *queryInstitutionPushButton;
     QLabel *queryCaseNumberLabel;
-    QWidget *widget3;
+    QWidget *layoutWidget3;
     QHBoxLayout *horizontalLayout_2;
     QVTKWidget *matchCTImageWidget;
     QVTKWidget *matchProjectionWidget;
@@ -87,11 +86,11 @@ public:
     QGroupBox *matchGroupBox;
     QPushButton *matchInstitutionPushButton;
     QSpinBox *matchSelectSpinBox;
-    QWidget *widget4;
+    QWidget *layoutWidget4;
     QHBoxLayout *horizontalLayout_3;
     QPushButton *OKPushButton;
     QPushButton *cancelPushButton;
-    QWidget *widget5;
+    QWidget *layoutWidget5;
     QHBoxLayout *horizontalLayout_4;
     QPushButton *historyPushButton;
     QPushButton *removeCurrentMatchPushButton;
@@ -100,7 +99,7 @@ public:
     {
         if (CompareDialog->objectName().isEmpty())
             CompareDialog->setObjectName(QString::fromUtf8("CompareDialog"));
-        CompareDialog->resize(1008, 682);
+        CompareDialog->resize(991, 667);
         CompareDialog->setMinimumSize(QSize(0, 0));
         verticalLayout = new QVBoxLayout(CompareDialog);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
@@ -110,8 +109,8 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1858, 1122));
-        scrollAreaWidgetContents->setMinimumSize(QSize(1858, 1122));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 971, 647));
+        scrollAreaWidgetContents->setMinimumSize(QSize(955, 634));
         viewGroupBox = new QGroupBox(scrollAreaWidgetContents);
         viewGroupBox->setObjectName(QString::fromUtf8("viewGroupBox"));
         viewGroupBox->setGeometry(QRect(514, 582, 184, 58));
@@ -130,12 +129,6 @@ public:
         viewFemoralHeadsCheckBox = new QCheckBox(viewGroupBox);
         viewFemoralHeadsCheckBox->setObjectName(QString::fromUtf8("viewFemoralHeadsCheckBox"));
         viewFemoralHeadsCheckBox->setGeometry(QRect(76, 36, 97, 16));
-        dvhLabel = new QLabel(scrollAreaWidgetContents);
-        dvhLabel->setObjectName(QString::fromUtf8("dvhLabel"));
-        dvhLabel->setGeometry(QRect(1376, 24, 223, 25));
-        QFont font;
-        font.setPointSize(16);
-        dvhLabel->setFont(font);
         projectionDisplayGroupBox = new QGroupBox(scrollAreaWidgetContents);
         projectionDisplayGroupBox->setObjectName(QString::fromUtf8("projectionDisplayGroupBox"));
         projectionDisplayGroupBox->setGeometry(QRect(416, -1, 287, 51));
@@ -148,25 +141,25 @@ public:
         originCheckBox = new QCheckBox(projectionDisplayGroupBox);
         originCheckBox->setObjectName(QString::fromUtf8("originCheckBox"));
         originCheckBox->setGeometry(QRect(286, 24, 51, 17));
-        widget = new QWidget(projectionDisplayGroupBox);
-        widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(10, 18, 177, 26));
-        horizontalLayout_6 = new QHBoxLayout(widget);
+        layoutWidget = new QWidget(projectionDisplayGroupBox);
+        layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
+        layoutWidget->setGeometry(QRect(10, 18, 177, 26));
+        horizontalLayout_6 = new QHBoxLayout(layoutWidget);
         horizontalLayout_6->setObjectName(QString::fromUtf8("horizontalLayout_6"));
         horizontalLayout_6->setContentsMargins(0, 0, 0, 0);
-        transparencyLabel = new QLabel(widget);
+        transparencyLabel = new QLabel(layoutWidget);
         transparencyLabel->setObjectName(QString::fromUtf8("transparencyLabel"));
 
         horizontalLayout_6->addWidget(transparencyLabel);
 
-        transparencySpinBox = new QSpinBox(widget);
+        transparencySpinBox = new QSpinBox(layoutWidget);
         transparencySpinBox->setObjectName(QString::fromUtf8("transparencySpinBox"));
         transparencySpinBox->setMinimum(0);
         transparencySpinBox->setMaximum(100);
 
         horizontalLayout_6->addWidget(transparencySpinBox);
 
-        transparencySlider = new QSlider(widget);
+        transparencySlider = new QSlider(layoutWidget);
         transparencySlider->setObjectName(QString::fromUtf8("transparencySlider"));
         transparencySlider->setMinimum(0);
         transparencySlider->setMaximum(100);
@@ -178,15 +171,12 @@ public:
 
         horizontalLayout_6->addWidget(transparencySlider);
 
-        maxTransparencyLabel = new QLabel(widget);
+        maxTransparencyLabel = new QLabel(layoutWidget);
         maxTransparencyLabel->setObjectName(QString::fromUtf8("maxTransparencyLabel"));
 
         horizontalLayout_6->addWidget(maxTransparencyLabel);
 
-        transparencyLabel->raise();
-        transparencySpinBox->raise();
-        transparencySlider->raise();
-        maxTransparencyLabel->raise();
+        layoutWidget->raise();
         originCheckBox->raise();
         gantryAnglePushButton->raise();
         flatShadedCheckBox->raise();
@@ -207,25 +197,25 @@ public:
         autoPlayPushButton->setObjectName(QString::fromUtf8("autoPlayPushButton"));
         autoPlayPushButton->setGeometry(QRect(338, 18, 58, 23));
         autoPlayPushButton->setFocusPolicy(Qt::NoFocus);
-        widget1 = new QWidget(ctAxisGroupBox);
-        widget1->setObjectName(QString::fromUtf8("widget1"));
-        widget1->setGeometry(QRect(176, 18, 154, 26));
-        horizontalLayout_5 = new QHBoxLayout(widget1);
+        layoutWidget1 = new QWidget(ctAxisGroupBox);
+        layoutWidget1->setObjectName(QString::fromUtf8("layoutWidget1"));
+        layoutWidget1->setGeometry(QRect(176, 18, 154, 26));
+        horizontalLayout_5 = new QHBoxLayout(layoutWidget1);
         horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
         horizontalLayout_5->setContentsMargins(0, 0, 0, 0);
-        sliceSelectionLabel = new QLabel(widget1);
+        sliceSelectionLabel = new QLabel(layoutWidget1);
         sliceSelectionLabel->setObjectName(QString::fromUtf8("sliceSelectionLabel"));
 
         horizontalLayout_5->addWidget(sliceSelectionLabel);
 
-        sliceSelectionSpinBox = new QSpinBox(widget1);
+        sliceSelectionSpinBox = new QSpinBox(layoutWidget1);
         sliceSelectionSpinBox->setObjectName(QString::fromUtf8("sliceSelectionSpinBox"));
         sliceSelectionSpinBox->setMinimum(0);
         sliceSelectionSpinBox->setMaximum(512);
 
         horizontalLayout_5->addWidget(sliceSelectionSpinBox);
 
-        sliceSelectionSlider = new QSlider(widget1);
+        sliceSelectionSlider = new QSlider(layoutWidget1);
         sliceSelectionSlider->setObjectName(QString::fromUtf8("sliceSelectionSlider"));
         sliceSelectionSlider->setMinimum(0);
         sliceSelectionSlider->setMaximum(100);
@@ -237,7 +227,7 @@ public:
 
         horizontalLayout_5->addWidget(sliceSelectionSlider);
 
-        maxSliceLabel = new QLabel(widget1);
+        maxSliceLabel = new QLabel(layoutWidget1);
         maxSliceLabel->setObjectName(QString::fromUtf8("maxSliceLabel"));
 
         horizontalLayout_5->addWidget(maxSliceLabel);
@@ -256,30 +246,30 @@ public:
         overlayDVHCheckBox = new QCheckBox(DVHGroupBox);
         overlayDVHCheckBox->setObjectName(QString::fromUtf8("overlayDVHCheckBox"));
         overlayDVHCheckBox->setGeometry(QRect(214, 19, 37, 17));
-        widget2 = new QWidget(scrollAreaWidgetContents);
-        widget2->setObjectName(QString::fromUtf8("widget2"));
-        widget2->setGeometry(QRect(74, 58, 886, 258));
-        horizontalLayout = new QHBoxLayout(widget2);
+        layoutWidget2 = new QWidget(scrollAreaWidgetContents);
+        layoutWidget2->setObjectName(QString::fromUtf8("layoutWidget2"));
+        layoutWidget2->setGeometry(QRect(74, 58, 886, 258));
+        horizontalLayout = new QHBoxLayout(layoutWidget2);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         horizontalLayout->setContentsMargins(0, 0, 0, 0);
-        queryCTImageWidget = new QVTKWidget(widget2);
+        queryCTImageWidget = new QVTKWidget(layoutWidget2);
         queryCTImageWidget->setObjectName(QString::fromUtf8("queryCTImageWidget"));
         queryCTImageWidget->setMinimumSize(QSize(256, 256));
-        QFont font1;
-        font1.setPointSize(8);
-        queryCTImageWidget->setFont(font1);
+        QFont font;
+        font.setPointSize(8);
+        queryCTImageWidget->setFont(font);
         queryCTImageWidget->setAutoFillBackground(true);
 
         horizontalLayout->addWidget(queryCTImageWidget);
 
-        queryProjectionWidget = new QVTKWidget(widget2);
+        queryProjectionWidget = new QVTKWidget(layoutWidget2);
         queryProjectionWidget->setObjectName(QString::fromUtf8("queryProjectionWidget"));
         queryProjectionWidget->setMinimumSize(QSize(256, 256));
         queryProjectionWidget->setAutoFillBackground(true);
 
         horizontalLayout->addWidget(queryProjectionWidget);
 
-        overlayDVHWidget = new QVTKWidget(widget2);
+        overlayDVHWidget = new QVTKWidget(layoutWidget2);
         overlayDVHWidget->setObjectName(QString::fromUtf8("overlayDVHWidget"));
         overlayDVHWidget->setMinimumSize(QSize(360, 256));
         overlayDVHWidget->setAutoFillBackground(true);
@@ -295,20 +285,20 @@ public:
         sizePolicy.setHeightForWidth(queryGroupBox->sizePolicy().hasHeightForWidth());
         queryGroupBox->setSizePolicy(sizePolicy);
         queryGroupBox->setMaximumSize(QSize(81, 258));
-        QFont font2;
-        font2.setPointSize(12);
-        queryGroupBox->setFont(font2);
+        QFont font1;
+        font1.setPointSize(12);
+        queryGroupBox->setFont(font1);
         queryCaseInstitutionLabel = new QLabel(queryGroupBox);
         queryCaseInstitutionLabel->setObjectName(QString::fromUtf8("queryCaseInstitutionLabel"));
         queryCaseInstitutionLabel->setGeometry(QRect(0, 101, 59, 24));
         queryCaseInstitutionLabel->setMinimumSize(QSize(59, 24));
         queryCaseInstitutionLabel->setMaximumSize(QSize(59, 24));
-        queryCaseInstitutionLabel->setFont(font1);
+        queryCaseInstitutionLabel->setFont(font);
         queryCaseInstitutionLabel->setAlignment(Qt::AlignCenter);
         querySelectSpinBox = new QSpinBox(queryGroupBox);
         querySelectSpinBox->setObjectName(QString::fromUtf8("querySelectSpinBox"));
         querySelectSpinBox->setGeometry(QRect(10, 202, 38, 20));
-        querySelectSpinBox->setFont(font1);
+        querySelectSpinBox->setFont(font);
         querySelectSpinBox->setFrame(true);
         querySelectSpinBox->setReadOnly(false);
         querySelectSpinBox->setMinimum(1);
@@ -319,35 +309,35 @@ public:
         queryInstitutionPushButton->setGeometry(QRect(10, 50, 59, 23));
         queryInstitutionPushButton->setMinimumSize(QSize(59, 23));
         queryInstitutionPushButton->setMaximumSize(QSize(59, 23));
-        queryInstitutionPushButton->setFont(font1);
+        queryInstitutionPushButton->setFont(font);
         queryCaseNumberLabel = new QLabel(queryGroupBox);
         queryCaseNumberLabel->setObjectName(QString::fromUtf8("queryCaseNumberLabel"));
         queryCaseNumberLabel->setGeometry(QRect(-4, 131, 59, 24));
         queryCaseNumberLabel->setMinimumSize(QSize(59, 24));
         queryCaseNumberLabel->setMaximumSize(QSize(59, 24));
-        queryCaseNumberLabel->setFont(font1);
+        queryCaseNumberLabel->setFont(font);
         queryCaseNumberLabel->setAlignment(Qt::AlignCenter);
-        widget3 = new QWidget(scrollAreaWidgetContents);
-        widget3->setObjectName(QString::fromUtf8("widget3"));
-        widget3->setGeometry(QRect(74, 322, 886, 258));
-        horizontalLayout_2 = new QHBoxLayout(widget3);
+        layoutWidget3 = new QWidget(scrollAreaWidgetContents);
+        layoutWidget3->setObjectName(QString::fromUtf8("layoutWidget3"));
+        layoutWidget3->setGeometry(QRect(74, 322, 886, 258));
+        horizontalLayout_2 = new QHBoxLayout(layoutWidget3);
         horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
         horizontalLayout_2->setContentsMargins(0, 0, 0, 0);
-        matchCTImageWidget = new QVTKWidget(widget3);
+        matchCTImageWidget = new QVTKWidget(layoutWidget3);
         matchCTImageWidget->setObjectName(QString::fromUtf8("matchCTImageWidget"));
         matchCTImageWidget->setMinimumSize(QSize(256, 256));
         matchCTImageWidget->setAutoFillBackground(true);
 
         horizontalLayout_2->addWidget(matchCTImageWidget);
 
-        matchProjectionWidget = new QVTKWidget(widget3);
+        matchProjectionWidget = new QVTKWidget(layoutWidget3);
         matchProjectionWidget->setObjectName(QString::fromUtf8("matchProjectionWidget"));
         matchProjectionWidget->setMinimumSize(QSize(256, 256));
         matchProjectionWidget->setAutoFillBackground(true);
 
         horizontalLayout_2->addWidget(matchProjectionWidget);
 
-        matchDVHWidget = new QVTKWidget(widget3);
+        matchDVHWidget = new QVTKWidget(layoutWidget3);
         matchDVHWidget->setObjectName(QString::fromUtf8("matchDVHWidget"));
         matchDVHWidget->setMinimumSize(QSize(360, 256));
         matchDVHWidget->setAutoFillBackground(true);
@@ -357,48 +347,48 @@ public:
         matchGroupBox = new QGroupBox(scrollAreaWidgetContents);
         matchGroupBox->setObjectName(QString::fromUtf8("matchGroupBox"));
         matchGroupBox->setGeometry(QRect(8, 322, 58, 258));
-        matchGroupBox->setFont(font2);
+        matchGroupBox->setFont(font1);
         matchInstitutionPushButton = new QPushButton(matchGroupBox);
         matchInstitutionPushButton->setObjectName(QString::fromUtf8("matchInstitutionPushButton"));
         matchInstitutionPushButton->setGeometry(QRect(4, 91, 49, 23));
         matchInstitutionPushButton->setMinimumSize(QSize(49, 23));
         matchInstitutionPushButton->setMaximumSize(QSize(59, 23));
-        matchInstitutionPushButton->setFont(font1);
+        matchInstitutionPushButton->setFont(font);
         matchSelectSpinBox = new QSpinBox(matchGroupBox);
         matchSelectSpinBox->setObjectName(QString::fromUtf8("matchSelectSpinBox"));
         matchSelectSpinBox->setGeometry(QRect(10, 138, 39, 20));
-        matchSelectSpinBox->setFont(font1);
+        matchSelectSpinBox->setFont(font);
         matchSelectSpinBox->setMinimum(1);
         matchSelectSpinBox->setMaximum(500);
         matchSelectSpinBox->setValue(12);
-        widget4 = new QWidget(scrollAreaWidgetContents);
-        widget4->setObjectName(QString::fromUtf8("widget4"));
-        widget4->setGeometry(QRect(804, 593, 158, 24));
-        horizontalLayout_3 = new QHBoxLayout(widget4);
+        layoutWidget4 = new QWidget(scrollAreaWidgetContents);
+        layoutWidget4->setObjectName(QString::fromUtf8("layoutWidget4"));
+        layoutWidget4->setGeometry(QRect(804, 593, 158, 25));
+        horizontalLayout_3 = new QHBoxLayout(layoutWidget4);
         horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
         horizontalLayout_3->setContentsMargins(0, 0, 0, 0);
-        OKPushButton = new QPushButton(widget4);
+        OKPushButton = new QPushButton(layoutWidget4);
         OKPushButton->setObjectName(QString::fromUtf8("OKPushButton"));
 
         horizontalLayout_3->addWidget(OKPushButton);
 
-        cancelPushButton = new QPushButton(widget4);
+        cancelPushButton = new QPushButton(layoutWidget4);
         cancelPushButton->setObjectName(QString::fromUtf8("cancelPushButton"));
 
         horizontalLayout_3->addWidget(cancelPushButton);
 
-        widget5 = new QWidget(scrollAreaWidgetContents);
-        widget5->setObjectName(QString::fromUtf8("widget5"));
-        widget5->setGeometry(QRect(8, 593, 170, 24));
-        horizontalLayout_4 = new QHBoxLayout(widget5);
+        layoutWidget5 = new QWidget(scrollAreaWidgetContents);
+        layoutWidget5->setObjectName(QString::fromUtf8("layoutWidget5"));
+        layoutWidget5->setGeometry(QRect(8, 593, 170, 25));
+        horizontalLayout_4 = new QHBoxLayout(layoutWidget5);
         horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
         horizontalLayout_4->setContentsMargins(0, 0, 0, 0);
-        historyPushButton = new QPushButton(widget5);
+        historyPushButton = new QPushButton(layoutWidget5);
         historyPushButton->setObjectName(QString::fromUtf8("historyPushButton"));
 
         horizontalLayout_4->addWidget(historyPushButton);
 
-        removeCurrentMatchPushButton = new QPushButton(widget5);
+        removeCurrentMatchPushButton = new QPushButton(layoutWidget5);
         removeCurrentMatchPushButton->setObjectName(QString::fromUtf8("removeCurrentMatchPushButton"));
 
         horizontalLayout_4->addWidget(removeCurrentMatchPushButton);
@@ -450,7 +440,6 @@ public:
         viewPTVCheckBox->setText(QApplication::translate("CompareDialog", "PTV", 0, QApplication::UnicodeUTF8));
         viewBladderCheckBox->setText(QApplication::translate("CompareDialog", "Bladder", 0, QApplication::UnicodeUTF8));
         viewFemoralHeadsCheckBox->setText(QApplication::translate("CompareDialog", "Femoral  Heads", 0, QApplication::UnicodeUTF8));
-        dvhLabel->setText(QApplication::translate("CompareDialog", "Dose Volume Histogram", 0, QApplication::UnicodeUTF8));
         projectionDisplayGroupBox->setTitle(QApplication::translate("CompareDialog", "Beam's Eye View", 0, QApplication::UnicodeUTF8));
         gantryAnglePushButton->setText(QApplication::translate("CompareDialog", "Gantry Angle", 0, QApplication::UnicodeUTF8));
         flatShadedCheckBox->setText(QApplication::translate("CompareDialog", "Flat shaded", 0, QApplication::UnicodeUTF8));

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CaseSpaceDialog.ui'
 **
-** Created: Wed Nov 2 10:04:29 2011
+** Created: Thu Nov 3 16:04:49 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -79,7 +79,7 @@ public:
     {
         if (CaseSpaceDialog->objectName().isEmpty())
             CaseSpaceDialog->setObjectName(QString::fromUtf8("CaseSpaceDialog"));
-        CaseSpaceDialog->resize(973, 706);
+        CaseSpaceDialog->resize(962, 692);
         horizontalLayout = new QHBoxLayout(CaseSpaceDialog);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         scrollArea = new QScrollArea(CaseSpaceDialog);
@@ -88,8 +88,8 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(-3, 0, 1100, 1122));
-        scrollAreaWidgetContents->setMinimumSize(QSize(1100, 1122));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 942, 672));
+        scrollAreaWidgetContents->setMinimumSize(QSize(935, 660));
         caseSpaceViewWidget = new QVTKWidget(scrollAreaWidgetContents);
         caseSpaceViewWidget->setObjectName(QString::fromUtf8("caseSpaceViewWidget"));
         caseSpaceViewWidget->setGeometry(QRect(10, 62, 920, 569));
@@ -259,7 +259,10 @@ public:
         resetViewPushButton->setSizePolicy(sizePolicy);
         resetViewPushButton->setMinimumSize(QSize(65, 0));
         scrollArea->setWidget(scrollAreaWidgetContents);
-        layoutWidget->raise();
+        selectOverlapDataGroupBox->raise();
+        backgroundColorGroupBox->raise();
+        MIRangeGroupBox->raise();
+        selectViewGroupBox->raise();
         caseSpaceViewWidget->raise();
         layoutWidget->raise();
 

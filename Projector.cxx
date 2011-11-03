@@ -443,9 +443,13 @@ void Projector::SetCameraPosition(double az)
 	//double posY = -210; // 04/13/11 so the body is entirely visible
 
 	renderer->GetActiveCamera()->SetPosition(64.5, posY, avgZ);   // campos in Matlab
-  renderer->GetActiveCamera()->SetFocalPoint(64, 64, avgZ);     // camtarget "
-  renderer->GetActiveCamera()->SetViewUp(0, 0, -1);             // camup     "
-  renderer->GetActiveCamera()->Azimuth(-az);                    // [az,el] = view "
+	renderer->GetActiveCamera()->SetFocalPoint(64, 64, avgZ);     // camtarget "
+	renderer->GetActiveCamera()->SetViewUp(0, 0, -1);             // camup     "
+	renderer->GetActiveCamera()->Azimuth(-az);                    // [az,el] = view "
+
+	double n, f;
+	renderer->GetActiveCamera()->GetClippingRange(n, f);
+	cout << " clip: " << n << ", " << f << endl;
 }
 
 ///UpdateExtrema////////////////////////////////////////////////////////////////
@@ -651,8 +655,8 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
 /*  } */
 
   renderer->AddActor(actor);
-  int numActors = renderer->GetActors()->GetNumberOfItems();
-  
+ // int numActors = renderer->GetActors()->GetNumberOfItems();
+ //  cout << patientNum << ": " << numActors << " actors" << endl;
   return true;
 }
 
@@ -689,10 +693,15 @@ bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatien
 		wasAtLeastOneStructureBuilt = true;
 	}
   }
- 
-  InitSlicePlane();
-  renderer->GetActiveCamera()->SetClippingRange(1.0, MAX(maxX, maxY, maxZ) * 3.0);
 
+//#if USE_PROJECTOR_SLICE_PLANE
+  InitSlicePlane();
+//#endif
+
+ // renderer->GetActiveCamera()->SetClippingRange(1.0, MAX(maxX, maxY, maxZ) * 3.0);
+  renderer->GetActiveCamera()->SetClippingRange(0.01, MAX(maxX, maxY, maxZ) * 7.0);
+
+/*
   if (isPatientChanged)
   {
 	  cout << "Projector::BuildStructuresForPatient(...) patient #" << patientNum << " extrema: " 
@@ -700,6 +709,7 @@ bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatien
 	   << minY << ", " << maxY << "; "
 	   << minZ << ", " << maxZ << endl;
   }
+*/
 
   isPatientChanged = false;
 
@@ -835,7 +845,9 @@ void Projector::InitSlicePlane()
 	sliceActor->SetMapper(sliceMapper);
 	sliceActor->GetProperty()->SetOpacity(0.2);
 
+#if USE_PROJECTOR_SLICE_PLANE
 	renderer->AddActor(sliceActor);  
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

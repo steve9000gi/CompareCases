@@ -165,9 +165,13 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		balloonRep(NULL),
 		zMult(10000.0),
 		axes(NULL),
-		stdCamDist(33700.0),	// Empricially determined
+		stdCamDist(33700.0),
 		stdVertShift(2500.0),	// Add to move camera up, oblique & MI views
+#ifdef XVGA_RESOLUTION
+		parallelScale(4500.0),
+#else
 		parallelScale(5300.0),
+#endif
 		thresholdPlaneThickness(15.0),
 		queryPoint(NULL),
 		queryPointActor(NULL),
@@ -2000,7 +2004,7 @@ void CaseSpaceDialog::displayQueryCaseData()
 	queryCaseNameLabel->update();
 
 	char txt[kMaxChars];  
-	sprintf_s(txt, "Query: %s patient #%03d: %s: %3g; %s: %3g; MI: %3g", 
+	sprintf_s(txt, "Query: %s #%03d: %s: %3g; %s: %3g; MI: %3.3g", 
 		queryInstitution.ascii(),
 		queryCase->getNumber(), 
 		XYValuesItemText[xValueType],
@@ -2034,7 +2038,7 @@ void CaseSpaceDialog::displayMatchCaseData()
 	matchCaseNameLabel->adjustSize();
 
 	char txt[kMaxChars];  
-	sprintf_s(txt, "Match: %s patient #%03d: %s: %3g; %s: %3g; MI: %3g", 
+	sprintf_s(txt, "Match: %s #%03d: %s: %3g; %s: %3g; MI: %3.3g", 
 		matchInstitution.ascii(),
 		matchCase->getNumber(), 
 		XYValuesItemText[xValueType],
@@ -2234,11 +2238,12 @@ void CaseSpaceDialog::prepareMIDisplay()
 
 #ifdef XVGA_RESOLUTION
 	const double scale = shaftLength / 26.0;	// Eyeballed
+	axisTextOffset = shaftLength * 1.05;		  // Likewise
 #else
 	const double scale = shaftLength / 35.0;	// Eyeballed
+	axisTextOffset = shaftLength * 1.1;			// Likewise
 #endif
 
-	axisTextOffset = shaftLength * 1.1;			// Likewise
 
 	vtkFollower *xf = axes->AddFollowingText(Axes::xAxis, XYValuesItemText[xValueType], 
 		queryCase->getPTVPlusBladder() + axisTextOffset, queryCase->getPTVPlusRectum(), z, 
