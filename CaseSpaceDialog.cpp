@@ -176,7 +176,9 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		MILookupTable(NULL),
 		newMatchCaseSelectedHere(false),
 		xValueType(PTVPlusBladder),
-		yValueType(PTVPlusRectum)
+		yValueType(PTVPlusRectum),
+		xAxisPlane(NULL),
+		yAxisPlane(NULL)
 
 {
 	matchIcon[0] = NULL;		// We'll just check the 0th element
@@ -201,6 +203,9 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 
 	ren->GetActiveCamera()->ParallelProjectionOn(); 
 	setObliqueView(true);
+	viewThresholdAxesCheckBox->setChecked(true);
+    viewAxisPlanesCheckBox->setChecked(true);
+	viewThresholdPlaneCheckBox->setChecked(true);
 }
 
 ///dtor/////////////////////////////////////////////////////////////////////////
@@ -598,6 +603,7 @@ void CaseSpaceDialog::compareCases()
 			compareDialog->setQuery(queryCase);
 			compareDialog->setMatch(matchCase);
 
+			compareDialog->readIsocenters();
 			compareDialog->show();
 		}
 		
@@ -755,6 +761,15 @@ void CaseSpaceDialog::setThresholdPlanePosition(int zVal)
 		MIRangeGroupBox->setTitle("MI threshold: " + thresholdAsText);
 	}
 
+	if (!xAxisPlane) addAxisPlanes();
+
+	setAxisPlanes(thresholdPlaneZVal);
+
+	thresholdAxesAssembly->SetPosition(
+		getXYValueFromIndex(queryCaseIndex, xValueType),
+		getXYValueFromIndex(queryCaseIndex, yValueType),
+		thresholdPlaneZVal);
+
 	caseSpaceRenWin->Render();
 }
 
@@ -823,6 +838,11 @@ void CaseSpaceDialog::selectXYDataAngle(QString text)
 	dukeXYDataSuffix = ((isNum) ? (nAsText) : "Avg") + ".txt";	
 
 	resetDukeDataPositions(true);
+	setAxisPlanes(thresholdPlaneZVal);
+	thresholdAxesAssembly->SetPosition(
+		getXYValueFromIndex(queryCaseIndex, xValueType),
+		getXYValueFromIndex(queryCaseIndex, yValueType),
+		thresholdPlaneZVal);
 	resetView();
 
 	for (int i = 0; i < numXYDataAngleMenuItems; i++)
@@ -862,6 +882,11 @@ void CaseSpaceDialog::selectXValues(QString text)
 	if (lastValueType != xValueType)
 	{
 		resetDukeDataPositions();
+		setAxisPlanes(thresholdPlaneZVal);
+		thresholdAxesAssembly->SetPosition(
+			getXYValueFromIndex(queryCaseIndex, xValueType),
+			getXYValueFromIndex(queryCaseIndex, yValueType),
+			thresholdPlaneZVal);
 		resetView();
 	}
 }
@@ -897,8 +922,66 @@ void CaseSpaceDialog::selectYValues(QString text)
 	if (lastValueType != yValueType)
 	{
 		resetDukeDataPositions();
-		resetView();
+		setAxisPlanes(thresholdPlaneZVal);
+		thresholdAxesAssembly->SetPosition(
+			getXYValueFromIndex(queryCaseIndex, xValueType),
+			getXYValueFromIndex(queryCaseIndex, yValueType),
+			thresholdPlaneZVal);
+
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::toggleAxisPlanes(bool checked)
+{
+	if (checked)
+	{
+		ren->AddActor(xAxisPlaneActor);
+		ren->AddActor(yAxisPlaneActor);
+	}
+	else
+	{
+		ren->RemoveActor(xAxisPlaneActor);
+		ren->RemoveActor(yAxisPlaneActor);
+	}
+
+	caseSpaceRenWin->Render();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::toggleThresholdAxes(bool checked)
+{
+	if (checked)
+	{
+		ren->AddActor(thresholdAxesAssembly);
+	}
+	else
+	{
+		ren->RemoveActor(thresholdAxesAssembly);
+	}
+
+	caseSpaceRenWin->Render();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::toggleThresholdPlane(bool checked)
+{
+	if (checked)
+	{
+		ren->AddActor(mitpActor);
+	}
+	else
+	{
+		ren->RemoveActor(mitpActor);
+	}
+
+	caseSpaceRenWin->Render();
 }
 
 ///SetCameraPosition////////////////////////////////////////////////////////////
@@ -953,7 +1036,14 @@ void CaseSpaceDialog::createActions()
 	connect(backgroundWhiteRadioButton, SIGNAL(toggled(bool)), this, 
 		SLOT(setBackgroundWhite(bool)));	
 	connect(backgroundRampRadioButton, SIGNAL(toggled(bool)), this, 
-		SLOT(setBackgroundRamped(bool)));	
+		SLOT(setBackgroundRamped(bool)));
+
+	connect(viewThresholdAxesCheckBox, SIGNAL(toggled(bool)), this, 
+		SLOT(toggleThresholdAxes(bool)));
+	connect(viewThresholdPlaneCheckBox, SIGNAL(toggled(bool)), this, 
+		SLOT(toggleThresholdPlane(bool)));
+	connect(viewAxisPlanesCheckBox, SIGNAL(toggled(bool)), this, 
+		SLOT(toggleAxisPlanes(bool)));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1205,8 +1295,8 @@ void CaseSpaceDialog::initializeMILegend()
 	MILegend->SetTitle("MI Values");
 	MILegend->SetOrientationToHorizontal();
 	MILegend->GetPositionCoordinate()->SetCoordinateSystemToNormalizedViewport();
-	MILegend->GetPositionCoordinate()->SetValue(0.8133, 0.95);
-	MILegend->SetWidth(0.1525);
+	MILegend->GetPositionCoordinate()->SetValue(0.849, 0.95);
+	MILegend->SetWidth(0.114);
 	MILegend->SetHeight(0.05);
 	MILegend->GetTitleTextProperty()->ItalicOff();
 	MILegend->GetLabelTextProperty()->ItalicOff();
@@ -1319,7 +1409,7 @@ bool CaseSpaceDialog::readDukeXYData()
 	{
 		QString warn = "readDukeXYData(...): seek(0) failed";
 		QMessageBox::warning(this, 
-			tr("failure attempting to return to file beginning"), warn);
+			tr("failure attempting to return to file start"), warn);
 		return false; 
 	}
 
@@ -2095,10 +2185,11 @@ void CaseSpaceDialog::prepareMIDisplay()
 	axes = new Axes();
 	double shaftLength = 4000.0;
 	axesAssembly = axes->InsertThis(ren, shaftLength);
-
+	thresholdAxesAssembly = axes->createGhostAxes(ren, shaftLength);
 	double z = MIMin * zMult;
 
 	axesAssembly->SetPosition(queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum(), z);
+	thresholdAxesAssembly->SetPosition(queryCase->getPTVPlusBladder(), queryCase->getPTVPlusRectum(), z);
 
 	const double scale = shaftLength / 35.0;	// Eyeballed 
 	axisTextOffset = shaftLength * 1.1;			// Likewise
@@ -2154,7 +2245,7 @@ void CaseSpaceDialog::addMIThresholdPlane()
 	vtkPolyDataMapper *mitpMapper = vtkPolyDataMapper::New();
 	mitpMapper->SetInputConnection(MIThresholdPlane->GetOutputPort());
 
-	vtkActor *mitpActor = vtkActor::New();
+	mitpActor = vtkActor::New();
 	mitpActor->SetMapper(mitpMapper);
 	mitpActor->GetProperty()->SetOpacity(0.33);
 	mitpActor->GetProperty()->SetSpecular(0);
@@ -2163,8 +2254,78 @@ void CaseSpaceDialog::addMIThresholdPlane()
 	mitpActor->GetProperty()->SetAmbientColor(0.2, 0.2, 0.2);
 	mitpActor->PickableOff();
 
-	ren->AddActor(mitpActor);
+	//ren->AddActor(mitpActor);
 
 	setThresholdPlanePosition(MIRangeSlider->value());
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::addAxisPlanes()
+{
+	if (xAxisPlane) return;
+
+	xAxisPlane = vtkCubeSource::New();
+	vtkPolyDataMapper *xAxisPlaneMapper = vtkPolyDataMapper::New();
+	xAxisPlaneMapper->SetInputConnection(xAxisPlane->GetOutputPort());
+	xAxisPlaneActor = vtkActor::New();
+	xAxisPlaneActor->SetMapper(xAxisPlaneMapper);
+	xAxisPlaneActor->GetProperty()->SetOpacity(0.05);
+	xAxisPlaneActor->GetProperty()->SetSpecular(0);
+	xAxisPlaneActor->GetProperty()->SetDiffuse(0);
+	xAxisPlaneActor->GetProperty()->SetAmbient(1);
+	xAxisPlaneActor->GetProperty()->SetAmbientColor(1.0, 0.0, 0.0);
+	xAxisPlaneActor->PickableOff();
+	//ren->AddActor(xAxisPlaneActor);
+
+	yAxisPlane = vtkCubeSource::New();
+	vtkPolyDataMapper *yAxisPlaneMapper = vtkPolyDataMapper::New();
+	yAxisPlaneMapper->SetInputConnection(yAxisPlane->GetOutputPort());
+	yAxisPlaneActor = vtkActor::New();
+	yAxisPlaneActor->SetMapper(yAxisPlaneMapper);
+	yAxisPlaneActor->GetProperty()->SetOpacity(0.05);
+	yAxisPlaneActor->GetProperty()->SetSpecular(0);
+	yAxisPlaneActor->GetProperty()->SetDiffuse(0);
+	yAxisPlaneActor->GetProperty()->SetAmbient(1);
+	yAxisPlaneActor->GetProperty()->SetAmbientColor(0.0, 1.0, 0.0);
+	yAxisPlaneActor->PickableOff();
+	//ren->AddActor(yAxisPlaneActor);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Make sure this is called *after* setThresholdPlanePosition(...) so that
+// MIThresholdVal is up to date.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CaseSpaceDialog::setAxisPlanes(int thresholdPlaneZVal)
+{
+	double width = axes->getShaftLength();
+	double height = thresholdPlaneZVal - zCenterQueryPt;
+	double thickness = thresholdPlaneThickness;
+
+	xAxisPlane->SetXLength(width);
+	xAxisPlane->SetYLength(thickness);
+	xAxisPlane->SetZLength(height);
+
+	xAxisPlane->SetCenter(xCenterQueryPt + (width / 2.0),
+								yCenterQueryPt + (thickness / 2.0),
+								zCenterQueryPt + (height / 2.0));
+
+	yAxisPlane->SetXLength(thickness);
+	yAxisPlane->SetYLength(width);
+	yAxisPlane->SetZLength(height);
+
+	yAxisPlane->SetCenter(xCenterQueryPt + (thickness / 2.0),
+								yCenterQueryPt + (width / 2.0),
+								zCenterQueryPt + (height / 2.0));
+
+	//axes->setGhostAxesPosition(zCenterQueryPt + height);
+
+	caseSpaceRenWin->Render();
+}
+
+
+
 

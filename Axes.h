@@ -39,6 +39,9 @@ public:
 
 	void setAxisLabel(AxisType axis, char *label);
 	void setAxisLabelPosition(AxisType axis, double x, double y, double z);
+	double getShaftLength() { return shaftLength; };
+	vtkAssembly *createGhostAxes(vtkRenderer *r, double shaftLen = 20.0,
+		double x = 0.0, double y = 0.0, double z = 0.0);
 
 protected:
 	double shaftLength;
@@ -55,6 +58,11 @@ protected:
 	vtkActor *yShaftActor;
 	vtkActor *zShaftActor;
 
+	vtkActor *ghostOActor;
+	vtkActor *ghostXConeActor;
+	vtkActor *ghostYConeActor;
+	vtkActor *ghostXShaftActor;
+	vtkActor *ghostYShaftActor;
 };
 
 #endif

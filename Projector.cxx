@@ -26,6 +26,7 @@
 #include "vtkCylinderSource.h"
 #include "vtkFollower.h"
 #include "vtkTextActor.h"
+#include "vtkTextProperty.h"
 #include "vtkCommand.h"
 #include "vtkWindowToImageFilter.h"
 #include "vtkPNGWriter.h"
@@ -44,6 +45,10 @@ using namespace std;
 // Window size and position:
 static const int kRenWinX = 512;
 static const int kRenWinY = 512;
+
+// Global: Structures don't show up in release build if class members:
+vtkTextActor *legendTextActor[Projector::kNumStructureTypes]; 
+bool usedThemUp = false; // HACK because multiple Projectors now share single legend
 
 // const member initializations:
 const int Projector::kNumInFileTypes = ekVertices + 1;
@@ -130,6 +135,8 @@ Projector::Projector()
 	for (int i = ekBladder; i < kNumStructureTypes; i++)
 	{
 		drawStructure[i] = true;
+
+		if (!usedThemUp) legendTextActor[i] = NULL;
 	}
 }
 
@@ -166,6 +173,8 @@ Projector::Projector(QString dataDir)
 	for (int i = ekBladder; i < kNumStructureTypes; i++)
 	{
 		drawStructure[i] = true;
+
+		if (!usedThemUp) legendTextActor[i] = NULL;
 	}
 }
 
@@ -732,6 +741,55 @@ void Projector::TextInit(void)
   renderer->AddActor(textActor);
 }
 
+///InitLegend///////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void Projector::InitLegend()
+{
+	usedThemUp = !usedThemUp; //major HACK
+
+	if (legendTextActor[0]) return;
+
+	// HACK: copied from CompareDialog.cpp:
+	static const char *shortStructureName[kNumStructureTypes] =
+	{
+		"PTV",		// Planning Target Volume
+		"rectum",
+		"bladder",
+		"left fem",
+		"right fem"
+	};
+
+	// SAME HACK: rgb values, 0.0-1.0 range:
+	static const double structureColor[kNumStructureTypes][3] =
+	{
+		0.9, 0.0, 0.0,			// PTV red     
+		0.545, 0.271, 0.075,	// rectum "saddle brown"
+		1.0, 0.84, 0.0,			// bladder "golden yellow"
+		0.5, 0.5, 0.6,			// left femoral head blue-gray
+		0.75, 0.75, 0.75		// right femoral head lite gray
+	};
+
+	//const int startY = kRenWinY - 20; // 512
+	const int startY = kRenWinY - 72; // 460
+	const int yDecrement = 15;
+	const int startX = kRenWinX - 112;
+	//const int startX = kRenWinX - 60; // 512
+
+	for (int i = 0; i < kNumStructureTypes; i++)
+	{
+		legendTextActor[i] = vtkTextActor::New();
+		legendTextActor[i]->SetHeight(0.25);
+		legendTextActor[i]->SetDisplayPosition(startX, startY - i * yDecrement);
+		legendTextActor[i]->GetTextProperty()->SetColor(1, 1, 0);
+		legendTextActor[i]->GetTextProperty()->BoldOn();
+		legendTextActor[i]->SetInput(shortStructureName[i]);
+		legendTextActor[i]->GetTextProperty()->SetColor(
+			structureColor[i][0], structureColor[i][1], structureColor[i][2]);
+		renderer->AddActor(legendTextActor[i]);
+	}
+}
+
 ////SetProjection///////////////////////////////////////////////////////////////
 //
 // Set the camera angle and add the corresponding text.
@@ -743,7 +801,16 @@ void Projector::SetProjection(int patientNum, int angle)
   SetCameraPosition(angle); 
   sprintf_s(txt, "patient #%03d: gantry angle %d degrees", patientNum, angle);
   renderer->AddActor(textActor); // Need to do this every time to see text
-  textActor->SetInput(txt);    
+  textActor->SetInput(txt);
+
+  //if (!usedThemUp)
+  {
+	  for (int i = 0; i < kNumStructureTypes; i++) // Why? Dunno, but it works
+		  if (legendTextActor[i]) renderer->AddActor(legendTextActor[i]);
+  }
+
+  usedThemUp = !usedThemUp; //major HACK
+
   renWin->Render();
   //ReportCameraPosition(renderer);
 }
@@ -770,7 +837,9 @@ void Projector::InitSlicePlane()
 	sliceActor->SetMapper(sliceMapper);
 	sliceActor->GetProperty()->SetOpacity(0.2);
 
+#if USE_PROJECTOR_SLICE_PLANE
 	renderer->AddActor(sliceActor);  
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CaseSpaceDialog.ui'
 **
-** Created: Tue Oct 25 12:21:08 2011
+** Created: Tue Nov 29 17:09:50 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -14,6 +14,7 @@
 #include <QtGui/QAction>
 #include <QtGui/QApplication>
 #include <QtGui/QButtonGroup>
+#include <QtGui/QCheckBox>
 #include <QtGui/QDialog>
 #include <QtGui/QDialogButtonBox>
 #include <QtGui/QGroupBox>
@@ -24,7 +25,6 @@
 #include <QtGui/QRadioButton>
 #include <QtGui/QScrollArea>
 #include <QtGui/QSlider>
-#include <QtGui/QSpacerItem>
 #include <QtGui/QSplitter>
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QWidget>
@@ -64,27 +64,27 @@ public:
     QLabel *MIMaxLabel;
     QVTKWidget *caseSpaceViewWidget;
     QSplitter *splitter;
-    QWidget *widget;
+    QWidget *layoutWidget1;
     QVBoxLayout *verticalLayout;
     QLabel *queryCaseLabel;
     QLabel *matchCaseLabel;
-    QWidget *widget1;
+    QWidget *layoutWidget2;
     QVBoxLayout *verticalLayout_2;
     QLabel *queryCaseNameLabel;
     QLabel *matchCaseNameLabel;
-    QWidget *widget2;
-    QHBoxLayout *horizontalLayout_7;
-    QHBoxLayout *compareTestButtonsLayout;
+    QGroupBox *viewMIThresholdIndicatorsGroupBox;
+    QCheckBox *viewAxisPlanesCheckBox;
+    QCheckBox *viewThresholdAxesCheckBox;
+    QCheckBox *viewThresholdPlaneCheckBox;
+    QDialogButtonBox *buttonBox;
     QPushButton *compareCasesPushButton;
     QPushButton *testPushButton;
-    QSpacerItem *horizontalSpacer;
-    QDialogButtonBox *buttonBox;
 
     void setupUi(QDialog *CaseSpaceDialog)
     {
         if (CaseSpaceDialog->objectName().isEmpty())
             CaseSpaceDialog->setObjectName(QString::fromUtf8("CaseSpaceDialog"));
-        CaseSpaceDialog->resize(1532, 1122);
+        CaseSpaceDialog->resize(1522, 1030);
         horizontalLayout = new QHBoxLayout(CaseSpaceDialog);
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         scrollArea = new QScrollArea(CaseSpaceDialog);
@@ -92,11 +92,11 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1616, 1122));
-        scrollAreaWidgetContents->setMinimumSize(QSize(1616, 1122));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1502, 1010));
+        scrollAreaWidgetContents->setMinimumSize(QSize(1495, 990));
         layoutWidget = new QWidget(scrollAreaWidgetContents);
         layoutWidget->setObjectName(QString::fromUtf8("layoutWidget"));
-        layoutWidget->setGeometry(QRect(452, 1, 1032, 58));
+        layoutWidget->setGeometry(QRect(452, 6, 1032, 58));
         horizontalLayout_5 = new QHBoxLayout(layoutWidget);
         horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
         horizontalLayout_5->setContentsMargins(0, 0, 0, 0);
@@ -206,75 +206,71 @@ public:
 
         caseSpaceViewWidget = new QVTKWidget(scrollAreaWidgetContents);
         caseSpaceViewWidget->setObjectName(QString::fromUtf8("caseSpaceViewWidget"));
-        caseSpaceViewWidget->setGeometry(QRect(10, 62, 1475, 996));
+        caseSpaceViewWidget->setGeometry(QRect(10, 68, 1473, 897));
         caseSpaceViewWidget->setMinimumSize(QSize(920, 569));
         splitter = new QSplitter(scrollAreaWidgetContents);
         splitter->setObjectName(QString::fromUtf8("splitter"));
-        splitter->setGeometry(QRect(10, 2, 427, 34));
+        splitter->setGeometry(QRect(10, 8, 427, 34));
         splitter->setOrientation(Qt::Horizontal);
-        widget = new QWidget(splitter);
-        widget->setObjectName(QString::fromUtf8("widget"));
-        verticalLayout = new QVBoxLayout(widget);
+        layoutWidget1 = new QWidget(splitter);
+        layoutWidget1->setObjectName(QString::fromUtf8("layoutWidget1"));
+        verticalLayout = new QVBoxLayout(layoutWidget1);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
-        queryCaseLabel = new QLabel(widget);
+        queryCaseLabel = new QLabel(layoutWidget1);
         queryCaseLabel->setObjectName(QString::fromUtf8("queryCaseLabel"));
 
         verticalLayout->addWidget(queryCaseLabel);
 
-        matchCaseLabel = new QLabel(widget);
+        matchCaseLabel = new QLabel(layoutWidget1);
         matchCaseLabel->setObjectName(QString::fromUtf8("matchCaseLabel"));
 
         verticalLayout->addWidget(matchCaseLabel);
 
-        splitter->addWidget(widget);
-        widget1 = new QWidget(splitter);
-        widget1->setObjectName(QString::fromUtf8("widget1"));
-        verticalLayout_2 = new QVBoxLayout(widget1);
+        splitter->addWidget(layoutWidget1);
+        layoutWidget2 = new QWidget(splitter);
+        layoutWidget2->setObjectName(QString::fromUtf8("layoutWidget2"));
+        verticalLayout_2 = new QVBoxLayout(layoutWidget2);
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         verticalLayout_2->setContentsMargins(0, 0, 0, 0);
-        queryCaseNameLabel = new QLabel(widget1);
+        queryCaseNameLabel = new QLabel(layoutWidget2);
         queryCaseNameLabel->setObjectName(QString::fromUtf8("queryCaseNameLabel"));
 
         verticalLayout_2->addWidget(queryCaseNameLabel);
 
-        matchCaseNameLabel = new QLabel(widget1);
+        matchCaseNameLabel = new QLabel(layoutWidget2);
         matchCaseNameLabel->setObjectName(QString::fromUtf8("matchCaseNameLabel"));
 
         verticalLayout_2->addWidget(matchCaseNameLabel);
 
-        splitter->addWidget(widget1);
-        widget2 = new QWidget(scrollAreaWidgetContents);
-        widget2->setObjectName(QString::fromUtf8("widget2"));
-        widget2->setGeometry(QRect(10, 1062, 1476, 27));
-        horizontalLayout_7 = new QHBoxLayout(widget2);
-        horizontalLayout_7->setObjectName(QString::fromUtf8("horizontalLayout_7"));
-        horizontalLayout_7->setContentsMargins(0, 0, 0, 0);
-        compareTestButtonsLayout = new QHBoxLayout();
-        compareTestButtonsLayout->setObjectName(QString::fromUtf8("compareTestButtonsLayout"));
-        compareCasesPushButton = new QPushButton(widget2);
-        compareCasesPushButton->setObjectName(QString::fromUtf8("compareCasesPushButton"));
-
-        compareTestButtonsLayout->addWidget(compareCasesPushButton);
-
-        testPushButton = new QPushButton(widget2);
-        testPushButton->setObjectName(QString::fromUtf8("testPushButton"));
-
-        compareTestButtonsLayout->addWidget(testPushButton);
-
-
-        horizontalLayout_7->addLayout(compareTestButtonsLayout);
-
-        horizontalSpacer = new QSpacerItem(1274, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout_7->addItem(horizontalSpacer);
-
-        buttonBox = new QDialogButtonBox(widget2);
+        splitter->addWidget(layoutWidget2);
+        viewMIThresholdIndicatorsGroupBox = new QGroupBox(scrollAreaWidgetContents);
+        viewMIThresholdIndicatorsGroupBox->setObjectName(QString::fromUtf8("viewMIThresholdIndicatorsGroupBox"));
+        viewMIThresholdIndicatorsGroupBox->setGeometry(QRect(594, 966, 305, 39));
+        QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(viewMIThresholdIndicatorsGroupBox->sizePolicy().hasHeightForWidth());
+        viewMIThresholdIndicatorsGroupBox->setSizePolicy(sizePolicy);
+        viewAxisPlanesCheckBox = new QCheckBox(viewMIThresholdIndicatorsGroupBox);
+        viewAxisPlanesCheckBox->setObjectName(QString::fromUtf8("viewAxisPlanesCheckBox"));
+        viewAxisPlanesCheckBox->setGeometry(QRect(10, 18, 77, 17));
+        viewThresholdAxesCheckBox = new QCheckBox(viewMIThresholdIndicatorsGroupBox);
+        viewThresholdAxesCheckBox->setObjectName(QString::fromUtf8("viewThresholdAxesCheckBox"));
+        viewThresholdAxesCheckBox->setGeometry(QRect(93, 18, 97, 17));
+        viewThresholdPlaneCheckBox = new QCheckBox(viewMIThresholdIndicatorsGroupBox);
+        viewThresholdPlaneCheckBox->setObjectName(QString::fromUtf8("viewThresholdPlaneCheckBox"));
+        viewThresholdPlaneCheckBox->setGeometry(QRect(196, 18, 99, 17));
+        buttonBox = new QDialogButtonBox(scrollAreaWidgetContents);
         buttonBox->setObjectName(QString::fromUtf8("buttonBox"));
+        buttonBox->setGeometry(QRect(1326, 974, 156, 23));
         buttonBox->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
-
-        horizontalLayout_7->addWidget(buttonBox);
-
+        compareCasesPushButton = new QPushButton(scrollAreaWidgetContents);
+        compareCasesPushButton->setObjectName(QString::fromUtf8("compareCasesPushButton"));
+        compareCasesPushButton->setGeometry(QRect(12, 974, 83, 23));
+        testPushButton = new QPushButton(scrollAreaWidgetContents);
+        testPushButton->setObjectName(QString::fromUtf8("testPushButton"));
+        testPushButton->setGeometry(QRect(101, 974, 75, 23));
         scrollArea->setWidget(scrollAreaWidgetContents);
 
         horizontalLayout->addWidget(scrollArea);
@@ -309,6 +305,10 @@ public:
         matchCaseLabel->setText(QApplication::translate("CaseSpaceDialog", "Match:", 0, QApplication::UnicodeUTF8));
         queryCaseNameLabel->setText(QApplication::translate("CaseSpaceDialog", "<not selected>", 0, QApplication::UnicodeUTF8));
         matchCaseNameLabel->setText(QApplication::translate("CaseSpaceDialog", "<not selected>", 0, QApplication::UnicodeUTF8));
+        viewMIThresholdIndicatorsGroupBox->setTitle(QApplication::translate("CaseSpaceDialog", "View MI Threshold Indicators", 0, QApplication::UnicodeUTF8));
+        viewAxisPlanesCheckBox->setText(QApplication::translate("CaseSpaceDialog", "Axis Planes", 0, QApplication::UnicodeUTF8));
+        viewThresholdAxesCheckBox->setText(QApplication::translate("CaseSpaceDialog", "Threshold Axes", 0, QApplication::UnicodeUTF8));
+        viewThresholdPlaneCheckBox->setText(QApplication::translate("CaseSpaceDialog", "Threshold Plane", 0, QApplication::UnicodeUTF8));
         compareCasesPushButton->setText(QApplication::translate("CaseSpaceDialog", "Compare Cases", 0, QApplication::UnicodeUTF8));
         testPushButton->setText(QApplication::translate("CaseSpaceDialog", "Test", 0, QApplication::UnicodeUTF8));
     } // retranslateUi

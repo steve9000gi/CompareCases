@@ -33,6 +33,11 @@
 
 using namespace std;
 
+const double coneRadiusRatio = 0.015; // 0.025; // 0.0375;
+const double coneHeightRatio = 0.045; // 0.067; // 0.1;
+const double shaftRadiusRatio = 0.003; // 0.004; // 0.005;
+
+
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +51,12 @@ Axes::Axes()
 	zConeActor(NULL),
 	xShaftActor(NULL),
 	yShaftActor(NULL),
-	zShaftActor(NULL)
+	zShaftActor(NULL),
+	ghostOActor(NULL),
+	ghostXConeActor(NULL),
+	ghostYConeActor(NULL),
+	ghostXShaftActor(NULL),
+	ghostYShaftActor(NULL)
 {}
 
 ///dtor/////////////////////////////////////////////////////////////////////////
@@ -99,10 +109,6 @@ vtkAssembly *Axes::InsertThis(vtkRenderer *r, double shaftLen /*= 20.0 */,
 		double x /*= 0.0 */, double y /* = 0.0 */, double z /*= 0.0 */)
 {
 	this->shaftLength = shaftLen;
-
-	const double coneRadiusRatio = 0.015; // 0.025; // 0.0375;
-	const double coneHeightRatio = 0.045; // 0.067; // 0.1;
-	const double shaftRadiusRatio = 0.003; // 0.004; // 0.005;
 	const double shaftPosition = shaftLength / 2.0;
 
 	vtkConeSource *xCone = vtkConeSource::New();
@@ -228,4 +234,101 @@ void Axes::setAxisLabelPosition(AxisType axis, double x, double y, double z)
 {
 	vTextActor[axis]->SetPosition(x, y, z);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+vtkAssembly *Axes::createGhostAxes(vtkRenderer *r, double shaftLen /*= 20.0 */,
+		double x /*= 0.0 */, double y /* = 0.0 */, double z /*= 0.0 */)
+{
+	const double shaftPosition = shaftLen / 2.0;
+	const double opacity = 0.25;
+
+	vtkConeSource *ghostXCone = vtkConeSource::New();
+	vtkPolyDataMapper *ghostXConeMapper = vtkPolyDataMapper::New();
+	ghostXConeActor = vtkActor::New();
+	ghostXConeActor->PickableOff();
+	ghostXCone->SetResolution(40);
+	ghostXCone->SetHeight(shaftLength * coneHeightRatio);
+	ghostXCone->SetRadius(shaftLength * coneRadiusRatio);
+	ghostXCone->SetDirection(1, 0, 0);
+	ghostXConeMapper->SetInputConnection(ghostXCone->GetOutputPort());
+	ghostXConeActor->SetPosition(shaftLength, 0, 0);
+	ghostXConeMapper->ScalarVisibilityOff();
+	ghostXConeActor->SetMapper(ghostXConeMapper);
+	ghostXConeActor->GetProperty()->SetColor(1, 0, 0);
+	ghostXConeActor->GetProperty()->SetOpacity(opacity);
+  
+	vtkCylinderSource *ghostXShaft = vtkCylinderSource::New();
+	vtkPolyDataMapper *ghostXShaftMapper = vtkPolyDataMapper::New();
+	ghostXShaftActor = vtkActor::New();
+	ghostXShaftActor->PickableOff();
+	ghostXShaft->SetResolution(40);
+	ghostXShaft->SetHeight(shaftLength);
+	ghostXShaft->SetRadius(shaftLength * shaftRadiusRatio);
+	ghostXShaftMapper->SetInputConnection(ghostXShaft->GetOutputPort());
+	ghostXShaftMapper->ScalarVisibilityOff();
+	ghostXShaftActor->RotateZ(90);
+	ghostXShaftActor->SetPosition(shaftPosition, 0, 0);
+	ghostXShaftActor->SetMapper(ghostXShaftMapper);
+	ghostXShaftActor->GetProperty()->SetColor(1, 0, 0);
+	ghostXShaftActor->GetProperty()->SetOpacity(opacity);
+
+	vtkConeSource *ghostYCone = vtkConeSource::New();
+	vtkPolyDataMapper *ghostYConeMapper = vtkPolyDataMapper::New();
+	ghostYConeActor = vtkActor::New();
+	ghostYConeActor->PickableOff();
+	ghostYCone->SetResolution(40);
+	ghostYCone->SetHeight(shaftLength * coneHeightRatio);
+	ghostYCone->SetRadius(shaftLength * coneRadiusRatio);
+	ghostYCone->SetDirection(0, 1, 0);
+	ghostYConeMapper->SetInputConnection(ghostYCone->GetOutputPort());
+	ghostYConeActor->SetPosition(0, shaftLength, 0);
+	ghostYConeMapper->ScalarVisibilityOff();
+	ghostYConeActor->SetMapper(ghostYConeMapper);
+	ghostYConeActor->GetProperty()->SetColor(0, 1, 0);
+	ghostYConeActor->GetProperty()->SetOpacity(opacity);
+  
+	vtkCylinderSource *ghostYShaft = vtkCylinderSource::New();
+	vtkPolyDataMapper *ghostYShaftMapper = vtkPolyDataMapper::New();
+	ghostYShaftActor = vtkActor::New();
+	ghostYShaftActor->PickableOff();
+	ghostYShaft->SetResolution(40);
+	ghostYShaft->SetHeight(shaftLength);
+	ghostYShaft->SetRadius(shaftLength * shaftRadiusRatio);
+	ghostYShaftMapper->SetInputConnection(ghostYShaft->GetOutputPort());
+	ghostYShaftMapper->ScalarVisibilityOff();
+	ghostYShaftActor->SetPosition(0, shaftPosition, 0);
+	ghostYShaftActor->SetMapper(ghostYShaftMapper);
+	ghostYShaftActor->GetProperty()->SetColor(0, 1, 0);
+	ghostYShaftActor->GetProperty()->SetOpacity(opacity);
+
+	vtkCubeSource *ghostOrigin = vtkCubeSource::New();
+	vtkPolyDataMapper *ghostOMapper = vtkPolyDataMapper::New();
+	ghostOActor = vtkActor::New();
+	ghostOActor->PickableOff();
+	ghostOrigin->SetXLength(shaftLength * 0.025);
+	ghostOrigin->SetYLength(shaftLength * 0.025);
+	ghostOrigin->SetZLength(shaftLength * 0.025);
+	ghostOMapper->SetInputConnection(ghostOrigin->GetOutputPort());
+	ghostOMapper->ScalarVisibilityOff();
+	ghostOActor->SetMapper(ghostOMapper);
+	ghostOActor->GetProperty()->SetColor(1, 1, 1);
+	ghostOActor->GetProperty()->SetOpacity(opacity);
+
+ 	vtkAssembly *assembly = vtkAssembly::New();
+	assembly->AddPart(ghostXConeActor);
+	assembly->AddPart(ghostYConeActor);
+	assembly->AddPart(ghostXShaftActor);
+	assembly->AddPart(ghostYShaftActor);
+	assembly->AddPart(ghostOActor);
+
+	//r->AddActor(assembly);
+
+	return assembly;
+}
+
+
+
+
 

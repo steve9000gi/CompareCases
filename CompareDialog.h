@@ -49,6 +49,7 @@
 
 static const int numDVHPoints = 103; // Based on DVH input data format
 static const int maxNumDVHPoints = 200;
+static const int gazillion = 300;
 
 // Forward declarations:
 class vtkPNGReader;
@@ -95,6 +96,7 @@ public:
 
 	bool CTDataExistsFor(Patient *patient);
 	bool DVHDataExistsFor(Patient *patient);
+	void readIsocenters();
 
 	QMenu *getMatchHistoryMenu() { return matchHistoryMenu; };
 
@@ -181,6 +183,9 @@ private:
 	vtkImageFlip *matchCTImageFlip;	// "
 	vtkImageViewer2 *queryCTImageViewer;
 	vtkImageViewer2 *matchCTImageViewer;
+	double isocenter[gazillion][3];
+	int *isocenterIndex;
+	int numIsocenters;
 
 	// Projection objects:
 	vtkRenderWindow *queryProjectionRenWin;

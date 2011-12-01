@@ -162,7 +162,6 @@ CompareDialog::CompareDialog()
 
 	setViewCheckboxColors();
 
-
 	viewRectumCheckBox->setChecked(true);
 	viewBladderCheckBox->setChecked(true);
 	viewPTVCheckBox->setChecked(true);
@@ -181,9 +180,6 @@ CompareDialog::CompareDialog()
 	querySelectSpinBox->setKeyboardTracking(false);
 	matchSelectSpinBox->setKeyboardTracking(false);
 	transparencySpinBox->setKeyboardTracking(false);
-
-	legendGroupBox->setStyleSheet("QGroupBox { color: solid black; }");
-	legendGroupBox->setStyleSheet("QGroupBox { border: 2px solid black; }");
 }
 
 ///ctor/////////////////////////////////////////////////////////////////////////
@@ -244,14 +240,15 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 	querySelectSpinBox->setHidden(true);
 	queryInstitutionPushButton->setHidden(true);
 	originCheckBox->setHidden(true);
+	sliceSelectionSpinBox->setHidden(true);
+	maxSliceLabel->setHidden(true);
+	dvhLabel->setHidden(true);
+	flatShadedCheckBox->setHidden(true);
 
 	sliceSelectionSpinBox->setKeyboardTracking(false);
 	querySelectSpinBox->setKeyboardTracking(false);
 	matchSelectSpinBox->setKeyboardTracking(false);
 	transparencySpinBox->setKeyboardTracking(false);
-
-	legendGroupBox->setStyleSheet("QGroupBox { color: solid black; }");
-	legendGroupBox->setStyleSheet("QGroupBox { border: 2px solid black; }");
 }
 
 CompareDialog::~CompareDialog()
@@ -481,6 +478,76 @@ bool CompareDialog::DVHDataExistsFor(Patient *patient)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// 
+// Make sure that queryPatient has been initialized before you call this method.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::readIsocenters()
+{
+	QString isoCenterFilePath = queryPatient->getDataDir() + "/isocenters.txt";
+
+	QFile file(isoCenterFilePath);
+
+	if (!file.open(QIODevice::ReadOnly))
+	{
+		QString warn = 
+			"CompareDialog::readIsocenters(): Failed to open \""
+			+ isoCenterFilePath + "\"";
+
+		QMessageBox::warning(this, tr("File Open Failed"), warn);
+		return;
+	}
+
+	QTextStream in(&file);
+	
+	in.readLine(); // skip first row: column headers;
+
+	int i = 0;
+
+	while (!in.atEnd())
+	{
+		in.readLine();
+		i++;
+	}
+
+	numIsocenters = i;
+
+	in.flush();
+
+	if (!in.seek(0)) // back to the top
+	{
+		QString warn = 
+			"CompareDialog::readIsocenters(): seek(0) failed for file \""
+			+ isoCenterFilePath + "\"";
+		QMessageBox::warning(this, 
+			tr("failure attempting to return to file start"), warn);
+		return; 
+	}
+
+	in.readLine(); // skip first row
+
+	isocenterIndex = new int[numIsocenters];
+
+	for (i = 0; i < numIsocenters; i++)
+	{
+		in >> isocenterIndex[i]
+		   >> isocenter[i][0]
+		   >> isocenter[i][1]
+		   >> isocenter[i][2];
+	}
+/*
+	for (i = 0; i < numIsocenters; i++)
+	{
+		cout << isocenterIndex[i] << ": "
+		   << isocenter[i][0] << ", "
+		   << isocenter[i][1] << ", "
+		   << isocenter[i][2] << ", " << endl;
+	}
+*/
+	file.close();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //
 // Sets up CT, projection, and DVH displays for query patient with id == param
 // patientNumber.
@@ -664,19 +731,23 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 	sliceSelectionSpinBox->setMaxValue(max(qSliceMax, mSliceMax));
 	sliceSelectionSlider->setMinValue(min(qSliceMin, mSliceMin));
 	sliceSelectionSpinBox->setMinValue(min(qSliceMin, mSliceMin));
+	// Here's where we'll set the two CT displays to their isocenters bydefault 
 	sliceSelectionSlider->setValue(max(qSliceMax, mSliceMax) / 2); // ~ middle
 	maxSliceLabel->setText(QString::number(max(qSliceMax, mSliceMax)));
 
 	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
 	float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
 
-	cout << "qImagePosition: " << qImagePosition[0] << ", " << qImagePosition[1] << ", " << qImagePosition[2] << endl;
-	cout << "mImagePosition: " << mImagePosition[0] << ", " << mImagePosition[1] << ", " << mImagePosition[2] << endl;
+	//cout << "qImagePosition: " << qImagePosition[0] << ", " << qImagePosition[1] << ", " << qImagePosition[2] << endl;
+	//cout << "mImagePosition: " << mImagePosition[0] << ", " << mImagePosition[1] << ", " << mImagePosition[2] << endl;
 
+#if USE_PROJECTOR_SLICE_PLANE
 	queryProjector->PositionSlicePlane(orientation,
 		queryCTImageViewer->GetSlice(), qSliceMax - qSliceMin);
 	matchProjector->PositionSlicePlane(orientation,
 		matchCTImageViewer->GetSlice(), mSliceMax - mSliceMin);
+#endif
+
 /*	queryProjector->PositionSlicePlane(orientation,
 		queryCTImageViewer->GetSlice(), queryDICOMReader->GetDataSpacing());
 	matchProjector->PositionSlicePlane(orientation,
@@ -692,6 +763,7 @@ void CompareDialog::changeSlice(int slice)
 	queryCTImageViewer->SetSlice(slice);
 	matchCTImageViewer->SetSlice(slice);
 
+#if USE_PROJECTOR_SLICE_PLANE
 	if (queryPatient && queryDICOMReader)
 	{
 		queryProjector->PositionSlicePlane(queryPatient->getSliceOrientation(),
@@ -705,6 +777,13 @@ void CompareDialog::changeSlice(int slice)
 			matchCTImageViewer->GetSlice(), 
 			matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin());
 	}
+#endif
+
+	sliceSelectionSlider->setSliderPosition(slice);
+	sliceSelectionSlider->setValue(slice);
+	sliceSelectionSlider->update();
+	sliceSelectionSpinBox->setValue(slice);
+	sliceSelectionSpinBox->update();
 
 	//float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
 	//float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
@@ -938,8 +1017,7 @@ void CompareDialog::setupVTKUI()
 	queryProjectionRenWin = vtkRenderWindow::New();
 	matchProjectionRenWin = vtkRenderWindow::New();
 
-	// TEMP SAC:
-	originCheckBox->setChecked(true);
+	originCheckBox->setChecked(false);
 
 	queryProjector->WindowInit(queryProjectionRenWin, queryProjectionWidget);
 	matchProjector->WindowInit(matchProjectionRenWin, matchProjectionWidget);
@@ -947,11 +1025,15 @@ void CompareDialog::setupVTKUI()
 	queryProjector->InitExtrema();
 	matchProjector->InitExtrema();
 
+	queryProjector->InitLegend();
+
 	queryProjector->TextInit();
 	matchProjector->TextInit();
 
+#if USE_PROJECTOR_SLICE_PLANE
 	queryProjector->InitSlicePlane();
 	matchProjector->InitSlicePlane();
+#endif
 
 	queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
 	matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
@@ -980,6 +1062,8 @@ void CompareDialog::createActions()
 		SLOT(setSliceAxis(bool)));
 
 	connect(sliceSelectionSlider, SIGNAL(valueChanged(int)), this, 
+		SLOT(changeSlice(int)));
+	connect(sliceSelectionSpinBox, SIGNAL(valueChanged(int)), this, 
 		SLOT(changeSlice(int)));
 	connect(autoPlayPushButton, SIGNAL(clicked()), this, SLOT(autoplay()));
 
@@ -1129,8 +1213,6 @@ void CompareDialog::selectQueryCTSlice(int slice)
 	queryCTImageViewer->GetRenderWindow()->Render();
 	
 	//extractQueryDICOMData();
-
-	//queryCTImageViewer->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1180,6 +1262,11 @@ void CompareDialog::extractQueryDICOMData()
 	queryDICOMReader->GetDataExtent(dataExtent);
 	queryDICOMReader->GetDataSpacing(dataSpacing);
 	queryDICOMReader->GetDataOrigin(dataOrigin);
+	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
+	double *pixelSpacing = queryDICOMReader->GetPixelSpacing();
+	int w = queryDICOMReader->GetWidth();
+	int h = queryDICOMReader->GetHeight();
+
 	cout << "CT slice #" << queryCTImageViewer->GetSlice() << ": " << endl;
 	cout << "orientation: " << queryCTImageViewer->GetSliceOrientation() << endl;
 	cout << "extent: " << dataExtent[0] << ", "
@@ -1191,20 +1278,24 @@ void CompareDialog::extractQueryDICOMData()
 	cout << "spacing: " << dataSpacing[0] << ", "
 					    << dataSpacing[1] << ", "
 					    << dataSpacing[2] << endl;
-	cout << "origin: " << dataOrigin[0] << ", "
+	cout << "data origin: " << dataOrigin[0] << ", "
 					    << dataOrigin[1] << ", "
 					    << dataOrigin[2] << endl;
+	cout << "qImagePosition: " << qImagePosition[0] << ", "
+						<< qImagePosition[1] << ", "
+						<< qImagePosition[2] << endl;
+	cout << "pixelSpacing: " << pixelSpacing[0] << ", "
+							 << pixelSpacing[1] << ", "
+							 << pixelSpacing[2] << endl;
+	cout << "width, height: " << w << ", " << h << endl;
 	cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
 	
 
-	double *pixelSpacing = queryDICOMReader->GetPixelSpacing();
 	const char *xferSyntaxUID = queryDICOMReader->GetTransferSyntaxUID();
 	const char *patientName = queryDICOMReader->GetPatientName();
 	const char *studyUID = queryDICOMReader->GetStudyUID();
 	const char *studyID = queryDICOMReader->GetStudyID();
 	const char *fileX = queryDICOMReader->GetFileExtensions();
-	int w = queryDICOMReader->GetWidth();
-	int h = queryDICOMReader->GetHeight();
 	float rescaleSlope = queryDICOMReader->GetRescaleSlope();
 	float rescaleOffset = queryDICOMReader->GetRescaleOffset();
 }

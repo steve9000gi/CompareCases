@@ -122,6 +122,9 @@ private slots:
 	void selectXValues(QString text);
 	void YValuesItemTriggered(bool checked);
 	void selectYValues(QString text);
+	void toggleAxisPlanes(bool checked);
+	void toggleThresholdAxes(bool checked);
+	void toggleThresholdPlane(bool checked);
 
 private: // methods
 	void SetCameraPosition(double pos[3], double fp[3], double vUp[3],
@@ -175,7 +178,8 @@ private:
 	bool averageMIData();
 	void prepareMIDisplay();
 	void addMIThresholdPlane();
-
+	void addAxisPlanes();
+	void setAxisPlanes(int thresholdPlaneZVal);
 
 private: // Objects
 	vtkContextView *caseSpaceView;
@@ -216,6 +220,7 @@ private: // Objects
 	double zMult;
 	Axes *axes;
 	vtkAssembly *axesAssembly;
+	vtkAssembly *thresholdAxesAssembly;
 	double axisTextOffset;
 
 	QString matchInstitution;
@@ -239,9 +244,14 @@ private: // Objects
 	double MIMin;
 	double MIRange;
 	vtkCubeSource *MIThresholdPlane;
+	vtkActor *mitpActor;
 	double MIThresholdVal;
 	double thresholdPlaneZVal;
 	double thresholdPlaneThickness;
+	vtkCubeSource *xAxisPlane;
+	vtkCubeSource *yAxisPlane;
+	vtkActor *xAxisPlaneActor;
+	vtkActor *yAxisPlaneActor;
 
 	static const double numMIColors;
 

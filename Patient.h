@@ -51,14 +51,8 @@ public:
 	SliceOrientation getSliceOrientation() { return sliceOrientation; };
 	void setSliceOrientation(SliceOrientation orientation) { sliceOrientation = orientation; };
 
-	bool getIsShowingFemoralHeads() { return isShowingFemoralHeads; };
-	void setIsShowingFemoralHeads(bool showFemoralHeads);
-
 	QString &getDataDir() { return this->dataDir; };
 	void setDataDir(const QString &dir) { this->dataDir = dir; };
-
-	QString getPathToProjectionImage(int angle);
-	void setPathToProjectionImage(const QString &path);
 
 	QString getPathToCTData();
 	void setPathToCTData(const QString &path);
