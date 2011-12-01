@@ -725,9 +725,10 @@ void CaseSpaceDialog::setThresholdPlanePosition(int zVal)
 	thresholdPlaneZVal = MIThresholdVal * zMult;
 	//cout << "MI threshold = " << MIThresholdVal
 	//	 << "; threshold plane z val = " << thresholdPlaneZVal << endl;
-	MIThresholdPlane->SetCenter(xCenterQueryPt,
-								yCenterQueryPt,
-								thresholdPlaneZVal);
+	MIThresholdPlane->SetCenter(
+	(maxVal[xValueType] - minVal[xValueType]) / 2.0 + minVal[xValueType],
+	(maxVal[yValueType] - minVal[yValueType]) / 2.0 + minVal[yValueType],
+	thresholdPlaneZVal);
 
 	for (int i = 0; i < numMICases; i++)
 	{
@@ -927,7 +928,7 @@ void CaseSpaceDialog::selectYValues(QString text)
 			getXYValueFromIndex(queryCaseIndex, xValueType),
 			getXYValueFromIndex(queryCaseIndex, yValueType),
 			thresholdPlaneZVal);
-
+		resetView();
 	}
 }
 

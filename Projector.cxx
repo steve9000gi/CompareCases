@@ -693,6 +693,7 @@ bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatien
   InitSlicePlane();
   renderer->GetActiveCamera()->SetClippingRange(1.0, MAX(maxX, maxY, maxZ) * 3.0);
 
+/*
   if (isPatientChanged)
   {
 	  cout << "Projector::BuildStructuresForPatient(...) patient #" << patientNum << " extrema: " 
@@ -700,7 +701,7 @@ bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatien
 	   << minY << ", " << maxY << "; "
 	   << minZ << ", " << maxZ << endl;
   }
-
+*/
   isPatientChanged = false;
 
   return wasAtLeastOneStructureBuilt;

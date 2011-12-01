@@ -433,7 +433,7 @@ bool CompareDialog::CTDataExistsFor(Patient *patient)
 
 	const char *s = path.ascii();
 
-	cout << "CompareDialog::CTDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
+	//cout << "CompareDialog::CTDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
 
 	if (!CTDir.exists())
 	{
@@ -466,9 +466,8 @@ bool CompareDialog::DVHDataExistsFor(Patient *patient)
 
 	QString path = patient->getPathToCTData();
 
-	const char *s = path.ascii();
-
-	cout << "CompareDialog::DVHDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
+	//const char *s = path.ascii();
+	//cout << "CompareDialog::DVHDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
 
 
 	return (DVHDataFile.exists());
