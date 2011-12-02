@@ -1087,6 +1087,8 @@ void CompareDialog::createActions()
 
 	connect(removeCurrentMatchPushButton, SIGNAL(released()), this,
 		SLOT(removeCurrentMatch()));
+	connect(savePushButton, SIGNAL(released()), this,
+		SLOT(saveMatchHistory()));
 
 	connect(overlayDVHCheckBox, SIGNAL(clicked(bool)), this, 
 		SLOT(toggleOverlayDVH(bool)));
@@ -1941,6 +1943,21 @@ void CompareDialog::removeCurrentMatch()
 	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::saveMatchHistory()
+{
+	QFileDialog dlg;
+	dlg.setViewMode(QFileDialog::Detail);
+	QString fileName = QFileDialog::getSaveFileName(this,
+		tr("Save Results"), ".", tr("Text files (*.txt)"));
+
+	if (!fileName.isEmpty())
+	{
+		writeResults(fileName);
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -2266,4 +2283,44 @@ bool CompareDialog::removeRedundantMenuItem(QMenu *menu, QString text)
 
 	return wasActionRemoved;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CompareDialog::writeResults(QString fileName)
+{
+	QFile f(fileName);
+	  
+	if( !f.open( IO_WriteOnly | IO_Truncate | QIODevice::Text ) )
+	{
+		cout << "Failed to open file." << std::endl;
+		return false;
+	}
+	else
+	{
+		QTextStream ts(&f);
+		ts << "Query case: Duke Patient #" << queryPatient->getNumber() << endl;
+		ts << "Match candidates: " << "\t\t\tMI value wrt query case" << endl;
+		ts << "Current match: Duke Patient #" << matchPatient->getNumber() 
+		   << "\t\t" 
+		   << caseSpaceDialog->getMIValue(
+						queryPatient->getIndex(), matchPatient->getIndex())
+		   << endl;
+		ts << "History: " << endl;
+
+		QList<QAction *> actions = matchHistoryMenu->actions(); 
+		QList<QAction *>::Iterator i;
+		int  counter = 1;
+		for (i = actions.begin(); i != actions.end(); ++i)
+		{
+			ts << counter++ << ". " << (*i)->text() << endl;
+		}
+
+		f.close();
+	}
+
+	return true;
+}
+
+
 

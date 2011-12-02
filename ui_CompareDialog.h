@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CompareDialog.ui'
 **
-** Created: Thu Nov 17 15:38:04 2011
+** Created: Fri Dec 2 10:08:49 2011
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -64,18 +64,12 @@ public:
     QSlider *sliceSelectionSlider;
     QPushButton *isocenterPushButton;
     QPushButton *autoPlayPushButton;
-    QWidget *layoutWidget1;
-    QHBoxLayout *bottomBtnsHLayout;
-    QPushButton *historyPushButton;
-    QPushButton *removeCurrentMatchPushButton;
-    QSpacerItem *horizontalSpacer;
-    QDialogButtonBox *buttonBox;
     QGroupBox *DVHGroupBox;
     QHBoxLayout *horizontalLayout_5;
     QCheckBox *overlayDVHCheckBox;
     QPushButton *overlaySelectionPushButton;
     QPushButton *removeSelectedOverlayPushButton;
-    QWidget *widget;
+    QWidget *layoutWidget1;
     QVBoxLayout *verticalLayout_2;
     QHBoxLayout *horizontalLayout;
     QGroupBox *queryGroupBox;
@@ -100,6 +94,13 @@ public:
     QVTKWidget *matchCTImageWidget;
     QVTKWidget *matchProjectionWidget;
     QVTKWidget *matchDVHWidget;
+    QWidget *widget;
+    QHBoxLayout *horizontalLayout_6;
+    QPushButton *historyPushButton;
+    QPushButton *removeCurrentMatchPushButton;
+    QPushButton *savePushButton;
+    QSpacerItem *horizontalSpacer;
+    QDialogButtonBox *buttonBox;
 
     void setupUi(QDialog *CompareDialog)
     {
@@ -188,11 +189,6 @@ public:
 
         horizontalLayout_4->addWidget(gantryAnglePushButton);
 
-        transparencyLabel->raise();
-        transparencySpinBox->raise();
-        transparencySlider->raise();
-        maxTransparencyLabel->raise();
-        gantryAnglePushButton->raise();
         ctAxisGroupBox = new QGroupBox(scrollAreaWidgetContents);
         ctAxisGroupBox->setObjectName(QString::fromUtf8("ctAxisGroupBox"));
         ctAxisGroupBox->setGeometry(QRect(94, -1, 465, 51));
@@ -242,32 +238,6 @@ public:
 
         horizontalLayout_3->addWidget(autoPlayPushButton);
 
-        layoutWidget1 = new QWidget(scrollAreaWidgetContents);
-        layoutWidget1->setObjectName(QString::fromUtf8("layoutWidget1"));
-        layoutWidget1->setGeometry(QRect(9, 990, 1688, 25));
-        bottomBtnsHLayout = new QHBoxLayout(layoutWidget1);
-        bottomBtnsHLayout->setObjectName(QString::fromUtf8("bottomBtnsHLayout"));
-        bottomBtnsHLayout->setContentsMargins(0, 0, 0, 0);
-        historyPushButton = new QPushButton(layoutWidget1);
-        historyPushButton->setObjectName(QString::fromUtf8("historyPushButton"));
-
-        bottomBtnsHLayout->addWidget(historyPushButton);
-
-        removeCurrentMatchPushButton = new QPushButton(layoutWidget1);
-        removeCurrentMatchPushButton->setObjectName(QString::fromUtf8("removeCurrentMatchPushButton"));
-
-        bottomBtnsHLayout->addWidget(removeCurrentMatchPushButton);
-
-        horizontalSpacer = new QSpacerItem(1440, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        bottomBtnsHLayout->addItem(horizontalSpacer);
-
-        buttonBox = new QDialogButtonBox(layoutWidget1);
-        buttonBox->setObjectName(QString::fromUtf8("buttonBox"));
-        buttonBox->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
-
-        bottomBtnsHLayout->addWidget(buttonBox);
-
         DVHGroupBox = new QGroupBox(scrollAreaWidgetContents);
         DVHGroupBox->setObjectName(QString::fromUtf8("DVHGroupBox"));
         DVHGroupBox->setGeometry(QRect(1214, -1, 295, 51));
@@ -290,15 +260,15 @@ public:
 
         horizontalLayout_5->addWidget(removeSelectedOverlayPushButton);
 
-        widget = new QWidget(scrollAreaWidgetContents);
-        widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(10, 56, 1686, 932));
-        verticalLayout_2 = new QVBoxLayout(widget);
+        layoutWidget1 = new QWidget(scrollAreaWidgetContents);
+        layoutWidget1->setObjectName(QString::fromUtf8("layoutWidget1"));
+        layoutWidget1->setGeometry(QRect(10, 56, 1686, 932));
+        verticalLayout_2 = new QVBoxLayout(layoutWidget1);
         verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         verticalLayout_2->setContentsMargins(0, 0, 0, 0);
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
-        queryGroupBox = new QGroupBox(widget);
+        queryGroupBox = new QGroupBox(layoutWidget1);
         queryGroupBox->setObjectName(QString::fromUtf8("queryGroupBox"));
         queryGroupBox->setMaximumSize(QSize(81, 16777215));
         QFont font;
@@ -352,7 +322,7 @@ public:
 
         horizontalLayout->addWidget(queryGroupBox);
 
-        queryCTImageWidget = new QVTKWidget(widget);
+        queryCTImageWidget = new QVTKWidget(layoutWidget1);
         queryCTImageWidget->setObjectName(QString::fromUtf8("queryCTImageWidget"));
         queryCTImageWidget->setMinimumSize(QSize(460, 460));
         queryCTImageWidget->setFont(font1);
@@ -364,14 +334,14 @@ public:
 
         horizontalLayout->addWidget(queryCTImageWidget);
 
-        queryProjectionWidget = new QVTKWidget(widget);
+        queryProjectionWidget = new QVTKWidget(layoutWidget1);
         queryProjectionWidget->setObjectName(QString::fromUtf8("queryProjectionWidget"));
         queryProjectionWidget->setMinimumSize(QSize(460, 460));
         queryProjectionWidget->setAutoFillBackground(true);
 
         horizontalLayout->addWidget(queryProjectionWidget);
 
-        overlayDVHWidget = new QVTKWidget(widget);
+        overlayDVHWidget = new QVTKWidget(layoutWidget1);
         overlayDVHWidget->setObjectName(QString::fromUtf8("overlayDVHWidget"));
         overlayDVHWidget->setMinimumSize(QSize(663, 460));
         overlayDVHWidget->setAutoFillBackground(true);
@@ -383,7 +353,7 @@ public:
 
         horizontalLayout_2 = new QHBoxLayout();
         horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
-        matchGroupBox = new QGroupBox(widget);
+        matchGroupBox = new QGroupBox(layoutWidget1);
         matchGroupBox->setObjectName(QString::fromUtf8("matchGroupBox"));
         matchGroupBox->setMinimumSize(QSize(79, 460));
         matchGroupBox->setFont(font);
@@ -414,21 +384,21 @@ public:
 
         horizontalLayout_2->addWidget(matchGroupBox);
 
-        matchCTImageWidget = new QVTKWidget(widget);
+        matchCTImageWidget = new QVTKWidget(layoutWidget1);
         matchCTImageWidget->setObjectName(QString::fromUtf8("matchCTImageWidget"));
         matchCTImageWidget->setMinimumSize(QSize(460, 460));
         matchCTImageWidget->setAutoFillBackground(true);
 
         horizontalLayout_2->addWidget(matchCTImageWidget);
 
-        matchProjectionWidget = new QVTKWidget(widget);
+        matchProjectionWidget = new QVTKWidget(layoutWidget1);
         matchProjectionWidget->setObjectName(QString::fromUtf8("matchProjectionWidget"));
         matchProjectionWidget->setMinimumSize(QSize(460, 460));
         matchProjectionWidget->setAutoFillBackground(true);
 
         horizontalLayout_2->addWidget(matchProjectionWidget);
 
-        matchDVHWidget = new QVTKWidget(widget);
+        matchDVHWidget = new QVTKWidget(layoutWidget1);
         matchDVHWidget->setObjectName(QString::fromUtf8("matchDVHWidget"));
         matchDVHWidget->setMinimumSize(QSize(663, 460));
         matchDVHWidget->setAutoFillBackground(true);
@@ -437,6 +407,37 @@ public:
 
 
         verticalLayout_2->addLayout(horizontalLayout_2);
+
+        widget = new QWidget(scrollAreaWidgetContents);
+        widget->setObjectName(QString::fromUtf8("widget"));
+        widget->setGeometry(QRect(10, 990, 1687, 25));
+        horizontalLayout_6 = new QHBoxLayout(widget);
+        horizontalLayout_6->setObjectName(QString::fromUtf8("horizontalLayout_6"));
+        horizontalLayout_6->setContentsMargins(0, 0, 0, 0);
+        historyPushButton = new QPushButton(widget);
+        historyPushButton->setObjectName(QString::fromUtf8("historyPushButton"));
+
+        horizontalLayout_6->addWidget(historyPushButton);
+
+        removeCurrentMatchPushButton = new QPushButton(widget);
+        removeCurrentMatchPushButton->setObjectName(QString::fromUtf8("removeCurrentMatchPushButton"));
+
+        horizontalLayout_6->addWidget(removeCurrentMatchPushButton);
+
+        savePushButton = new QPushButton(widget);
+        savePushButton->setObjectName(QString::fromUtf8("savePushButton"));
+
+        horizontalLayout_6->addWidget(savePushButton);
+
+        horizontalSpacer = new QSpacerItem(1259, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_6->addItem(horizontalSpacer);
+
+        buttonBox = new QDialogButtonBox(widget);
+        buttonBox->setObjectName(QString::fromUtf8("buttonBox"));
+        buttonBox->setStandardButtons(QDialogButtonBox::Cancel|QDialogButtonBox::Ok);
+
+        horizontalLayout_6->addWidget(buttonBox);
 
         scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -471,8 +472,6 @@ public:
         sliceSelectionLabel->setText(QApplication::translate("CompareDialog", "Z slice:", 0, QApplication::UnicodeUTF8));
         isocenterPushButton->setText(QApplication::translate("CompareDialog", "Isocenter", 0, QApplication::UnicodeUTF8));
         autoPlayPushButton->setText(QApplication::translate("CompareDialog", "Auto-play", 0, QApplication::UnicodeUTF8));
-        historyPushButton->setText(QApplication::translate("CompareDialog", "History", 0, QApplication::UnicodeUTF8));
-        removeCurrentMatchPushButton->setText(QApplication::translate("CompareDialog", "Remove Current", 0, QApplication::UnicodeUTF8));
         DVHGroupBox->setTitle(QApplication::translate("CompareDialog", "Dose Volume Histogram", 0, QApplication::UnicodeUTF8));
         overlayDVHCheckBox->setText(QApplication::translate("CompareDialog", " Overlay On", 0, QApplication::UnicodeUTF8));
         overlaySelectionPushButton->setText(QApplication::translate("CompareDialog", "Select Overlay", 0, QApplication::UnicodeUTF8));
@@ -488,6 +487,9 @@ public:
         dvhLabel->setText(QApplication::translate("CompareDialog", "Dose Volume Histogram", 0, QApplication::UnicodeUTF8));
         matchGroupBox->setTitle(QApplication::translate("CompareDialog", "Match", 0, QApplication::UnicodeUTF8));
         matchInstitutionPushButton->setText(QApplication::translate("CompareDialog", "Duke", 0, QApplication::UnicodeUTF8));
+        historyPushButton->setText(QApplication::translate("CompareDialog", "History", 0, QApplication::UnicodeUTF8));
+        removeCurrentMatchPushButton->setText(QApplication::translate("CompareDialog", "Remove Current", 0, QApplication::UnicodeUTF8));
+        savePushButton->setText(QApplication::translate("CompareDialog", "Save", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

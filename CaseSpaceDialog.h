@@ -27,7 +27,7 @@
 static const int numMICases = 100;
 static const int maxNumMICases = 200; // Just in case we get more
 
-static const int numMatchIconLevels = 25;
+static const int numMatchIconLevels = 35;
 static const double cubeSize = 100.0;
 
 static const double colorMult = 1.2;
@@ -103,6 +103,10 @@ public:
 
 	bool pickPatient();
 	const static void ReportCameraPosition(vtkRenderer *r);
+	double getMIValue(int queryIx, int matchIx)
+	{
+		return MIval[queryIx][matchIx];
+	};
 
 private slots:
 	void compareCases();

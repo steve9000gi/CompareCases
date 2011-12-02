@@ -125,6 +125,7 @@ private slots:
 	void historyItemTriggered(bool checked);
 	void selectHistoryMatch(QString text);
 	void removeCurrentMatch();
+	void saveMatchHistory();
 	void overlayItemTriggered(bool checked);
 	void selectOverlay(QString text);
 	void removeSelectedOverlayMenuItem();
@@ -166,6 +167,10 @@ private:
 	void setupMatchHistoryMenu();
 	void addMatchHistoryItem();
 	bool removeRedundantMenuItem(QMenu *menu, QString text);
+
+	// Save:
+	bool writeResults(QString fileName);
+
 
 	// Overlay selection methods:
 	void setupOverlaySelectionMenu();

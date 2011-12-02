@@ -1238,7 +1238,8 @@ void CaseSpaceDialog::initializeMatchIcon()
 
 		const double halfPi = 1.57079632679489661923;
 
-		double mult = (i == 0) ? 1.0 : ((i < 6) ? 0.6 : ((i < 10) ? 0.45 : 0.3));
+		//double mult = (i == 0) ? 1.0 : ((i < 6) ? 0.6 : ((i < 10) ? 0.45 : 0.3));
+		double mult = (i == 0) ? 1.0 : ((i < 6) ? 0.6 : ((i < 15) ? 0.45 : 0.3));
 		double opacity = 
 			mult * (1.0 - sin(halfPi * ((i + 1.0) / numMatchIconLevels))); 
 		matchIconActor[i]->GetProperty()->SetOpacity(opacity);
