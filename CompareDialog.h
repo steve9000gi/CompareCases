@@ -86,10 +86,8 @@ public:
 	CompareDialog(CaseSpaceDialog *csDlog);
 	~CompareDialog();
 
-	void initScrollArea();
 	virtual void accept();
 	virtual void reject();
-
 
 	void setQuery(Patient *patient);
 	void setMatch(Patient *patient);

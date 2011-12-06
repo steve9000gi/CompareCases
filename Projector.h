@@ -71,7 +71,7 @@ public:
 
 	Projector();
 	Projector(QString dataDir);
-	~Projector() {};
+	~Projector();
 	void setFlatShaded(bool value) { flatShaded = value; };
 	void setNoFemoralHeads(bool value) { noFemoralHeads = value; };
 	void setDrawStructure(int sNum, bool value) { drawStructure[sNum] = value; };

@@ -1,5 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Axes.h:  
+//
+// Axes.h:  Class for adding the standard 3D axes, labelled, into a 3D scene.  
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -34,8 +35,6 @@ public:
 		double z, double r, double g, double b, double scale, vtkRenderer *ren);
 	vtkAssembly *InsertThis(vtkRenderer *r, double shaftLen = 20.0,
 		double x = 0.0, double y = 0.0, double z = 0.0);
-//	void Insert(vtkRenderer *r, double shaftLen = 20.0,
-//		double x = 0.0, double y = 0.0, double z = 0.0);
 
 	void setAxisLabel(AxisType axis, char *label);
 	void setAxisLabelPosition(AxisType axis, double x, double y, double z);

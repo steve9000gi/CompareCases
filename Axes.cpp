@@ -1,5 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Axes.h:  
+//
+// Axes.cpp: Class for adding the standard 3D axes, labelled, into a 3D scene.  
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,9 +34,9 @@
 
 using namespace std;
 
-const double coneRadiusRatio = 0.015; // 0.025; // 0.0375;
-const double coneHeightRatio = 0.045; // 0.067; // 0.1;
-const double shaftRadiusRatio = 0.003; // 0.004; // 0.005;
+const double coneRadiusRatio = 0.015;
+const double coneHeightRatio = 0.045;
+const double shaftRadiusRatio = 0.003;
 
 
 ///ctor/////////////////////////////////////////////////////////////////////////
@@ -64,9 +65,6 @@ Axes::Axes()
 ////////////////////////////////////////////////////////////////////////////////
 Axes::~Axes()
 {
-	//if (vText) vText->Delete();
-	//if (vTextMapper) vTextMapper->Delete();
-	//if (vTextActor) vTextActor->Delete();
 	if (oActor) oActor->Delete();
 	if (xConeActor) xConeActor->Delete();
 	if (yConeActor) yConeActor->Delete();
@@ -74,11 +72,23 @@ Axes::~Axes()
 	if (xShaftActor) xShaftActor->Delete();
 	if (yShaftActor) yShaftActor->Delete();
 	if (zShaftActor) zShaftActor->Delete();
+	if (ghostOActor) ghostOActor->Delete();
+	if (ghostXConeActor) ghostXConeActor->Delete();
+	if (ghostYConeActor) ghostYConeActor->Delete();
+	if (ghostXShaftActor) ghostXShaftActor->Delete();
+	if (ghostYShaftActor) ghostYShaftActor->Delete();
+
+	for (int i = 0; i < numAxes; i++)
+	{
+		vText[i]->Delete();
+		vTextMapper[i]->Delete();
+		vTextActor[i]->Delete();
+	}
 }
 
 ///AddFollowingText/////////////////////////////////////////////////////////////
 // 
-// Specify some text, where you want it to go in 3-space, a color, and a
+// Specify some text, where you want it to go in 3-space, a color, scale, and a
 // renderer, and it will always face the active camera associated with that
 // renderer.
 //
@@ -216,6 +226,21 @@ vtkAssembly *Axes::InsertThis(vtkRenderer *r, double shaftLen /*= 20.0 */,
 
 	r->AddActor(assembly);
 
+	xCone->Delete();
+	xConeMapper->Delete();
+	yCone->Delete();
+	yConeMapper->Delete();
+	zCone->Delete();
+	zConeMapper->Delete();
+	xShaft->Delete();
+	xShaftMapper->Delete();
+	yShaft->Delete();
+	yShaftMapper->Delete();
+	zShaft->Delete();
+	zShaftMapper->Delete();
+	origin->Delete();
+	oMapper->Delete();
+
 	return assembly;
 }
 
@@ -323,7 +348,16 @@ vtkAssembly *Axes::createGhostAxes(vtkRenderer *r, double shaftLen /*= 20.0 */,
 	assembly->AddPart(ghostYShaftActor);
 	assembly->AddPart(ghostOActor);
 
-	//r->AddActor(assembly);
+	ghostXCone->Delete();
+	ghostXConeMapper->Delete();
+	ghostYCone->Delete();
+	ghostYConeMapper->Delete();
+	ghostXShaft->Delete();
+	ghostXShaftMapper->Delete();
+	ghostYShaft->Delete();
+	ghostYShaftMapper->Delete();
+	ghostOrigin->Delete();
+	ghostOMapper->Delete();
 
 	return assembly;
 }

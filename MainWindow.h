@@ -11,7 +11,8 @@
 // for selecting a match case, is enabled.
 //
 // author:  Steve Chall, RENCI
-// primary collaborator: Vorakarn Chanyavanich, Duke Medical Center
+// primary collaborators: Joseph Lo, Shiva Das, and Vorakarn Chanyavanich,
+//						  Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,9 +40,9 @@ public:
 	};
 
 	MainWindow();
-	~MainWindow()
-	{
-	};
+	~MainWindow();
+
+	void setCaseSpaceDialogPointerToNULL() { caseSpaceDialog = NULL; };
 
 private slots:
 	void openCaseSpaceDialog();	
@@ -53,6 +54,7 @@ private slots:
 	void selectHighPointQueryCase(int index);
 	void viewDocumentation();
 	void about();
+	void close();
 
 protected:
 	// General setup methods:

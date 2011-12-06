@@ -98,7 +98,8 @@ public:
     vtkRenderer *r = vtkRenderer::SafeDownCast(caller);
 	double clip[2];
 	r->GetActiveCamera()->GetClippingRange(clip);
-	cout << "RendererCallback::Execute(...) clip: " << clip[0] << ", " << clip[1] << endl;
+	cout << "RendererCallback::Execute(...) clip: "
+		 << clip[0] << ", " << clip[1] << endl;
 
     //Projector::ReportCameraPosition(r);
   }
@@ -178,6 +179,27 @@ Projector::Projector(QString dataDir)
 	}
 }
 
+///dtor/////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+Projector::~Projector()
+{
+	if (structure) structure->Delete();
+	if (deci) deci->Delete();
+	if (smoother) smoother->Delete();
+	if (normals) normals->Delete();
+	if (mapper) mapper->Delete();
+	if (actor) actor->Delete();
+	if (textActor) textActor->Delete();
+	if (renderer) renderer->Delete();
+	if (slicePlane) slicePlane->Delete();
+
+	for (int i = ekBladder; i < kNumStructureTypes; i++)
+	{
+		if (legendTextActor[i]) legendTextActor[i]->Delete();
+	}
+};
+
 ///AddFollowingText/////////////////////////////////////////////////////////////
 // 
 // Specify some text, where you want it to go in 3-space, a color, and a
@@ -206,6 +228,9 @@ vtkFollower *Projector::AddFollowingText(char *text, double x, double y, double 
   return xTextActor;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
 void Projector::setTransparency(int transp)
 {
 	transparency = transp;
@@ -439,10 +464,10 @@ void Projector::SetCameraPosition(vtkRenderer *renderer,
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::SetCameraPosition(double az)
 {
-	double posY = -150; // 1/28/11 changed from -250
-	//double posY = -210; // 04/13/11 so the body is entirely visible
+  double posY = -150; // 1/28/11 changed from -250
+  //double posY = -210; // 04/13/11 so the body is entirely visible
 
-	renderer->GetActiveCamera()->SetPosition(64.5, posY, avgZ);   // campos in Matlab
+  renderer->GetActiveCamera()->SetPosition(64.5, posY, avgZ);   // campos in Matlab
   renderer->GetActiveCamera()->SetFocalPoint(64, 64, avgZ);     // camtarget "
   renderer->GetActiveCamera()->SetViewUp(0, 0, -1);             // camup     "
   renderer->GetActiveCamera()->Azimuth(-az);                    // [az,el] = view "
@@ -696,7 +721,8 @@ bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatien
 /*
   if (isPatientChanged)
   {
-	  cout << "Projector::BuildStructuresForPatient(...) patient #" << patientNum << " extrema: " 
+	  cout << "Projector::BuildStructuresForPatient(...) patient #"
+	   << patientNum << " extrema: " 
 	   << minX << ", " << maxX << "; "
 	   << minY << ", " << maxY << "; "
 	   << minZ << ", " << maxZ << endl;
@@ -924,7 +950,8 @@ void Projector::PositionSlicePlane(int orientation, int slice, int numSlices)
 		slicePlane->SetCenter(avgX, avgY, rangeZMin + (zSliceSize * slice));
 		break;
 	default:
-		cout << "Projector::PositionSlicePlane(...): Invalid orientation: " << endl;		
+		cout << "Projector::PositionSlicePlane(...): Invalid orientation: "
+			 << endl;		
 		break;
 	}
 

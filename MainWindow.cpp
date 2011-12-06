@@ -11,7 +11,8 @@
 // for selecting a match case, is enabled.
 //
 // author:  Steve Chall, RENCI
-// primary collaborator: Vorakarn Chanyavanich, Duke Medical Center
+// primary collaborators: Joseph Lo, Shiva Das, and Vorakarn Chanyavanich,
+//						  Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -23,11 +24,15 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-	:	versionNumber(329),
+	:	versionNumber(338),
 		queryCaseSourceInstitution(kDuke),
 		queryCasePatientNumber(-1),
 		dukeDir(""),
-		dukeDataDirectoryPath("./PathToDukeData")
+		dukeDataDirectoryPath("./PathToDukeData"),
+		selectDukeQueryCaseAction(NULL),
+		selectPoconoQueryCaseAction(NULL),
+		selectHighPointQueryCaseAction(NULL),
+		caseSpaceDialog(NULL)
 {
 	setupUi(this);
 
@@ -50,6 +55,16 @@ MainWindow::MainWindow()
 	highPointQueryCaseComboBox->setDisabled(true);
 	viewCaseSpaceButton->setDisabled(true);
 }
+
+///dtor/////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+MainWindow::~MainWindow()
+{
+	if (selectDukeQueryCaseAction) delete selectDukeQueryCaseAction;
+	if (selectPoconoQueryCaseAction) delete selectPoconoQueryCaseAction;
+	if (selectHighPointQueryCaseAction) delete selectHighPointQueryCaseAction;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -166,7 +181,8 @@ void MainWindow::createActions()
 	connect(actionExit, SIGNAL(triggered()), this, SLOT(close()));
 
 	connect(actionAbout_CompareCases, SIGNAL(triggered()), this, SLOT(about()));
-	connect(action_View_documentation, SIGNAL(triggered()), this, SLOT(viewDocumentation()));
+	connect(action_View_documentation, SIGNAL(triggered()), this,
+		SLOT(viewDocumentation()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -180,14 +196,11 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
 	dukeQueryCaseComboBox->addAction(selectDukeQueryCaseAction); 
 	dukeQueryCaseComboBox->addItem(QString("-"));
 
-	// for each Duke patient for which we have overlap data, create a combo box
-	// item:
-	//dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlap180.txt";
-	//dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlapAvg.txt";
+	// for each Duke patient for which we have overlap data, create a combo
+	// box item:
 	dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlap";
 	QString defaultPath = dukeXYDataPath + "Avg.txt";
 
-	//QFile file(dukeXYDataPath);
 	QFile file(defaultPath);
 
 	if (!file.open(QIODevice::ReadOnly))
@@ -327,7 +340,8 @@ void MainWindow::selectHighPointQueryCase(int index)
 
 	QString patientNumAsText = highPointQueryCaseComboBox->itemText(index);
 	queryCasePatientNumber = patientNumAsText.toInt();
-	QString queryCasePatientDescriptor = "High Point patient #" + patientNumAsText;
+	QString queryCasePatientDescriptor =
+		"High Point patient #" + patientNumAsText;
 	queryCaseNameLabel->setText(queryCasePatientDescriptor);
 
 	queryCaseSourceInstitution = kHighPoint;
@@ -344,17 +358,19 @@ void MainWindow::about()
 {
 	QString versionNumberAsString;
 	versionNumberAsString.setNum(versionNumber);
-	QString info = "CompareCases\nDevelopment version #" + versionNumberAsString;
-	info.append("\n\nCompareCases is a tool for assisting in the planning of prostate cancer radiotherapy.\n");
-	info.append("It's currently under development at RENCI@Duke University.\n\n");
-	info.append("Contributors include:\n");
+	QString info = "CompareCases\nDevelopment version #"
+		+ versionNumberAsString;
+	info.append("\n\nCompareCases is a tool for assisting in the planning of ");
+	info.append("prostate cancer radiotherapy.\n");
+	info.append("It's currently under development at RENCI@Duke University.");
+	info.append("\n\nContributors include:\n");
 	info.append("Steve Chall, Renaissance Computing Institute\n");
 	info.append("Shiva Das, Duke University\n");
 	info.append("Joseph Lo, Duke University\n");
 	info.append("Vorakarn Chanyavanich, Emory University\n\n");
 
-	info.append("The open source CompareCases application is implemented using\n");
-	info.append("Microsoft Visual C++ 2010\n");
+	info.append("The open source CompareCases application is implemented");
+	info.append(" using\nMicrosoft Visual C++ 2010\n");
 	info.append("Qt 4.71\n");
 	info.append("VTK 5.8.0\n");
 	info.append("CMake 2.8.3\n");
@@ -362,6 +378,15 @@ void MainWindow::about()
 	QMessageBox::about(this, tr("About CompareCases"), info);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// 
+////////////////////////////////////////////////////////////////////////////////
+void MainWindow::close()
+{	
+	if (caseSpaceDialog) caseSpaceDialog->close();
+
+	QMainWindow::close();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // 

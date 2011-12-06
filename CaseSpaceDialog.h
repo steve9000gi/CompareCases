@@ -55,6 +55,7 @@ class MainWindow;
 class Patient;
 class CompareDialog;
 class Axes;
+class ccInteractorStyleTrackballCamera;
 
 
 class CaseSpaceDialog : public QDialog, public Ui_CaseSpaceDialog
@@ -100,6 +101,8 @@ public:
 	{
 		compareCasesPushButton->setEnabled(isEnabled);
 	};
+
+	void setCompareDialogPointer(CompareDialog *ptr) { compareDialog = ptr; };
 
 	bool pickPatient();
 	const static void ReportCameraPosition(vtkRenderer *r);
@@ -188,9 +191,8 @@ private:
 private: // Objects
 	vtkContextView *caseSpaceView;
 
-	// Pointers to data corresponding to the plot point the user
+	// Pointer to data corresponding to the plot point the user
 	// has clicked on:
-	vtkPlot *selectedMatchPlot;
 	vtkVector2f *selectedMatchPlotPosition;
 
 	// Stucture XY data for chart display:
@@ -204,10 +206,13 @@ private: // Objects
 	vtkRenderWindow *caseSpaceRenWin;
 	vtkRenderWindowInteractor *renderWindowInteractor;
 	vtkRenderer *ren;
+	ccInteractorStyleTrackballCamera *iStyle;
 	vtkPolyDataAlgorithm *dukePoint[maxNumMICases];
 	vtkPolyDataMapper *dukePointMapper[maxNumMICases];
 	vtkActor *dukePointActor[maxNumMICases];
+
 	vtkCubeSource *queryPoint;
+	vtkPolyDataMapper *queryPointMapper;
 	vtkActor *queryPointActor;
 
 	vtkSphereSource *matchIcon[numMatchIconLevels];
@@ -258,14 +263,6 @@ private: // Objects
 	vtkActor *yAxisPlaneActor;
 
 	static const double numMIColors;
-
-	vtkTable *dukeTable;
-	vtkTable *poconoTable;
-	vtkTable *highPointTable;
-	vtkTable *queryCaseTable;
-	vtkTable *selectedMatchCaseTable;
-
-	vtkPlot *selectedPoint;
 
 	MainWindow *mainWindow;
 

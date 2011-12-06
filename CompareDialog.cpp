@@ -148,7 +148,6 @@ CompareDialog::CompareDialog()
 {
 	setupUi(this);
 	setupVTKUI();
-	initScrollArea();
 	setupProjectionGantryAngleMenu();
 	setupMatchHistoryMenu();
 	setupOverlaySelectionMenu();
@@ -213,9 +212,9 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 		matchDVHDataExists(false),
 		matchXYDataExists(true)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	setupUi(this);
 	setupVTKUI();
-	initScrollArea();
 	setupProjectionGantryAngleMenu();
 	createActions();
 
@@ -249,20 +248,15 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 	querySelectSpinBox->setKeyboardTracking(false);
 	matchSelectSpinBox->setKeyboardTracking(false);
 	transparencySpinBox->setKeyboardTracking(false);
+	buttonBox->button(QDialogButtonBox::Ok)->setFocusPolicy(Qt::NoFocus);
+	buttonBox->button(QDialogButtonBox::Cancel)->setFocusPolicy(Qt::NoFocus);
 }
 
+///dtor/////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
 CompareDialog::~CompareDialog()
 {
-	if (queryPatient)
-	{
-		delete queryPatient;
-	}
-
-	if (matchPatient)
-	{
-		delete matchPatient;
-	}
-
 	if (queryDICOMReader)
 	{
 		queryDICOMReader->Delete();
@@ -333,6 +327,8 @@ CompareDialog::~CompareDialog()
 		delete matchProjector;
 	}
 
+/* Looks like these deletions are handled via QVTKWidget:
+
 	if (queryProjectionRenWin)
 	{
 		queryProjectionRenWin->Delete();
@@ -342,32 +338,18 @@ CompareDialog::~CompareDialog()
 	{
 		matchProjectionRenWin->Delete();
 	}
-
-	// 2do: delete all the match history menu stuff: actions, etc.
-
-	// Re-enable the "Compare Cases" button back on the Case Space dialog when
-	// closing this (Compare dialog):
-	if (caseSpaceDialog)
-	{
-		caseSpaceDialog->enableCompareCasesButton(true);
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::initScrollArea()
-{
-/*	QScrollArea *scrollArea = new QScrollArea(this);
-	scrollArea->setBackgroundRole(QPalette::Dark);
-	QWidget *viewport = new QWidget(this);
-	QHBoxLayout *dialog_layout = new QHBoxLayout(this);
-    dialog_layout->addWidget(scroll); // add scroll to the QDialog's layout
-    setLayout(dialog_layout);
-	viewport->setLayout(this->layout());
-	scrollArea->setWidget(viewport);
-	scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 */
+	if (matchHistoryMenu)
+	{
+		matchHistoryMenu->clear();
+		delete matchHistoryMenu;
+	}
+
+	if (overlaySelectionMenu)
+	{
+		overlaySelectionMenu->clear();
+		delete overlaySelectionMenu;
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -376,6 +358,7 @@ void CompareDialog::initScrollArea()
 void CompareDialog::accept()
 {
 	caseSpaceDialog->enableCompareCasesButton(true);
+	caseSpaceDialog->setCompareDialogPointer(NULL);
 	QDialog::accept();
 }
 
@@ -385,6 +368,7 @@ void CompareDialog::accept()
 void CompareDialog::reject()
 {
 	caseSpaceDialog->enableCompareCasesButton(true);
+	caseSpaceDialog->setCompareDialogPointer(NULL);
 	QDialog::reject();
 }
 
@@ -433,7 +417,8 @@ bool CompareDialog::CTDataExistsFor(Patient *patient)
 
 	const char *s = path.ascii();
 
-	//cout << "CompareDialog::CTDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
+	//cout << "CompareDialog::CTDataExistsFor(patient #"
+	//	   << patient->getNumber() << "): path: " << s << endl;
 
 	if (!CTDir.exists())
 	{
@@ -467,8 +452,8 @@ bool CompareDialog::DVHDataExistsFor(Patient *patient)
 	QString path = patient->getPathToCTData();
 
 	//const char *s = path.ascii();
-	//cout << "CompareDialog::DVHDataExistsFor(patient #" << patient->getNumber() << "): path: " << s << endl;
-
+	//cout << "CompareDialog::DVHDataExistsFor(patient #"
+	//     << patient->getNumber() << "): path: " << s << endl;
 
 	return (DVHDataFile.exists());
 #else
@@ -737,8 +722,10 @@ void CompareDialog::setSliceAxis(bool val /* = true */)
 	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
 	float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
 
-	//cout << "qImagePosition: " << qImagePosition[0] << ", " << qImagePosition[1] << ", " << qImagePosition[2] << endl;
-	//cout << "mImagePosition: " << mImagePosition[0] << ", " << mImagePosition[1] << ", " << mImagePosition[2] << endl;
+	//cout << "qImagePosition: " << qImagePosition[0] << ", "
+	//     << qImagePosition[1] << ", " << qImagePosition[2] << endl;
+	//cout << "mImagePosition: " << mImagePosition[0] << ", "
+	//     << mImagePosition[1] << ", " << mImagePosition[2] << endl;
 
 #if USE_PROJECTOR_SLICE_PLANE
 	queryProjector->PositionSlicePlane(orientation,
@@ -783,12 +770,6 @@ void CompareDialog::changeSlice(int slice)
 	sliceSelectionSlider->update();
 	sliceSelectionSpinBox->setValue(slice);
 	sliceSelectionSpinBox->update();
-
-	//float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
-	//float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
-
-	//cout << "slice " << slice << " qImagePosition: " << qImagePosition[0] << ", " << qImagePosition[1] << ", " << qImagePosition[2] << endl;
-	//cout << "slice " << slice << " mImagePosition: " << mImagePosition[0] << ", " << mImagePosition[1] << ", " << mImagePosition[2] << endl;
 
 	//extractQueryDICOMData();
 }
@@ -1095,8 +1076,8 @@ void CompareDialog::createActions()
 	connect(removeSelectedOverlayPushButton, SIGNAL(released()), this,
 		SLOT(removeSelectedOverlayMenuItem()));
 
-	//connect(okPushButton, SIGNAL(clicked()), this, SLOT(accept()));
-	//connect(cancelPushButton, SIGNAL(clicked()), this, SLOT(reject()));
+	connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+	connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1116,7 +1097,6 @@ void CompareDialog::setViewCheckboxColors()
 					 (int)(color[bladder][2]) / 2);
 	viewBladderCheckboxShadowLabel->setPaletteForegroundColor(shadowClr);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -1291,7 +1271,6 @@ void CompareDialog::extractQueryDICOMData()
 	cout << "width, height: " << w << ", " << h << endl;
 	cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
 	
-
 	const char *xferSyntaxUID = queryDICOMReader->GetTransferSyntaxUID();
 	const char *patientName = queryDICOMReader->GetPatientName();
 	const char *studyUID = queryDICOMReader->GetStudyUID();
@@ -1825,9 +1804,11 @@ void CompareDialog::displayOverlayDVHData()
 		if (readDVHData(*overlayPatient, overlayVolumes, numOverlayDVHPoints))
 		{
 			title = "DVH: match -- Duke patient #" + 
-			QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
+			QString(("%1")).arg
+				(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
 			+ " + overlay -- Duke patient #" +
-			QString(("%1")).arg(overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
+			QString(("%1")).arg(
+				overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
 		}
 		else
 		{
@@ -1891,7 +1872,8 @@ void CompareDialog::toggleOverlayDVH(bool checked)
 		title = "DVH: match -- Duke patient " + 
 		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
 		+ " + overlay -- Duke patient " +
-		QString(("%1")).arg(overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
+		QString(("%1")).arg(
+			overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
 	}
 	else
 	{
@@ -2311,9 +2293,16 @@ bool CompareDialog::writeResults(QString fileName)
 		QList<QAction *> actions = matchHistoryMenu->actions(); 
 		QList<QAction *>::Iterator i;
 		int  counter = 1;
+
 		for (i = actions.begin(); i != actions.end(); ++i)
 		{
-			ts << counter++ << ". " << (*i)->text() << endl;
+			QString text = (*i)->text();
+			QStringList list = text.split("#", QString::SkipEmptyParts);
+			int currIx = list.at(1).toInt();
+
+			ts << counter++ << ". " << text << "\t\t\t\t" 
+			   << caseSpaceDialog->getMIValue(queryPatient->getIndex(), currIx)
+			   << endl;
 		}
 
 		f.close();

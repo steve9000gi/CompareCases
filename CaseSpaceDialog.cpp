@@ -141,15 +141,17 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		dukeXYDataPath(mainWindow->getDukeXYDataPath()),
 		dukeXYDataSuffix("Avg.txt"),
 		caseSpaceView(NULL),
+		selectedMatchPlotPosition(NULL),
 		dX(NULL),
 		dY(NULL),
+		pX(NULL),
+		pY(NULL),
 		hpX(NULL),
 		hpY(NULL),
-		dukeTable(NULL),
-		poconoTable(NULL),
-		highPointTable(NULL),
-		selectedMatchCaseTable(NULL),
-		selectedPoint(NULL),
+		caseSpaceRenWin(NULL),
+		renderWindowInteractor(NULL),
+		ren(NULL),
+		iStyle(NULL),
 		dukePatientList(NULL),
 		queryCase(NULL),
 		matchCase(NULL),
@@ -158,8 +160,9 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		MIMax(-FLT_MAX),
 		MIMin(FLT_MAX),
 		MIRange(0.0),
+		MIThresholdPlane(NULL),
+		mitpActor(NULL),
 		queryCaseIndex(-1),		// Impossible dummy value -> uninitialized,
-		caseSpaceRenWin(NULL),
 		balloonWidget(NULL),
 		balloonRep(NULL),
 		zMult(10000.0),
@@ -169,6 +172,7 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		parallelScale(5300.0),
 		thresholdPlaneThickness(15.0),
 		queryPoint(NULL),
+		queryPointMapper(NULL),
 		queryPointActor(NULL),
 		lastMatchCaseIndex(-1),	// Negative until initialized
 		currMatchCaseIndex(-1),	// Negative until initialized
@@ -178,9 +182,13 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 		xValueType(PTVPlusBladder),
 		yValueType(PTVPlusRectum),
 		xAxisPlane(NULL),
-		yAxisPlane(NULL)
-
+		yAxisPlane(NULL),
+		XYDataAngleMenu(NULL),
+		XValuesMenu(NULL),
+		YValuesMenu(NULL)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
+
 	matchIcon[0] = NULL;		// We'll just check the 0th element
 
 	initXYValExtrema();
@@ -213,7 +221,81 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
 ////////////////////////////////////////////////////////////////////////////////
 CaseSpaceDialog::~CaseSpaceDialog()
 {
-	// 2do: delete 
+	if (caseSpaceView) caseSpaceView->Delete();
+	delete selectedMatchPlotPosition;
+	delete[] dX;
+	delete[] dY;
+	delete[] pX;
+	delete[] pY;
+	delete[] hpX;
+	delete[] hpY;
+
+	if (ren) ren->Delete();
+	if (iStyle) iStyle->Delete();
+
+	for (int i = 0; i < numDukePatients; i++)
+	{
+		if (dukePoint[i]) dukePoint[i]->Delete();
+		if (dukePointMapper[i]) dukePointMapper[i]->Delete();
+		if (dukePointActor[i]) dukePointActor[i]->Delete();
+	}
+
+	if (queryPoint) queryPoint->Delete();
+	if (queryPointMapper) queryPointMapper->Delete();
+	if (queryPointActor) queryPointActor->Delete();
+
+	if (matchIcon[0])
+	{
+		for (int i = 0; i < numMatchIconLevels; i++)
+		{
+			matchIcon[i]->Delete();
+			matchIconMapper[i]->Delete();
+			matchIconActor[i]->Delete();
+		}
+	}
+
+	if (balloonWidget)
+	{
+		balloonWidget->Delete();
+		balloonRep->Delete();
+	}
+
+	if (MILegend) MILegend->Delete();
+	if (MILookupTable) MILookupTable->Delete();
+
+	delete axes;
+	if (axesAssembly) axesAssembly->Delete();
+	if (thresholdAxesAssembly) thresholdAxesAssembly->Delete();
+
+	for (int i = 0; i < numMICases; i++)
+	{
+		delete[] MIval[i];
+	}
+
+	if (MIThresholdPlane) MIThresholdPlane->Delete();
+	if (mitpActor) mitpActor->Delete();
+
+	if (xAxisPlane)
+	{
+		xAxisPlane->Delete();
+		xAxisPlaneActor->Delete();
+	}
+
+	if (yAxisPlane)
+	{
+		yAxisPlane->Delete();
+		yAxisPlaneActor->Delete();
+	}
+
+	if (XYDataAngleMenu) delete XYDataAngleMenu;
+	if (XValuesMenu) delete XValuesMenu;
+	if (YValuesMenu) delete YValuesMenu;
+
+	if (dukePatientList) delete[] dukePatientList;
+
+	mainWindow->setCaseSpaceDialogPointerToNULL();
+
+	if (compareDialog) compareDialog->close();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +329,6 @@ void CaseSpaceDialog::setSelectedMatchPlotPos(vtkVector2f *pos)
 ////////////////////////////////////////////////////////////////////////////////
 void CaseSpaceDialog::identifyMatchCase()
 {
-	//QString matchInstitution = selectedMatchPlot->GetLabel();
 	/*QString */matchInstitution = "Duke"; // TEMP SAC 2011/07/15
 
 	double *x; // Pointers to arrays of values of which the selected point...
@@ -316,8 +397,7 @@ void CaseSpaceDialog::identifyMatchCase()
 
 			makeCubeIfSphere(currMatchCaseIndex);
 
-			double *center = new double[3];
-			center = dukePointActor[currMatchCaseIndex]->GetCenter();
+			double *center = dukePointActor[currMatchCaseIndex]->GetCenter();
 			setMatchIconLocation(center[0], center[1], center[2]);
 		}
 
@@ -376,8 +456,7 @@ void CaseSpaceDialog::setMatchCaseFromCompareDialog(int patientNumber)
 
 		makeCubeIfSphere(currMatchCaseIndex);
 
-		double *center = new double[3];
-		center = dukePointActor[currMatchCaseIndex]->GetCenter();
+		double *center = dukePointActor[currMatchCaseIndex]->GetCenter();
 		setMatchIconLocation(center[0], center[1], center[2]);
 
 		matchCaseNameLabel->setText(matchInstitution + " patient #"
@@ -519,8 +598,7 @@ bool CaseSpaceDialog::pickPatient()
 			return false;
 		}
 
-		double *center = new double[3];
-		center = pickedActor->GetCenter();
+		double *center = pickedActor->GetCenter();
 
 		//cout << "Picked actor center at (" << center[0] << ", " << center[1]
 		//     << ", " << center[2] << ")" << endl;
@@ -595,7 +673,8 @@ void CaseSpaceDialog::compareCases()
 			// The code depends on compareDialog being either fully 
 			// instantiated or NULL:
 			CompareDialog *cd = compareDialog;
-			cd->deleteLater();
+			//cd->deleteLater();
+			delete cd;
 			compareDialog = NULL;
 		}
 		else
@@ -744,6 +823,7 @@ void CaseSpaceDialog::setThresholdPlanePosition(int zVal)
 		else
 		{
 			vtkSphereSource *sphere = vtkSphereSource::SafeDownCast(dukePoint[i]);
+
 			if (sphere)
 			{
 				sphere->GetCenter(center);
@@ -1045,6 +1125,9 @@ void CaseSpaceDialog::createActions()
 		SLOT(toggleThresholdPlane(bool)));
 	connect(viewAxisPlanesCheckBox, SIGNAL(toggled(bool)), this, 
 		SLOT(toggleAxisPlanes(bool)));
+
+	connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+	connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1083,7 +1166,7 @@ void CaseSpaceDialog::setupCaseSpaceRenWin()
 	vtkInteractorObserver *o = renderWindowInteractor->GetInteractorStyle();
 	const char *className = o->GetClassName();
 
-	ccInteractorStyleTrackballCamera *iStyle = ccInteractorStyleTrackballCamera::New();
+	iStyle = ccInteractorStyleTrackballCamera::New();
 	renderWindowInteractor->SetInteractorStyle(iStyle);
 
 	initializeBalloonStuff();
@@ -1121,7 +1204,7 @@ void CaseSpaceDialog::addQueryCase()
 	queryPoint->SetYLength(200.0);
 	queryPoint->SetZLength(200.0);
 
-	vtkPolyDataMapper *queryPointMapper = vtkPolyDataMapper::New();
+	queryPointMapper = vtkPolyDataMapper::New();
 	queryPointMapper->SetInputConnection(queryPoint->GetOutputPort());
 
 	queryPointActor = vtkActor::New();
@@ -1484,25 +1567,32 @@ void CaseSpaceDialog::addDukeDataToGraph()
 
 	for (int i = 0; i < numDukePatients; i++)
 	{
-		dX[i] = getXYValueFromIndex(i, xValueType); //dukePatientList[i].getPTVPlusBladder();
-		dY[i] = getXYValueFromIndex(i, yValueType); //dukePatientList[i].getPTVPlusRectum();
+		dX[i] = getXYValueFromIndex(i, xValueType);
+		dY[i] = getXYValueFromIndex(i, yValueType);
 
-		if (i == queryCaseIndex) continue; // Don't draw the usual for the query case
+		if (i == queryCaseIndex) 
+		{	// Don't draw the usual for the query case
+			dukePoint[i] = NULL;
+			dukePointMapper[i] = NULL;
+			dukePointActor[i] = NULL;
+		}
+		else
+		{
+			vtkCubeSource *cube = vtkCubeSource::New();
+			dukePoint[i] = cube;
+			cube->SetCenter(dX[i], dY[i], MIval[queryCaseIndex][i] * zMult);
+			cube->SetXLength(cubeSize);
+			cube->SetYLength(cubeSize);
+			cube->SetZLength(cubeSize);
 
-		vtkCubeSource *cube = vtkCubeSource::New();
-		dukePoint[i] = cube;
-		cube->SetCenter(dX[i], dY[i], MIval[queryCaseIndex][i] * zMult);
-		cube->SetXLength(cubeSize);
-		cube->SetYLength(cubeSize);
-		cube->SetZLength(cubeSize);
+			dukePointMapper[i] = vtkPolyDataMapper::New();
+			dukePointMapper[i]->SetInputConnection(dukePoint[i]->GetOutputPort());
 
-		dukePointMapper[i] = vtkPolyDataMapper::New();
-		dukePointMapper[i]->SetInputConnection(dukePoint[i]->GetOutputPort());
+			dukePointActor[i] = vtkActor::New();
+			dukePointActor[i]->SetMapper(dukePointMapper[i]);
 
-		dukePointActor[i] = vtkActor::New();
-		dukePointActor[i]->SetMapper(dukePointMapper[i]);
-
-		addBalloon(i);
+			addBalloon(i);
+		}
 	}
 
 	ren->Render();
@@ -1633,8 +1723,7 @@ void CaseSpaceDialog::resetAppurtenances()
 		displayMatchCaseData();
 		makeCubeIfSphere(currMatchCaseIndex);
 
-		double *center = new double[3];
-		center = dukePointActor[currMatchCaseIndex]->GetCenter();
+		double *center = dukePointActor[currMatchCaseIndex]->GetCenter();
 		setMatchIconLocation(center[0], center[1], center[2]);
 	}
 }
@@ -2256,7 +2345,7 @@ void CaseSpaceDialog::addMIThresholdPlane()
 	mitpActor->GetProperty()->SetAmbientColor(0.2, 0.2, 0.2);
 	mitpActor->PickableOff();
 
-	//ren->AddActor(mitpActor);
+	mitpMapper->Delete();
 
 	setThresholdPlanePosition(MIRangeSlider->value());
 }
@@ -2292,7 +2381,9 @@ void CaseSpaceDialog::addAxisPlanes()
 	yAxisPlaneActor->GetProperty()->SetAmbient(1);
 	yAxisPlaneActor->GetProperty()->SetAmbientColor(0.0, 1.0, 0.0);
 	yAxisPlaneActor->PickableOff();
-	//ren->AddActor(yAxisPlaneActor);
+	
+	xAxisPlaneMapper->Delete();
+	yAxisPlaneMapper->Delete();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2322,8 +2413,6 @@ void CaseSpaceDialog::setAxisPlanes(int thresholdPlaneZVal)
 	yAxisPlane->SetCenter(xCenterQueryPt + (thickness / 2.0),
 								yCenterQueryPt + (width / 2.0),
 								zCenterQueryPt + (height / 2.0));
-
-	//axes->setGhostAxesPosition(zCenterQueryPt + height);
 
 	caseSpaceRenWin->Render();
 }

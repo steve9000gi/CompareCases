@@ -48,16 +48,15 @@ Patient::~Patient()
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
-// Currently hard-wired to a specific absolute path. 
-//
-// 2do: Add path select dialog (but probably not here).
+// Currently hard-wired to a specific relative path. 
 //
 ////////////////////////////////////////////////////////////////////////////////
 QString Patient::getPathToCTData()
 {
 	CTDataPath = dataDir + "\\CT\\Patient";
 
-	QString numberAsString = QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
+	QString numberAsString = 
+		QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
 	CTDataPath.append(numberAsString);
 
 	CTDataPath.append("\\Primary");
@@ -82,10 +81,12 @@ void Patient::setPathToCTData(const QString &path)
 ////////////////////////////////////////////////////////////////////////////////
 QString Patient::getPathToDVHData()
 {
-	DVHDataPath = dataDir + "\\DVH\\DVH_ORIGINAL" + QString::number(this->number);
+	DVHDataPath = dataDir + "\\DVH\\DVH_ORIGINAL" +
+		QString::number(this->number);
 	//DVHDataPath = dataDir + "/DVHdata/DVH";
 
-	//QString numberAsString = QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
+	//QString numberAsString = 
+	//	QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
 	//DVHDataPath.append(numberAsString);
 
 	DVHDataPath.append(".txt");

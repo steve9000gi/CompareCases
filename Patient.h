@@ -49,7 +49,8 @@ public:
 	void setSliceMax(int max) { sliceMax = max; };
 
 	SliceOrientation getSliceOrientation() { return sliceOrientation; };
-	void setSliceOrientation(SliceOrientation orientation) { sliceOrientation = orientation; };
+	void setSliceOrientation(SliceOrientation orientation)
+		{ sliceOrientation = orientation; };
 
 	QString &getDataDir() { return this->dataDir; };
 	void setDataDir(const QString &dir) { this->dataDir = dir; };
