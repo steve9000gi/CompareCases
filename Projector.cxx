@@ -622,7 +622,8 @@ void Projector::SetProjection(int patientNum, int angle)
 {
   char txt[kMaxChars];  
   SetCameraPosition(angle); 
-  sprintf_s(txt, "Duke patient #%03d: gantry angle %d degrees", patientNum, angle);
+  sprintf_s(txt, "Duke patient #%03d: gantry angle %d degrees", patientNum,
+    angle);
   renderer->RemoveActor(textActor);
   renderer->AddActor(textActor); // Need to do this every time to see text
   textActor->SetInput(txt);

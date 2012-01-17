@@ -1368,8 +1368,8 @@ int rnd(double x)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Set the CT slider to the slice most closely approximating the larger
-// of the two isocenters.
+// Set the CT slider to the slice most closely approximating the isocenter with
+// the greater slice number.
 //
 ////////////////////////////////////////////////////////////////////////////////
 bool CompareDialog::setCTSliderToMaxIsocenter(int orientation)
@@ -1400,7 +1400,6 @@ bool CompareDialog::setCTSliderToMaxIsocenter(int orientation)
     rnd(isocenter[qIsocenterIx][orientation] / queryPixelSpacing[orientation]);
   int nSlicesFromOriginToMatchIsocenter = sign *
     rnd(isocenter[mIsocenterIx][orientation] / matchPixelSpacing[orientation]);
-
 
   qIsocenterSlice = qOrigin[orientation] + nSlicesFromOriginToQueryIsocenter;
   mIsocenterSlice = mOrigin[orientation] + nSlicesFromOriginToMatchIsocenter;
@@ -2082,8 +2081,7 @@ void CompareDialog::toggleOverlayDVH(bool checked)
     title = "DVH: match -- Duke patient #" + 
     QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
     + " + overlay -- Duke patient #" +
-    QString(("%1")).arg(
-      overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
+    QString(("%1")).arg(overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
   }
   else
   {
@@ -2247,8 +2245,6 @@ void CompareDialog::removeSelectedOverlayMenuItem()
 {
   if (!overlaySelectionMenu || overlaySelectionMenu->isEmpty()) return;
 
-  bool deleted = false;
-  
   QList<QAction *> actions = overlaySelectionMenu->actions(); 
   QList<QAction *>::Iterator i;
 
@@ -2299,6 +2295,9 @@ void CompareDialog::setDVHYAxisTicks(vtkChartXY *chart)
   chart->GetAxis(vtkAxis::LEFT)->SetTickPositions(tickPositions);
   chart->GetAxis(vtkAxis::LEFT)->SetTickLabels(tickLabels);
   chart->GetAxis(vtkAxis::LEFT)->SetRange(0, maxY);
+
+  tickPositions->Delete();
+  tickLabels->Delete();
 
   chart->GetAxis(vtkAxis::LEFT)->GetGridPen()->SetColorF(0.17, 0.17, 0.22);
   chart->GetAxis(vtkAxis::BOTTOM)->GetGridPen()->SetColorF(0.17, 0.17, 0.22);
