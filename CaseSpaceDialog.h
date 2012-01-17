@@ -60,246 +60,246 @@ class ccInteractorStyleTrackballCamera;
 
 class CaseSpaceDialog : public QDialog, public Ui_CaseSpaceDialog
 {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	enum XYValueType
-	{
-		PTVSize = 0,
-		rectumSize,
-		bladderSize,
-		PTVPlusRectum,
-		PTVPlusBladder,
-		PTVPlusRectumPlusBladder,
-		numXYValueTypes
-	};
+  enum XYValueType
+  {
+    PTVSize = 0,
+    rectumSize,
+    bladderSize,
+    PTVPlusRectum,
+    PTVPlusBladder,
+    PTVPlusRectumPlusBladder,
+    numXYValueTypes
+  };
 
-	CaseSpaceDialog(MainWindow *mw);
-	~CaseSpaceDialog();
+  CaseSpaceDialog(MainWindow *mw);
+  ~CaseSpaceDialog();
 
-	void setQueryCaseText(QString &text);
-	void setSelectedMatchPlotPos(vtkVector2f *pos);
-	void setDukeXYDataPath(QString &path) { dukeXYDataPath = path; };
-	void identifyMatchCase();
-	void setMatchCaseFromCompareDialog(int patientNumber);
-	int getIndexFrom(Patient *p);
-	Patient *getDukePatientFromCoodinates(double posX, double posY);
-	Patient *getDukePatientFrom(int patientNumber);
-	Patient *getPatientFromCoodinates(
-		double *xArray, double *yArray, double x, double y);
-	int getNumDukePatients() { return numDukePatients; };
-	MainWindow *getMainWindow() { return mainWindow; };
+  void setQueryCaseText(QString &text);
+  void setSelectedMatchPlotPos(vtkVector2f *pos);
+  void setDukeXYDataPath(QString &path) { dukeXYDataPath = path; };
+  void identifyMatchCase();
+  void setMatchCaseFromCompareDialog(int patientNumber);
+  int getIndexFrom(Patient *p);
+  Patient *getDukePatientFromCoodinates(double posX, double posY);
+  Patient *getDukePatientFrom(int patientNumber);
+  Patient *getPatientFromCoodinates(
+    double *xArray, double *yArray, double x, double y);
+  int getNumDukePatients() { return numDukePatients; };
+  MainWindow *getMainWindow() { return mainWindow; };
 
-	Patient *getLastMatchCase() { return lastMatchCase; };
-	Patient *getMatchCase() { return matchCase; };
-	void setLastMatchCase(Patient *lmc) { lastMatchCase = lmc; };
-	bool isNewMatchCaseSelectedHere();
-	void setIsNewMatchCaseSelectedHere(bool here)
-		{ newMatchCaseSelectedHere = here; };
+  Patient *getLastMatchCase() { return lastMatchCase; };
+  Patient *getMatchCase() { return matchCase; };
+  void setLastMatchCase(Patient *lmc) { lastMatchCase = lmc; };
+  bool isNewMatchCaseSelectedHere();
+  void setIsNewMatchCaseSelectedHere(bool here)
+    { newMatchCaseSelectedHere = here; };
 
-	void enableCompareCasesButton(bool isEnabled)
-	{
-		compareCasesPushButton->setEnabled(isEnabled);
-	};
+  void enableCompareCasesButton(bool isEnabled)
+  {
+    compareCasesPushButton->setEnabled(isEnabled);
+  };
 
-	void setCompareDialogPointer(CompareDialog *ptr) { compareDialog = ptr; };
+  void setCompareDialogPointer(CompareDialog *ptr) { compareDialog = ptr; };
 
-	bool pickPatient();
-	const static void ReportCameraPosition(vtkRenderer *r);
-	double getMIValue(int queryIx, int matchIx)
-	{
-		return MIval[queryIx][matchIx];
-	};
+  bool pickPatient();
+  const static void ReportCameraPosition(vtkRenderer *r);
+  double getMIValue(int queryIx, int matchIx)
+  {
+    return MIval[queryIx][matchIx];
+  };
 
 private slots:
-	void compareCases();
-	void testFunction();
-	void setXYView(bool checked = true);
-	void setXMIView(bool checked = true);
-	void setYMIView(bool checked = true);
-	void setObliqueView(bool checked = true);
-	void resetView();
-	void setThresholdPlanePosition(int zVal);
-	void setBackgroundBlack(bool checked = true);
-	void setBackgroundWhite(bool checked = true);
-	void setBackgroundRamped(bool checked = true);
-	void XYDataAngleItemTriggered(bool checked);
-	void selectXYDataAngle(QString text);
-	void XValuesItemTriggered(bool checked);
-	void selectXValues(QString text);
-	void YValuesItemTriggered(bool checked);
-	void selectYValues(QString text);
-	void toggleAxisPlanes(bool checked);
-	void toggleThresholdAxes(bool checked);
-	void toggleThresholdPlane(bool checked);
+  void compareCases();
+  void testFunction();
+  void setXYView(bool checked = true);
+  void setXMIView(bool checked = true);
+  void setYMIView(bool checked = true);
+  void setObliqueView(bool checked = true);
+  void resetView();
+  void setThresholdPlanePosition(int zVal);
+  void setBackgroundBlack(bool checked = true);
+  void setBackgroundWhite(bool checked = true);
+  void setBackgroundRamped(bool checked = true);
+  void XYDataAngleItemTriggered(bool checked);
+  void selectXYDataAngle(QString text);
+  void XValuesItemTriggered(bool checked);
+  void selectXValues(QString text);
+  void YValuesItemTriggered(bool checked);
+  void selectYValues(QString text);
+  void toggleAxisPlanes(bool checked);
+  void toggleThresholdAxes(bool checked);
+  void toggleThresholdPlane(bool checked);
 
 private: // methods
-	void SetCameraPosition(double pos[3], double fp[3], double vUp[3],
-		double clip[2], double zoom);
-	void SetCameraPosition(double az);
+  void SetCameraPosition(double pos[3], double fp[3], double vUp[3],
+    double clip[2], double zoom);
+  void SetCameraPosition(double az);
 
-	void createActions();
-	void setupCaseSpaceRenWin();
-	void addQueryCase();
+  void createActions();
+  void setupCaseSpaceRenWin();
+  void addQueryCase();
 
-	void initializeBalloonStuff();
-	void addBalloon(int index);
-	void updateBalloon(int i, int xVal, int yVal);
+  void initializeBalloonStuff();
+  void addBalloon(int index);
+  void updateBalloon(int i, int xVal, int yVal);
 
-	void initializeMatchIcon();
-	void setMatchIconLocation(double x, double y, double z);
+  void initializeMatchIcon();
+  void setMatchIconLocation(double x, double y, double z);
 
-	void initializeMILegend();
-	void getColorCorrespondingToMIvalue(
-		double MIVal, double &r, double &g, double &b);
+  void initializeMILegend();
+  void getColorCorrespondingToMIvalue(
+    double MIVal, double &r, double &g, double &b);
 
-	void initXYValExtrema();
-	bool readDukeXYData();
-	void addDukeDataToGraph();
+  void initXYValExtrema();
+  bool readDukeXYData();
+  void addDukeDataToGraph();
 
-	void makeSphereIfCube(int ix);
-	void makeCubeIfSphere(int ix);
-	void setGeometryAccordingToMatchHistory(int ix);
-	void resetAppurtenances();
+  void makeSphereIfCube(int ix);
+  void makeCubeIfSphere(int ix);
+  void setGeometryAccordingToMatchHistory(int ix);
+  void resetAppurtenances();
 
 public:
-	void resetDukeDataPositions(bool needToRead = false);
+  void resetDukeDataPositions(bool needToRead = false);
 
 private:
-	double getXYValueFromIndex(int index, XYValueType valueType);
-	double getXYValueFromNumber(int patientNum, XYValueType valueType);
-	void averageDukeXYData();
+  double getXYValueFromIndex(int index, XYValueType valueType);
+  double getXYValueFromNumber(int patientNum, XYValueType valueType);
+  void averageDukeXYData();
 
-	// Axis values selection menus:
-	void setupXYDataAngleMenu();
-	void setupXValuesMenu();
-	void setupYValuesMenu();
+  // Axis values selection menus:
+  void setupXYDataAngleMenu();
+  void setupXValuesMenu();
+  void setupYValuesMenu();
 
-	void addPoconoDataToGraph();
-	void addHighPointDataToGraph();
+  void addPoconoDataToGraph();
+  void addHighPointDataToGraph();
 
-	void displayQueryCaseData();
-	void displayMatchCaseData();
+  void displayQueryCaseData();
+  void displayMatchCaseData();
 
-	bool readMIData();
-	bool averageMIData();
-	void prepareMIDisplay();
-	void addMIThresholdPlane();
-	void addAxisPlanes();
-	void setAxisPlanes(int thresholdPlaneZVal);
+  bool readMIData();
+  bool averageMIData();
+  void prepareMIDisplay();
+  void addMIThresholdPlane();
+  void addAxisPlanes();
+  void setAxisPlanes(int thresholdPlaneZVal);
 
 private: // Objects
-	vtkContextView *caseSpaceView;
+  vtkContextView *caseSpaceView;
 
-	// Pointer to data corresponding to the plot point the user
-	// has clicked on:
-	vtkVector2f *selectedMatchPlotPosition;
+  // Pointer to data corresponding to the plot point the user
+  // has clicked on:
+  vtkVector2f *selectedMatchPlotPosition;
 
-	// Stucture XY data for chart display:
-	double *dX;		// Duke
-	double *dY;
-	double *pX;		// Pocono
-	double *pY;
-	double *hpX;	// High Point
-	double *hpY;
+  // Stucture XY data for chart display:
+  double *dX;   // Duke
+  double *dY;
+  double *pX;   // Pocono
+  double *pY;
+  double *hpX;  // High Point
+  double *hpY;
 
-	vtkRenderWindow *caseSpaceRenWin;
-	vtkRenderWindowInteractor *renderWindowInteractor;
-	vtkRenderer *ren;
-	ccInteractorStyleTrackballCamera *iStyle;
-	vtkPolyDataAlgorithm *dukePoint[maxNumMICases];
-	vtkPolyDataMapper *dukePointMapper[maxNumMICases];
-	vtkActor *dukePointActor[maxNumMICases];
+  vtkRenderWindow *caseSpaceRenWin;
+  vtkRenderWindowInteractor *renderWindowInteractor;
+  vtkRenderer *ren;
+  ccInteractorStyleTrackballCamera *iStyle;
+  vtkPolyDataAlgorithm *dukePoint[maxNumMICases];
+  vtkPolyDataMapper *dukePointMapper[maxNumMICases];
+  vtkActor *dukePointActor[maxNumMICases];
 
-	vtkCubeSource *queryPoint;
-	vtkPolyDataMapper *queryPointMapper;
-	vtkActor *queryPointActor;
+  vtkCubeSource *queryPoint;
+  vtkPolyDataMapper *queryPointMapper;
+  vtkActor *queryPointActor;
 
-	vtkSphereSource *matchIcon[numMatchIconLevels];
-	vtkPolyDataMapper *matchIconMapper[numMatchIconLevels];
-	vtkActor *matchIconActor[numMatchIconLevels];
+  vtkSphereSource *matchIcon[numMatchIconLevels];
+  vtkPolyDataMapper *matchIconMapper[numMatchIconLevels];
+  vtkActor *matchIconActor[numMatchIconLevels];
 
-	// Tell us about the patient over which we're hovering:
-	vtkBalloonWidget *balloonWidget;
-	vtkBalloonRepresentation *balloonRep;
+  // Tell us about the patient over which we're hovering:
+  vtkBalloonWidget *balloonWidget;
+  vtkBalloonRepresentation *balloonRep;
 
-	vtkScalarBarActor *MILegend;
-	vtkLookupTable *MILookupTable;
+  vtkScalarBarActor *MILegend;
+  vtkLookupTable *MILookupTable;
 
-	double zMult;
-	Axes *axes;
-	vtkAssembly *axesAssembly;
-	vtkAssembly *thresholdAxesAssembly;
-	double axisTextOffset;
+  double zMult;
+  Axes *axes;
+  vtkAssembly *axesAssembly;
+  vtkAssembly *thresholdAxesAssembly;
+  double axisTextOffset;
 
-	QString matchInstitution;
-	QString queryInstitution;
+  QString matchInstitution;
+  QString queryInstitution;
 
-	// Use these to set the camera to center at origin, 
-	// i.e., query point:
-	double xCenterQueryPt;
-	double yCenterQueryPt;
-	double zCenterQueryPt;
-	double stdCamDist;
-	double stdVertShift;
-	double parallelScale;
+  // Use these to set the camera to center at origin, 
+  // i.e., query point:
+  double xCenterQueryPt;
+  double yCenterQueryPt;
+  double zCenterQueryPt;
+  double stdCamDist;
+  double stdVertShift;
+  double parallelScale;
 
-	int numDukePatients;
-	int numPoconoPatients;
-	int numHighPointPatients;
+  int numDukePatients;
+  int numPoconoPatients;
+  int numHighPointPatients;
 
-	double *MIval[numMICases];
-	double MIMax;
-	double MIMin;
-	double MIRange;
-	vtkCubeSource *MIThresholdPlane;
-	vtkActor *mitpActor;
-	double MIThresholdVal;
-	double thresholdPlaneZVal;
-	double thresholdPlaneThickness;
-	vtkCubeSource *xAxisPlane;
-	vtkCubeSource *yAxisPlane;
-	vtkActor *xAxisPlaneActor;
-	vtkActor *yAxisPlaneActor;
+  double *MIval[numMICases];
+  double MIMax;
+  double MIMin;
+  double MIRange;
+  vtkCubeSource *MIThresholdPlane;
+  vtkActor *mitpActor;
+  double MIThresholdVal;
+  double thresholdPlaneZVal;
+  double thresholdPlaneThickness;
+  vtkCubeSource *xAxisPlane;
+  vtkCubeSource *yAxisPlane;
+  vtkActor *xAxisPlaneActor;
+  vtkActor *yAxisPlaneActor;
 
-	static const double numMIColors;
+  static const double numMIColors;
 
-	MainWindow *mainWindow;
+  MainWindow *mainWindow;
 
-	// Path to data for structure XY values: used for placing patient 
-	// points in Case Space:
-	QString dukeXYDataPath;
-	QString dukeXYDataSuffix;
+  // Path to data for structure XY values: used for placing patient 
+  // points in Case Space:
+  QString dukeXYDataPath;
+  QString dukeXYDataSuffix;
 
-	// XY Values:
-	QMenu *XYDataAngleMenu;
-	QMenu *XValuesMenu;
-	QMenu *YValuesMenu;
-	int XYValue[numXYValueTypes];
-	int minVal[numXYValueTypes];
-	int maxVal[numXYValueTypes];
-	XYValueType xValueType;
-	XYValueType yValueType;
+  // XY Values:
+  QMenu *XYDataAngleMenu;
+  QMenu *XValuesMenu;
+  QMenu *YValuesMenu;
+  int XYValue[numXYValueTypes];
+  int minVal[numXYValueTypes];
+  int maxVal[numXYValueTypes];
+  XYValueType xValueType;
+  XYValueType yValueType;
 
-	Patient *dukePatientList;
-	Patient *queryCase;
-	Patient *matchCase;
-	Patient *lastMatchCase;
+  Patient *dukePatientList;
+  Patient *queryCase;
+  Patient *matchCase;
+  Patient *lastMatchCase;
 
-	bool newMatchCaseSelectedHere;
+  bool newMatchCaseSelectedHere;
 
-	// Zero-based indices into array of Patients: the first position
-	// is of course 0 even though the first patient number is 3 or
-	// something. Also, there may be gaps between patient numbers.
-	int queryCaseIndex; 
-	int lastMatchCaseIndex;
-	int currMatchCaseIndex;
+  // Zero-based indices into array of Patients: the first position
+  // is of course 0 even though the first patient number is 3 or
+  // something. Also, there may be gaps between patient numbers.
+  int queryCaseIndex; 
+  int lastMatchCaseIndex;
+  int currMatchCaseIndex;
 
-	CompareDialog *compareDialog;
+  CompareDialog *compareDialog;
 
 private:
-	CaseSpaceDialog(const CaseSpaceDialog&);		// Not implemented.
-	void operator=(const CaseSpaceDialog&);			// Not implemented.
+  CaseSpaceDialog(const CaseSpaceDialog&);  // Not implemented.
+  void operator=(const CaseSpaceDialog&);   // Not implemented.
 };
 
 #endif

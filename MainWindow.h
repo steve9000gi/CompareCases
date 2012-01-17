@@ -7,12 +7,12 @@
 // organization beneath that top level. Once one or more of these directories
 // are determined, the user may then select a particular patient case from the
 // established institutions for use as query case. Once a specific query case
-// is selected, the View Space Case button, which opens the Case Space dialog
+// is selected, the View Case Space button, which opens the Case Space dialog
 // for selecting a match case, is enabled.
 //
 // author:  Steve Chall, RENCI
 // primary collaborators: Joseph Lo, Shiva Das, and Vorakarn Chanyavanich,
-//						  Duke Medical Center
+//              Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,70 +29,70 @@ class CaseSpaceDialog;
 
 class MainWindow : public QMainWindow, public Ui_MainWindow
 {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	enum SourceInstitution
-	{
-		kDuke,
-		kPocono,
-		kHighPoint
-	};
+  enum SourceInstitution
+  {
+    kDuke,
+    kPocono,
+    kHighPoint
+  };
 
-	MainWindow();
-	~MainWindow();
+  MainWindow();
+  ~MainWindow();
 
-	void setCaseSpaceDialogPointerToNULL() { caseSpaceDialog = NULL; };
+  void setCaseSpaceDialogPointerToNULL() { caseSpaceDialog = NULL; };
 
 private slots:
-	void openCaseSpaceDialog();	
-	void selectDukeDirectory();
-	void selectPoconoDirectory();
-	void selectHighPointDirectory();
-	void selectDukeQueryCase(int index);
-	void selectPoconoQueryCase(int index);
-	void selectHighPointQueryCase(int index);
-	void viewDocumentation();
-	void about();
-	void close();
+  void openCaseSpaceDialog();  
+  void selectDukeDirectory();
+  void selectPoconoDirectory();
+  void selectHighPointDirectory();
+  void selectDukeQueryCase(int index);
+  void selectPoconoQueryCase(int index);
+  void selectHighPointQueryCase(int index);
+  void viewDocumentation();
+  void about();
+  void close();
 
 protected:
-	// General setup methods:
-	void createActions();
-	bool setupDukeSelectQueryCaseComboBox();
-	void setupSelectQueryCaseComboBoxes();
-	void setViewCaseSpacePushButtonEnabling();
+  // General setup methods:
+  void createActions();
+  bool setupDukeSelectQueryCaseComboBox();
+  void setupSelectQueryCaseComboBoxes();
+  void setViewCaseSpacePushButtonEnabling();
 
-	// Qt objects:
-	QAction *selectDukeQueryCaseAction;
-	QAction *selectPoconoQueryCaseAction;
-	QAction *selectHighPointQueryCaseAction;
+  // Qt objects:
+  QAction *selectDukeQueryCaseAction;
+  QAction *selectPoconoQueryCaseAction;
+  QAction *selectHighPointQueryCaseAction;
 
-	QFile dukeDataDirectoryPath;
+  QFile dukeDataDirectoryPath;
 
-	QString dukeDir;
-	QString dukeXYDataPath;
-	QString poconoDir;
-	QString highPointDir;
+  QString dukeDir;
+  QString dukeXYDataPath;
+  QString poconoDir;
+  QString highPointDir;
 
-	SourceInstitution queryCaseSourceInstitution;
-	int queryCasePatientNumber;
+  SourceInstitution queryCaseSourceInstitution;
+  int queryCasePatientNumber;
 
-	CaseSpaceDialog *caseSpaceDialog;
+  CaseSpaceDialog *caseSpaceDialog;
 
-	int versionNumber;
+  int versionNumber;
 
 public:
-	QString getDukeDir() { return dukeDir; };
-	 // TEMP hardwired to Duke pending introduction of data from other institutions:
-	QString getDataDir() { return dukeDir; };
-	QString &getDukeXYDataPath() { return dukeXYDataPath; };
-	SourceInstitution getQueryCaseSourceInstitution() { return queryCaseSourceInstitution; };
-	int getQueryCasePatientNumber() { return queryCasePatientNumber; };
+  QString getDukeDir() { return dukeDir; };
+   // TEMP hardwired to Duke pending introduction of data from other institutions:
+  QString getDataDir() { return dukeDir; };
+  QString &getDukeXYDataPath() { return dukeXYDataPath; };
+  SourceInstitution getQueryCaseSourceInstitution() { return queryCaseSourceInstitution; };
+  int getQueryCasePatientNumber() { return queryCasePatientNumber; };
 
 private:
-	MainWindow(const MainWindow&);		// Not implemented.
-	void operator=(const MainWindow&);  // Not implemented.
+  MainWindow(const MainWindow&);      // Not implemented.
+  void operator=(const MainWindow&);  // Not implemented.
 };
 
 #endif

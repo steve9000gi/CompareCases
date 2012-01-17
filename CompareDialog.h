@@ -35,7 +35,7 @@
 //
 // author:  Steve Chall, RENCI
 // primary collaborators: Joseph Lo, Shiva Das, and Vorakarn Chanyavanich,
-//						  Duke Medical Center
+//              Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -49,12 +49,13 @@
 
 static const int numDVHPoints = 103; // Based on DVH input data format
 static const int maxNumDVHPoints = 200;
-static const int gazillion = 300;
+static const int maxNumIsocenters = 300;
 
 // Forward declarations:
 class vtkPNGReader;
 class vtkImageViewer;
 class vtkImageViewer2;
+class vtkTextActor;
 class vtkDICOMImageReader;
 class vtkRenderer;
 class vtkRenderWindow;
@@ -69,180 +70,196 @@ class Projector;
 
 class CompareDialog : public QDialog, public Ui_CompareDialog
 {
-	Q_OBJECT
+  Q_OBJECT
 
 public:
-	enum Structure
-	{
-		PTV = 0,							// Planning Target Volume
-		rectum,
-		bladder,
-		leftFem,
-		rightFem,
-		numStructures
-	};
+  enum Structure
+  {
+    PTV = 0,              // Planning Target Volume
+    rectum,
+    bladder,
+    leftFem,
+    rightFem,
+    numStructures
+  };
 
-	CompareDialog();
-	CompareDialog(CaseSpaceDialog *csDlog);
-	~CompareDialog();
+  CompareDialog();
+  CompareDialog(CaseSpaceDialog *csDlog);
+  ~CompareDialog();
 
-	virtual void accept();
-	virtual void reject();
+  virtual void accept();
+  virtual void reject();
 
-	void setQuery(Patient *patient);
-	void setMatch(Patient *patient);
+  void setQuery(Patient *patient);
+  void setMatch(Patient *patient);
 
-	bool CTDataExistsFor(Patient *patient);
-	bool DVHDataExistsFor(Patient *patient);
-	void readIsocenters();
+  bool CTDataExistsFor(Patient *patient);
+  bool DVHDataExistsFor(Patient *patient);
+  void readIsocenters(Patient *qCase);
 
-	QMenu *getMatchHistoryMenu() { return matchHistoryMenu; };
+  QMenu *getMatchHistoryMenu() { return matchHistoryMenu; };
 
 signals:
-	void historyMenuItemSelected(int number);
+  void historyMenuItemSelected(int number);
 
 private slots:
-	void selectQuery(int patientNumber);			// For query CT and projection displays
-	void selectMatch(int patientNumber);			// For match CT, projection, DVH displays
-	void setSliceAxis(bool val = true);				// Both query and match CT data
-	void changeSlice(int slice);					// Both query and match CT data
-	void autoplay();								// Both query and match CT data
-	void setGantryAngle25();						// All these for projection data, ...
-	void setGantryAngle75();				
-	void setGantryAngle130();
-	void setGantryAngle180();
-	void setGantryAngle230();
-	void setGantryAngle280();
-	void setGantryAngle335();						// ...both query and match.
-	void changeTransparency(int transp);
-	void changeTransparency();
-	void toggleFlatShadedStructures(bool checked);	// For projections
-	void toggleOrigin(bool checked);
-	void toggleViewStructure(bool checked);			// For projection and DVH data. q. and m.
-	void toggleOverlayDVH(bool checked);
-	void historyItemTriggered(bool checked);
-	void selectHistoryMatch(QString text);
-	void removeCurrentMatch();
-	void saveMatchHistory();
-	void overlayItemTriggered(bool checked);
-	void selectOverlay(QString text);
-	void removeSelectedOverlayMenuItem();
+  void selectQuery(int patientNumber);      // Query CT and projection displays
+  void selectMatch(int patientNumber);      // Match CT, projection, DVH
+  void setSliceAxis(bool val = true);       // Both query and match CT data
+  void setCTDisplaysToIsocenters();
+  void changeSlice(int slice);              
+  void autoplay();                          
+  void setGantryAngle25();                  
+  void setGantryAngle75();        
+  void setGantryAngle130();
+  void setGantryAngle180();
+  void setGantryAngle230();
+  void setGantryAngle280();
+  void setGantryAngle335();                 // ...both query and match.
+  void changeTransparency(int transp);
+  void changeTransparency();
+  void toggleFlatShadedStructures(bool checked);  // For projections
+  void toggleOrigin(bool checked);
+  void toggleViewStructure(bool checked);   // For projection and DVH data. q. and m.
+  void toggleOverlayDVH(bool checked);
+  void historyItemTriggered(bool checked);
+  void selectHistoryMatch(QString text);
+  void removeCurrentMatch();
+  void saveMatchHistory();
+  void overlayItemTriggered(bool checked);
+  void selectOverlay(QString text);
+  void removeSelectedOverlayMenuItem();
 
 private:
-	// General setup methods:
-	void setupVTKUI();
-	void createActions();
-	void setViewCheckboxColors();
+  // General setup methods:
+  void setupVTKUI();
+  void createActions();
+  void setViewCheckboxColors();
 
-	// CT data display methods:
-	void initQueryCTPipeLine();
-	void initMatchCTPipeLine();
-	void selectQueryCTSlice(int slice);
-	void selectMatchCTSlice(int slice);
-	void extractQueryDICOMData();
+  // CT data display methods:
+  void initQueryCTPipeLine();
+  void initMatchCTPipeLine();
+  void selectQueryCTSlice(int slice);
+  void selectMatchCTSlice(int slice);
+  bool isocenterDataExists(int patientNum, int &isocenterIx);
+  bool setCTSliderToMaxIsocenter(int orientation);  
+  void printIsocenterValues(int orientation, int qNum, int qSlice, 
+  int mNum, int mSlice);
+  void extractQueryDICOMData();
 
-	// Projection data display methods:
-	void selectQueryProjection(bool newQuery = false);
-	void selectMatchProjection(bool newMatch = false);
-	void setupProjectionGantryAngleMenu();
+  // Projection data display methods:
+  void selectQueryProjection(bool newQuery = false);
+  void selectMatchProjection(bool newMatch = false);
+  void setupProjectionGantryAngleMenu();
 
-	// Dose Volume Histogram data display methods:
-	void initOverlayDVHObjects();
-	void initMatchDVHObjects();
-	void initVolumesArray(float volumes[numStructures][maxNumDVHPoints]);
-	bool readDVHData(Patient &patient,
-		float volumes[numStructures][maxNumDVHPoints], int &numPoints);
-	int readDVHStructureData(QTextStream &in, int structureNum,
-		float volumes[numStructures][maxNumDVHPoints]);
-	void setupOverlayDVHChart(vtkChartXY *chart, char *title);
-	void setupMatchDVHChart(vtkChartXY *chart, char *title);
+  // Dose Volume Histogram data display methods:
+  void initOverlayDVHObjects();
+  void initMatchDVHObjects();
+  void initVolumesArray(float volumes[numStructures][maxNumDVHPoints]);
+  bool readDVHData(Patient &patient,
+    float volumes[numStructures][maxNumDVHPoints], int &numPoints);
+  int readDVHStructureData(QTextStream &in, int structureNum,
+    float volumes[numStructures][maxNumDVHPoints]);
+  void setupOverlayDVHChart(vtkChartXY *chart, char *title);
+  void setupMatchDVHChart(vtkChartXY *chart, char *title);
 
-	void displayOverlayDVHData();
-	void displayMatchDVHData();
-	void setDVHYAxisTicks(vtkChartXY *chart);
+  void displayOverlayDVHData();
+  void displayMatchDVHData();
+  void setDVHYAxisTicks(vtkChartXY *chart);
 
-	// Match history methods:
-	void setupMatchHistoryMenu();
-	void addMatchHistoryItem();
-	bool removeRedundantMenuItem(QMenu *menu, QString text);
+  // Match history methods:
+  void setupMatchHistoryMenu();
+  void addMatchHistoryItem();
+  bool removeRedundantMenuItem(QMenu *menu, QString text);
 
-	// Save:
-	bool writeResults(QString fileName);
+  // Save:
+  bool writeResults(QString fileName);
 
+  // Overlay selection methods:
+  void setupOverlaySelectionMenu();
+  void addOverlaySelectionItem();
 
-	// Overlay selection methods:
-	void setupOverlaySelectionMenu();
-	void addOverlaySelectionItem();
+  // Objects:
+  Patient *queryPatient;
+  Patient *matchPatient;
+  Patient *overlayPatient;
 
-	// Objects:
-	Patient *queryPatient;
-	Patient *matchPatient;
-	Patient *overlayPatient;
+  // CT data display objects:
+  vtkDICOMImageReader *queryDICOMReader;
+  vtkDICOMImageReader *matchDICOMReader;
+  vtkImageFlip *queryCTImageFlip;  // CT image orientation appropriate to prostate data
+  vtkImageFlip *matchCTImageFlip;  // "
+  vtkImageViewer2 *queryCTImageViewer;
+  vtkImageViewer2 *matchCTImageViewer;
+  vtkTextActor *queryCTTextActor;
+  vtkTextActor *matchCTTextActor;
+  int qSliceMin;
+  int qSliceMax;
+  int mSliceMin;
+  int mSliceMax;
+  double isocenter[maxNumIsocenters][3];
+  int *originZSlice;
+  int *isocenterCaseNumber;
+  int numIsocenters;
+  double *queryPixelSpacing;
+  double *matchPixelSpacing;
+  int qIsocenterSlice;
+  int mIsocenterSlice;
+  int CTSliderIsocenterValue;
 
-	// CT data display objects:
-	vtkDICOMImageReader *queryDICOMReader;
-	vtkDICOMImageReader *matchDICOMReader;
-	vtkImageFlip *queryCTImageFlip;	// CT image orientation appropriate to prostate data
-	vtkImageFlip *matchCTImageFlip;	// "
-	vtkImageViewer2 *queryCTImageViewer;
-	vtkImageViewer2 *matchCTImageViewer;
-	double isocenter[gazillion][3];
-	int *isocenterIndex;
-	int numIsocenters;
+  // Projection objects:
+  vtkRenderWindow *queryProjectionRenWin;
+  vtkRenderWindow *matchProjectionRenWin;
+  Projector *queryProjector;
+  Projector *matchProjector;
 
-	// Projection objects:
-	vtkRenderWindow *queryProjectionRenWin;
-	vtkRenderWindow *matchProjectionRenWin;
-	Projector *queryProjector;
-	Projector *matchProjector;
+  // Projection gantry angle drop-down menu elements:
+  QMenu *gantryAngleMenu;
+  QActionGroup *gantryAngleActionGroup;
+  QAction *angle25Action;
+  QAction *angle75Action;
+  QAction *angle130Action;
+  QAction *angle180Action;
+  QAction *angle230Action;
+  QAction *angle280Action;
+  QAction *angle335Action;
 
-	// Projection gantry angle drop-down menu elements:
-	QMenu *gantryAngleMenu;
-	QActionGroup *gantryAngleActionGroup;
-	QAction *angle25Action;
-	QAction *angle75Action;
-	QAction *angle130Action;
-	QAction *angle180Action;
-	QAction *angle230Action;
-	QAction *angle280Action;
-	QAction *angle335Action;
+  int queryAngle;   // Current gantry angle for query projection display
+  int matchAngle;   // Current gantry angle for match projection display
 
-	int queryAngle;	// Current gantry angle for query projection display
-	int matchAngle; // Current gantry angle for match projection display
+  // To determine which structures to show (projection & DVH):
+  (QCheckBox *) viewStructureCheckBox[numStructures];
 
-	// To determine which structures to show (projection & DVH):
-	(QCheckBox *) viewStructureCheckBox[numStructures];
+  // Dose Volume Histogram data display objects:
+  vtkChartXY *overlayDVH;
+  vtkChartXY *matchDVH;
+  vtkContextView *overlayDVHView;
+  vtkContextView *matchDVHView;
 
-	// Dose Volume Histogram data display objects:
-	vtkChartXY *overlayDVH;
-	vtkChartXY *matchDVH;
-	vtkContextView *overlayDVHView;
-	vtkContextView *matchDVHView;
+  float dose[maxNumDVHPoints];                          // x-axis DVH values   
+  float overlayVolumes[numStructures][maxNumDVHPoints]; // y-axis DVH values
+  float matchVolumes[numStructures][maxNumDVHPoints];   // y-axis DVH values
+  int numMatchDVHPoints;
+  int numOverlayDVHPoints;
 
-	float dose[maxNumDVHPoints];							// x-axis DVH values 	
-	float overlayVolumes[numStructures][maxNumDVHPoints];	// y-axis DVH values
-	float matchVolumes[numStructures][maxNumDVHPoints];	// y-axis DVH values
-	int numMatchDVHPoints;
-	int numOverlayDVHPoints;
+  static const int xDVHWidget;              // DVH display width
+  static const int yDVHWidget;              // DVH display height
 
-	static const int xDVHWidget;						// DVH display width
-	static const int yDVHWidget;						// DVH display height
+  CaseSpaceDialog *caseSpaceDialog;
 
-	CaseSpaceDialog *caseSpaceDialog;
+  // Match history:
+  QMenu *matchHistoryMenu;
+  QString newHistoryItemText;               // Need for overlay menu
 
-	// Match history:
-	QMenu *matchHistoryMenu;
-	QString newHistoryItemText;							// Need for overlay menu
-
-	// DVH overlay selection:
-	QMenu *overlaySelectionMenu;
-	int overlaySelectionIndex;
-	bool matchDVHDataExists;							// Don't overlay nonexistent match data
-	bool matchXYDataExists;						// If not, don't add to menus
-
+  // DVH overlay selection:
+  QMenu *overlaySelectionMenu;
+  int overlaySelectionIndex;
+  bool matchDVHDataExists;                  // Don't overlay nonexistent match data
+  bool matchXYDataExists;                   // If not, don't add to menus
+ 
 private:
-	CompareDialog(const CompareDialog&);				// Not implemented.
-	void operator=(const CompareDialog&);				// Not implemented.
+  CompareDialog(const CompareDialog&);      // Not implemented.
+  void operator=(const CompareDialog&);     // Not implemented.
 };
 
 #endif

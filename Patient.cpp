@@ -17,12 +17,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient::Patient()
-	:	dataDir("."),
-		number(defaultPatientNumber),
-		index(-1),
-		sliceMin(-1),
-		sliceMax(-1),
-		sliceOrientation(Z)
+  : dataDir("."),
+    number(defaultPatientNumber),
+    index(-1),
+    sliceMin(-1),
+    sliceMax(-1),
+    sliceOrientation(Z)
 {
 }
 
@@ -30,12 +30,12 @@ Patient::Patient()
 //
 ////////////////////////////////////////////////////////////////////////////////
 Patient::Patient(int n)
-	:	dataDir("."),
-		number(n),
-		index(-1),
-		sliceMin(-1),
-		sliceMax(-1),
-		sliceOrientation(Z)
+  : dataDir("."),
+    number(n),
+    index(-1),
+    sliceMin(-1),
+    sliceMax(-1),
+    sliceOrientation(Z)
 {
 }
 
@@ -48,20 +48,18 @@ Patient::~Patient()
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
-// Currently hard-wired to a specific relative path. 
-//
 ////////////////////////////////////////////////////////////////////////////////
 QString Patient::getPathToCTData()
 {
-	CTDataPath = dataDir + "\\CT\\Patient";
+  CTDataPath = dataDir + "\\CT\\Patient";
 
-	QString numberAsString = 
-		QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
-	CTDataPath.append(numberAsString);
+  QString numberAsString = 
+    QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
+  CTDataPath.append(numberAsString);
 
-	CTDataPath.append("\\Primary");
+  CTDataPath.append("\\Primary");
 
-	return CTDataPath;
+  return CTDataPath;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -69,29 +67,25 @@ QString Patient::getPathToCTData()
 ///////////////////////////////////////////////////////////////////////////////
 void Patient::setPathToCTData(const QString &path)
 {
-	CTDataPath = path;
+  CTDataPath = path;
 }
-	
+  
 ////////////////////////////////////////////////////////////////////////////////
 // 
-// Currently hard-wired to a specific absolute path. 
-//
-// 2do: Add path select dialog (but probably not here).
-//
 ////////////////////////////////////////////////////////////////////////////////
 QString Patient::getPathToDVHData()
 {
-	DVHDataPath = dataDir + "\\DVH\\DVH_ORIGINAL" +
-		QString::number(this->number);
-	//DVHDataPath = dataDir + "/DVHdata/DVH";
+  DVHDataPath = dataDir + "\\DVH\\DVH_ORIGINAL" +
+    QString::number(this->number);
+  //DVHDataPath = dataDir + "/DVHdata/DVH";
 
-	//QString numberAsString = 
-	//	QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
-	//DVHDataPath.append(numberAsString);
+  //QString numberAsString = 
+  //  QString(("%1")).arg(this->number, 3, 10, QLatin1Char('0'));
+  //DVHDataPath.append(numberAsString);
 
-	DVHDataPath.append(".txt");
+  DVHDataPath.append(".txt");
 
-	return DVHDataPath;
+  return DVHDataPath;
 
 }
 
@@ -100,6 +94,6 @@ QString Patient::getPathToDVHData()
 ////////////////////////////////////////////////////////////////////////////////
 void Patient::setPathToDVHData(const QString &path)
 {
-	DVHDataPath = path;
+  DVHDataPath = path;
 }
-	
+  

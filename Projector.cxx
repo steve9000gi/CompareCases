@@ -42,32 +42,30 @@
 
 using namespace std;
 
-// Window size and position:
-static const int kRenWinX = 512;
-static const int kRenWinY = 512;
-
-// Global: Structures don't show up in release build if class members:
-vtkTextActor *legendTextActor[Projector::kNumStructureTypes]; 
-bool usedThemUp = false; // HACK because multiple Projectors now share single legend
+// Window size:
+static const int kRenWinX = 460;
+static const int kRenWinY = 460;
 
 // const member initializations:
 const int Projector::kNumInFileTypes = ekVertices + 1;
 
-static const char inFileType[Projector::kNumInFileTypes][kMaxFileTypeChars] = {"faces", "vertices"};
+// Globals:
+static const char inFileType[Projector::kNumInFileTypes][kMaxFileTypeChars]
+  = { "faces", "vertices" };
 
-static const char structureType[Projector::kNumStructureTypes][kMaxFileTypeChars] = 
-	{"bladder", "LtFem", "PTV", "rectum", "RtFem" /*, "body" */};
+static const char structureType[Projector::kNumStructureTypes][kMaxFileTypeChars]
+  = { "bladder", "LtFem", "PTV", "rectum", "RtFem" /*, "body" */ };
 
 
 // 2011/05/02: values from current CompareDialog:
 static const double structureColor[Projector::kNumStructureTypes][3] =
 {
-	1.0, 0.84, 0.0,			// bladder "golden yellow"
-	0.33, 0.33, 0.4,		// left femoral head blue-gray
-	0.9, 0.0, 0.0,			// PTV red     
-	0.545, 0.271, 0.075,	// rectum "saddle brown"
-	0.67, 0.67, 0.67		// right femoral head lite gray
-//		0.961, 0.8, 0.69		// flesh F5CCB0 = 245, 204, 176 = 0.961, 0.8, 0.69
+  1.0, 0.84, 0.0,       // bladder "golden yellow"
+  0.5, 0.5, 0.6,        // left femoral head blue-gray
+  0.9, 0.0, 0.0,        // PTV red     
+  0.545, 0.271, 0.075,  // rectum "saddle brown"
+  0.75, 0.75, 0.75      // right femoral head lite gray
+// 0.961, 0.8, 0.69     // flesh F5CCB0 = 245, 204, 176 = 0.961, 0.8, 0.69
 };
 
 // The Carl Zhang/Vorakarn Chanyavanich convention for naming structure 
@@ -78,105 +76,74 @@ static const double structureColor[Projector::kNumStructureTypes][3] =
 //       <patient number> is a 3-digit integer (possibly front-padded with 0's),
 // and   <structure>  = [ "bladder" | "LtFem" | "PTV" | "rectum" | "RtFem" ].
 //
-//char inPathFormat[] = 
-//"C:/Users/Steve/Documents/IMRT/Zhang-test/PMC069_body_included/%s_PMC%03d_%s.out"; // test case for body
-//"C:/Users/Steve/Documents/IMRT/structures-2010-11-30/%03d/%s_%03d_%s.out";
-//"C:/Duke_Cases_2011-06-13/structures/%03d/%s_%03d_%s.out";
 
-class RendererCallback : public vtkCommand
-{
-public:
-  static RendererCallback *New() { return new RendererCallback; }
-
-  ///Execute////////////////////////////////////////////////////////////////////
-  // 
-  // Gets called whenever the user interactively manipulates the camera.  
-  //
-  //////////////////////////////////////////////////////////////////////////////
-  virtual void Execute(vtkObject *caller, unsigned long, void *)
-  {
-    vtkRenderer *r = vtkRenderer::SafeDownCast(caller);
-	double clip[2];
-	r->GetActiveCamera()->GetClippingRange(clip);
-	cout << "RendererCallback::Execute(...) clip: "
-		 << clip[0] << ", " << clip[1] << endl;
-
-    //Projector::ReportCameraPosition(r);
-  }
-};
 
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
 Projector::Projector()
-	:	structure(NULL),
-		deci(NULL),
-		smoother(NULL),
-		normals(NULL),
-		mapper(NULL),
-		actor(NULL),
-		renderWindowInteractor(NULL),
-		renWin(NULL), 
-		textActor(NULL),
-		renderer(NULL),
-		isPatientChanged(true),
-		flatShaded(true),
-		noFemoralHeads(false),
-		avgX(0.0),
-		minX(kMinInit),
-		maxX(kMaxInit),
-		avgY(0.0),
-		minY(kMinInit),
-		maxY(kMaxInit),
-		avgZ(0.0),
-		minZ(kMinInit),
-		maxZ(kMaxInit),
-		slicePlane(NULL)
+  : renderWindowInteractor(NULL),
+    renWin(NULL), 
+    textActor(NULL),
+    renderer(NULL),
+    isPatientChanged(true),
+    flatShaded(true),
+    avgX(0.0),
+    minX(kMinInit),
+    maxX(kMaxInit),
+    avgY(0.0),
+    minY(kMinInit),
+    maxY(kMaxInit),
+    avgZ(0.0),
+    minZ(kMinInit),
+    maxZ(kMaxInit),
+    slicePlane(NULL)
 {
-	for (int i = ekBladder; i < kNumStructureTypes; i++)
-	{
-		drawStructure[i] = true;
-
-		if (!usedThemUp) legendTextActor[i] = NULL;
-	}
+  for (int i = ekBladder; i < kNumStructureTypes; i++)
+  {
+    drawStructure[i] = true;
+    legendTextActor[i] = NULL;
+  }
 }
 
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
 Projector::Projector(QString dataDir)
-	:	structure(NULL),
-		deci(NULL),
-		smoother(NULL),
-		normals(NULL),
-		mapper(NULL),
-		actor(NULL),
-		renderWindowInteractor(NULL),
-		renWin(NULL), 
-		textActor(NULL),
-		renderer(NULL),
-		isPatientChanged(true),
-		flatShaded(true),
-		noFemoralHeads(false),
-		avgX(0.0),
-		minX(kMinInit),
-		maxX(kMaxInit),
-		avgY(0.0),
-		minY(kMinInit),
-		maxY(kMaxInit),
-		avgZ(0.0),
-		minZ(kMinInit),
-		maxZ(kMaxInit),
-		slicePlane(NULL)
+  : renderWindowInteractor(NULL),
+    renWin(NULL), 
+    textActor(NULL),
+    renderer(NULL),
+    isPatientChanged(true),
+    flatShaded(true),
+    avgX(0.0),
+    minX(kMinInit),
+    maxX(kMaxInit),
+    avgY(0.0),
+    minY(kMinInit),
+    maxY(kMaxInit),
+    avgZ(0.0),
+    minZ(kMinInit),
+    maxZ(kMaxInit),
+    slicePlane(NULL)
 {
-	inPathFormat = dataDir + "/structures/%03d/%s_%03d_%s.out";
+  inPathFormat = dataDir + "/structures/%03d/%s_%03d_%s.out";
 
-	for (int i = ekBladder; i < kNumStructureTypes; i++)
-	{
-		drawStructure[i] = true;
+  for (int i = ekBladder; i < kNumStructureTypes; i++)
+  {
+    drawStructure[i] = true;
 
-		if (!usedThemUp) legendTextActor[i] = NULL;
-	}
+    points[i] = NULL;
+    polys[i] = NULL;
+    structure[i] = NULL;
+    deci[i] = NULL;
+    smoother[i] = NULL;
+    normals[i] = NULL;
+    mapper[i] = NULL;
+    actor[i] = NULL;
+
+    legendTextActor[i] = NULL;
+  }
 }
 
 ///dtor/////////////////////////////////////////////////////////////////////////
@@ -184,185 +151,30 @@ Projector::Projector(QString dataDir)
 ////////////////////////////////////////////////////////////////////////////////
 Projector::~Projector()
 {
-	if (structure) structure->Delete();
-	if (deci) deci->Delete();
-	if (smoother) smoother->Delete();
-	if (normals) normals->Delete();
-	if (mapper) mapper->Delete();
-	if (actor) actor->Delete();
-	if (textActor) textActor->Delete();
-	if (renderer) renderer->Delete();
-	if (slicePlane) slicePlane->Delete();
+  if (textActor) textActor->Delete();
+  if (renderer) renderer->Delete();
+  if (slicePlane) slicePlane->Delete();
 
-	for (int i = ekBladder; i < kNumStructureTypes; i++)
-	{
-		if (legendTextActor[i]) legendTextActor[i]->Delete();
-	}
+  for (int i = ekBladder; i < kNumStructureTypes; i++)
+  {
+    if (legendTextActor[i]) legendTextActor[i]->Delete();
+    if (points[i]) points[i]->Delete();
+    if (polys[i]) polys[i]->Delete();
+    if (structure[i]) structure[i]->Delete();
+    if (deci[i]) deci[i]->Delete();
+    if (smoother[i]) smoother[i]->Delete();
+    if (normals[i]) normals[i]->Delete();
+    if (mapper[i]) mapper[i]->Delete();
+    if (actor[i]) actor[i]->Delete();
+  }
 };
-
-///AddFollowingText/////////////////////////////////////////////////////////////
-// 
-// Specify some text, where you want it to go in 3-space, a color, and a
-// renderer, and it will always face the active camera associated with that
-// renderer.
-//
-////////////////////////////////////////////////////////////////////////////////
-vtkFollower *Projector::AddFollowingText(char *text, double x, double y, double z,
-	double r, double g, double b, vtkRenderer *ren)
-{
-  vtkVectorText *xText = vtkVectorText::New();;
-  vtkPolyDataMapper *xTextMapper = vtkPolyDataMapper::New();
-  vtkFollower *xTextActor = vtkFollower::New();
-
-  xText->SetText(text);
-  xTextMapper->SetInputConnection(xText->GetOutputPort());
-  xTextActor->SetMapper(xTextMapper);
-  xTextActor->SetScale(2, 2, 2);
-  xTextActor->AddPosition(x, y, z);
-  xTextActor->GetProperty()->SetColor(r, g, b);
-  xTextActor->SetCamera(ren->GetActiveCamera());
-  ren->AddActor(xTextActor);
-
-  xText->Delete();
-
-  return xTextActor;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::setTransparency(int transp)
 {
-	transparency = transp;
-}
-
-///AddOrigin////////////////////////////////////////////////////////////////////
-//
-// The standard three arrows -- red = x, green = y, blue = z -- emanating from a
-// white cube.
-//
-////////////////////////////////////////////////////////////////////////////////
-void Projector::AddOrigin(vtkRenderer *renderer, double shaftLength /* = 20.0 */)
-{
-	vtkActor *oActor = NULL;
-	vtkActor *xConeActor = NULL;
-	vtkActor *yConeActor = NULL;
-	vtkActor *zConeActor = NULL;
-	vtkActor *xShaftActor = NULL;
-	vtkActor *yShaftActor = NULL;
-	vtkActor *zShaftActor = NULL;
-
-	vtkConeSource *xCone = vtkConeSource::New();
-	vtkPolyDataMapper *xConeMapper = vtkPolyDataMapper::New();
-	xConeActor = vtkActor::New();
-	xCone->SetResolution(40);
-	xCone->SetHeight(shaftLength / 10.0);
-	xCone->SetRadius(shaftLength * 0.0375);
-	xCone->SetDirection(1, 0, 0);
-	xConeMapper->SetInputConnection(xCone->GetOutputPort());
-	xConeActor->SetPosition(shaftLength, 0, 0);
-	xConeMapper->ScalarVisibilityOff();
-	xConeActor->SetMapper(xConeMapper);
-	xConeActor->GetProperty()->SetColor(1, 0, 0);
-  
-	vtkCylinderSource *xShaft = vtkCylinderSource::New();
-	vtkPolyDataMapper *xShaftMapper = vtkPolyDataMapper::New();
-	xShaftActor = vtkActor::New();
-	xShaft->SetResolution(40);
-	xShaft->SetHeight(shaftLength);
-	xShaft->SetRadius(shaftLength / 200.0);
-	xShaftMapper->SetInputConnection(xShaft->GetOutputPort());
-	xShaftMapper->ScalarVisibilityOff();
-	xShaftActor->RotateZ(90);
-	xShaftActor->SetPosition(shaftLength / 2.0, 0, 0);
-	xShaftActor->SetMapper(xShaftMapper);
-	xShaftActor->GetProperty()->SetColor(1, 0, 0);
-
-	vtkConeSource *yCone = vtkConeSource::New();
-	vtkPolyDataMapper *yConeMapper = vtkPolyDataMapper::New();
-	yConeActor = vtkActor::New();
-	yCone->SetResolution(40);
-	yCone->SetHeight(shaftLength / 10.0);
-	yCone->SetRadius(shaftLength * 0.0375);
-	yCone->SetDirection(0, 1, 0);
-	yConeMapper->SetInputConnection(yCone->GetOutputPort());
-	yConeActor->SetPosition(0, shaftLength, 0);
-	yConeMapper->ScalarVisibilityOff();
-	yConeActor->SetMapper(yConeMapper);
-	yConeActor->GetProperty()->SetColor(0, 1, 0);
-  
-	vtkCylinderSource *yShaft = vtkCylinderSource::New();
-	vtkPolyDataMapper *yShaftMapper = vtkPolyDataMapper::New();
-	yShaftActor = vtkActor::New();
-	yShaft->SetResolution(40);
-	yShaft->SetHeight(shaftLength);
-	yShaft->SetRadius(shaftLength / 200.0);
-	yShaftMapper->SetInputConnection(yShaft->GetOutputPort());
-	yShaftMapper->ScalarVisibilityOff();
-	yShaftActor->SetPosition(0, shaftLength / 2.0, 0);
-	yShaftActor->SetMapper(yShaftMapper);
-	yShaftActor->GetProperty()->SetColor(0, 1, 0);
-
-	vtkConeSource *zCone = vtkConeSource::New();
-	vtkPolyDataMapper *zConeMapper = vtkPolyDataMapper::New();
-	zConeActor = vtkActor::New();
-	zCone->SetResolution(40);
-	zCone->SetHeight(shaftLength / 10.0);
-	zCone->SetRadius(shaftLength * 0.0375);
-	zCone->SetDirection(0, 0, 1);
-	zConeMapper->SetInputConnection(zCone->GetOutputPort());
-	zConeActor->SetPosition(0, 0, shaftLength);
-	zConeMapper->ScalarVisibilityOff();
-	zConeActor->SetMapper(zConeMapper);
-	zConeActor->GetProperty()->SetColor(0, 0, 1);
-  
-	vtkCylinderSource *zShaft = vtkCylinderSource::New();
-	vtkPolyDataMapper *zShaftMapper = vtkPolyDataMapper::New();
-	zShaftActor = vtkActor::New();
-	zShaft->SetResolution(40);
-	zShaft->SetHeight(shaftLength);
-	zShaft->SetRadius(shaftLength / 200.0);
-	zShaftMapper->SetInputConnection(zShaft->GetOutputPort());
-	zShaftMapper->ScalarVisibilityOff();
-	zShaftActor->RotateX(90);
-	zShaftActor->SetPosition(0, 0, shaftLength / 2.0);
-	zShaftActor->SetMapper(zShaftMapper);
-	zShaftActor->GetProperty()->SetColor(0, 0, 1);
-  
-	vtkCubeSource *origin = vtkCubeSource::New();
-	vtkPolyDataMapper *oMapper = vtkPolyDataMapper::New();
-	oActor = vtkActor::New();
-	origin->SetXLength(shaftLength * 0.025);
-	origin->SetYLength(shaftLength * 0.025);
-	origin->SetZLength(shaftLength * 0.025);
-	oMapper->SetInputConnection(origin->GetOutputPort());
-	oMapper->ScalarVisibilityOff();
-	oActor->SetMapper(oMapper);
-	oActor->GetProperty()->SetColor(1, 1, 1);
-  
-	char x[] = "+x";
-	char y[] = "+y";
-	char z[] = "+z";
-
-	double textLabelOffset = shaftLength / 20.0; 
-	vtkFollower *xf = AddFollowingText(x, shaftLength + textLabelOffset, -textLabelOffset, 0, 1, 0, 0, renderer);
-	vtkFollower *yf = AddFollowingText(y, -textLabelOffset, shaftLength + textLabelOffset, 0, 0, 1, 0, renderer);
-	vtkFollower *zf = AddFollowingText(z, 0, -textLabelOffset, shaftLength + 2 *textLabelOffset, 0, 0, 1, renderer);
-
-	xf->SetScale(shaftLength / 30.0);
-	yf->SetScale(shaftLength / 30.0);
-	zf->SetScale(shaftLength / 30.0);
-
-  	renderer->AddActor(xConeActor);
-  	renderer->AddActor(yConeActor);
-	renderer->AddActor(zConeActor);
-	renderer->AddActor(xShaftActor);
-	renderer->AddActor(yShaftActor);
-	renderer->AddActor(zShaftActor);
-	renderer->AddActor(oActor);
-	renderer->AddActor(xf);
-	renderer->AddActor(yf);
-	renderer->AddActor(zf);
+  transparency = transp;
 }
 
 ///WindowInit//////////////////////////////////////////////////////////////////
@@ -374,14 +186,13 @@ void Projector::WindowInit(vtkRenderWindow *renWin, QVTKWidget *qVTKWidget)
 {
   renderer = vtkRenderer::New();
   //renderer->SetBackground(0.8, 0.8, 0.8); // like CERR
-  RendererCallback *callback = RendererCallback::New();
-  renderer->AddObserver(vtkCommand::StartEvent, callback);
-  callback->Delete();
 
   this->renWin = renWin;
   renWin->SetWindowName("cartoon projection");
   renWin->AddRenderer(renderer);
   renWin->SetSize(kRenWinX, kRenWinY);
+
+  vtkWidget = qVTKWidget;
 
   renderWindowInteractor = qVTKWidget->GetInteractor();
   renderWindowInteractor->SetRenderWindow(renWin);
@@ -449,7 +260,7 @@ void Projector::ReportCameraPosition(vtkRenderer *renderer)
 //
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::SetCameraPosition(vtkRenderer *renderer, 
-	double pos[3], double fp[3], double vUp[3])
+  double pos[3], double fp[3], double vUp[3])
 {
   renderer->GetActiveCamera()->SetPosition(pos);
   renderer->GetActiveCamera()->SetFocalPoint(fp);  
@@ -530,7 +341,7 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
   double v[3];
   vtkIdType f[3];
  
-  vtkPoints *points = vtkPoints::New();
+  points[st] = vtkPoints::New();
   int vNum = -1;
   
   while(!vfs.eof())
@@ -539,13 +350,13 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
     vfs >> v[0] >> v[1] >> v[2];
     vfs.ignore(kMaxChars, '\n');
     //cout << "vertex[" << vNum << "]: " << v[0] << ", " << v[1] << ", " << v[2] << endl;
-    points->InsertPoint(vNum, v);
+    points[st]->InsertPoint(vNum, v);
     if (isPatientChanged) UpdateExtrema(st, v);   
   }
   
   vfs.close();
   
-  vtkCellArray *polys = vtkCellArray::New();
+  polys[st] = vtkCellArray::New();
   int fNum = -1;
 
   while(!ffs.eof())
@@ -557,26 +368,14 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
     f[0]--; // Matlab arrays are 1-based vs. 0-based in C/C++. 
     f[1]--;
     f[2]--; 
-    //cout << "  face[" << fNum << "]: "<< f[0] << ", " << f[1] << ", " << f[2] << endl;
-    polys->InsertNextCell(3, f);
+    polys[st]->InsertNextCell(3, f);
   }
   
   ffs.close();
 
-  /*
-  PrintStructureName(st);
-  cout << "vNum: " << vNum << "; fNum: " << fNum
-       << "; color: " << structureColor[st][0] << ", "
-       << structureColor[st][1] << ", "
-       << structureColor[st][2] << endl;
- */
-
-  if (structure) structure->Delete(); 
-  structure = vtkPolyData::New();
-  structure->SetPoints(points);
-  points->Delete();
-  structure->SetPolys(polys);
-  polys->Delete();
+  structure[st] = vtkPolyData::New();
+  structure[st]->SetPoints(points[st]);
+  structure[st]->SetPolys(polys[st]);
 
 #if STRAIGHTPIPE
   cout << "Straight pipe." << endl;
@@ -587,103 +386,102 @@ bool Projector::BuildStructure(int patientNum, eStructureType st)
 
 #else
   //cout << "Decimated and smoothed." << endl;
-  if (deci) deci->Delete(); 
-  deci = vtkDecimatePro::New();
-  deci->SetInput(structure);
-  deci->SetTargetReduction(0.5);
-  deci->PreserveTopologyOn();
+  deci[st] = vtkDecimatePro::New();
+  deci[st]->SetInput(structure[st]);
+  deci[st]->SetTargetReduction(0.5);
+  deci[st]->PreserveTopologyOn();
 
-  if (smoother) smoother->Delete();
-  smoother = vtkSmoothPolyDataFilter::New();
-  smoother->SetInputConnection(deci->GetOutputPort());
-  smoother->SetNumberOfIterations(100);
+  smoother[st] = vtkSmoothPolyDataFilter::New();
+  smoother[st]->SetInputConnection(deci[st]->GetOutputPort());
+  smoother[st]->SetNumberOfIterations(100);
 
-  if (normals) normals->Delete();
-  normals = vtkPolyDataNormals::New();
-  normals->SetInputConnection(smoother->GetOutputPort());
-  normals->NonManifoldTraversalOff();
+  normals[st] = vtkPolyDataNormals::New();
+  normals[st]->SetInputConnection(smoother[st]->GetOutputPort());
+  normals[st]->NonManifoldTraversalOff();
   //normals->FlipNormalsOn();
   //normals->FlipNormalsOff();
-  normals->AutoOrientNormalsOn();
-  normals->ConsistencyOn();
+  normals[st]->AutoOrientNormalsOn();
+  normals[st]->ConsistencyOn();
   //normals->ComputeCellNormalsOn();
 
-  if (mapper) mapper->Delete();
-  mapper = vtkPolyDataMapper::New();
-  mapper->SetInputConnection(normals->GetOutputPort());
+  mapper[st] = vtkPolyDataMapper::New();
+  mapper[st]->SetInputConnection(normals[st]->GetOutputPort());
 #endif
 
-  if (actor) actor->Delete(); 
-  actor = vtkActor::New();  
-  actor->SetMapper(mapper);
-  actor->GetProperty()->SetColor(structureColor[st][0], structureColor[st][1],
-	  structureColor[st][2]);
-  actor->GetProperty()->SetInterpolationToPhong();
+  actor[st] = vtkActor::New();  
+  actor[st]->SetMapper(mapper[st]);
+  actor[st]->GetProperty()->SetColor(structureColor[st][0], structureColor[st][1],
+    structureColor[st][2]);
+  actor[st]->GetProperty()->SetInterpolationToPhong();
 
   //actor->GetProperty()->SetOpacity(st == ekBody ? 0.3 : 1.0);
 
   if (transparency != 0.0)
   {
     //normals->FlipNormalsOn();
-	//normals->FlipNormalsOff();
-	normals->ComputeCellNormalsOn();
-    actor->GetProperty()->SetOpacity(1.0 - (transparency / 100.0));
+    //normals->FlipNormalsOff();
+    normals[st]->ComputeCellNormalsOn();
+    actor[st]->GetProperty()->SetOpacity(1.0 - (transparency / 100.0));
   }
 
 /* 
   if (st == ekBody)
   {
-	actor->GetProperty()->SetSpecular(2);
-	actor->GetProperty()->SetSpecularPower(3);
-	actor->GetProperty()->SetColor(
-		structureColor[st][0],
-		structureColor[st][1],
-		structureColor[st][2]);
-	//actor->GetProperty()->SetSpecularColor(1, 1, 1);
-	//actor->GetProperty()->SetSpecularColor(
-		structureColor[st][0], 
-		structureColor[st][1],
-		structureColor[st][2]);
-	actor->GetProperty()->SetSpecularColor(.5, .4, .4);
+  actor->GetProperty()->SetSpecular(2);
+  actor->GetProperty()->SetSpecularPower(3);
+  actor->GetProperty()->SetColor(
+    structureColor[st][0],
+    structureColor[st][1],
+    structureColor[st][2]);
+  //actor->GetProperty()->SetSpecularColor(1, 1, 1);
+  //actor->GetProperty()->SetSpecularColor(
+    structureColor[st][0], 
+    structureColor[st][1],
+    structureColor[st][2]);
+  actor->GetProperty()->SetSpecularColor(.5, .4, .4);
   }
   else
   {
 */
-	if (flatShaded)
-	{
-	  actor->GetProperty()->SetSpecular(0);
-	  actor->GetProperty()->SetDiffuse(0);
-	  actor->GetProperty()->SetAmbient(1);
-	  actor->GetProperty()->SetAmbientColor(
-		  structureColor[st][0],
-		  structureColor[st][1],
-		  structureColor[st][2]);
-	  actor->GetProperty()->SetColor(
-		  structureColor[st][0],
-		  structureColor[st][1],
-		  structureColor[st][2]);
-	}
-	else
-	{
-	  actor->GetProperty()->SetSpecular(4);
-	  actor->GetProperty()->SetSpecularPower(30);
-	  actor->GetProperty()->SetColor(
-		  structureColor[st][0], 
-		  structureColor[st][1],
-		  structureColor[st][2]);
-	  actor->GetProperty()->SetSpecularColor(1, 1, 1);
-	}
+  if (flatShaded)
+  {
+    actor[st]->GetProperty()->SetSpecular(0);
+    actor[st]->GetProperty()->SetDiffuse(0);
+    actor[st]->GetProperty()->SetAmbient(1);
+    actor[st]->GetProperty()->SetAmbientColor(
+      structureColor[st][0],
+      structureColor[st][1],
+      structureColor[st][2]);
+    actor[st]->GetProperty()->SetColor(
+      structureColor[st][0],
+      structureColor[st][1],
+      structureColor[st][2]);
+  }
+  else
+  {
+    actor[st]->GetProperty()->SetSpecular(4);
+    actor[st]->GetProperty()->SetSpecularPower(30);
+    actor[st]->GetProperty()->SetColor(
+      structureColor[st][0], 
+      structureColor[st][1],
+      structureColor[st][2]);
+    actor[st]->GetProperty()->SetSpecularColor(1, 1, 1);
+  }
 /*  } */
 
-  renderer->AddActor(actor);
-  int numActors = renderer->GetActors()->GetNumberOfItems();
+  renderer->AddActor(actor[st]);
   
   return true;
 }
 
 double MAX(double a, double b, double c)
 {
-	return (a > b) ? ((a > c) ? a : c) : ((b > c) ? b : c);
+  return (a > b) ? ((a > c) ? a : c) : ((b > c) ? b : c);
+}
+
+double MIN(double a, double b, double c)
+{
+  return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
 }
 
 ///BuildStructuresForPatient////////////////////////////////////////////////////
@@ -706,26 +504,28 @@ bool Projector::BuildStructuresForPatient(int patientNum, bool isDifferentPatien
   
   for (int s = ekBladder; s < kNumStructureTypes; s++)
   {
-
-	if (!drawStructure[s]) continue;
+    if (!drawStructure[s]) continue;
 
     if (BuildStructure(patientNum, (eStructureType)s))
-	{
-		wasAtLeastOneStructureBuilt = true;
-	}
+    {
+        wasAtLeastOneStructureBuilt = true;
+    }
   }
- 
+
   InitSlicePlane();
   renderer->GetActiveCamera()->SetClippingRange(1.0, MAX(maxX, maxY, maxZ) * 3.0);
-
 /*
   if (isPatientChanged)
   {
-	  cout << "Projector::BuildStructuresForPatient(...) patient #"
-	   << patientNum << " extrema: " 
-	   << minX << ", " << maxX << "; "
-	   << minY << ", " << maxY << "; "
-	   << minZ << ", " << maxZ << endl;
+    cout << "Projector::BuildStructuresForPatient(...) patient #"
+     << patientNum << " extrema: " 
+     << minX << ", " << maxX << "; "
+     << minY << ", " << maxY << "; "
+     << minZ << ", " << maxZ << endl;
+  
+    double *clip = renderer->GetActiveCamera()->GetClippingRange();
+    cout << "min: " << MIN(minX, minY, minZ) << endl;
+    cout << clip[0] << ", " << clip[1] << endl;
   }
 */
   isPatientChanged = false;
@@ -773,48 +573,44 @@ void Projector::TextInit(void)
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::InitLegend()
 {
-	usedThemUp = !usedThemUp; //major HACK
+  if (legendTextActor[0]) return;
 
-	if (legendTextActor[0]) return;
+  // HACK: copied from CompareDialog.cpp (to get the ordering right):
+  static const char *shortStructureName[kNumStructureTypes] =
+  {
+    "PTV",    // Planning Target Volume
+    "rectum",
+    "bladder",
+    "left fem",
+    "right fem"
+  };
 
-	// HACK: copied from CompareDialog.cpp:
-	static const char *shortStructureName[kNumStructureTypes] =
-	{
-		"PTV",		// Planning Target Volume
-		"rectum",
-		"bladder",
-		"left fem",
-		"right fem"
-	};
+  // SAME HACK: rgb values, 0.0-1.0 range:
+  static const double structureColor[kNumStructureTypes][3] =
+  {
+    0.9, 0.0, 0.0,        // PTV red     
+    0.545, 0.271, 0.075,  // rectum "saddle brown"
+    1.0, 0.84, 0.0,       // bladder "golden yellow"
+    0.5, 0.5, 0.6,        // left femoral head blue-gray
+    0.75, 0.75, 0.75      // right femoral head lite gray
+  };
 
-	// SAME HACK: rgb values, 0.0-1.0 range:
-	static const double structureColor[kNumStructureTypes][3] =
-	{
-		0.9, 0.0, 0.0,			// PTV red     
-		0.545, 0.271, 0.075,	// rectum "saddle brown"
-		1.0, 0.84, 0.0,			// bladder "golden yellow"
-		0.5, 0.5, 0.6,			// left femoral head blue-gray
-		0.75, 0.75, 0.75		// right femoral head lite gray
-	};
+  const int startY = kRenWinY - 20;
+  const int yDecrement = 15;
+  const int startX = kRenWinX - 60;
 
-	//const int startY = kRenWinY - 20; // 512
-	const int startY = kRenWinY - 72; // 460
-	const int yDecrement = 15;
-	const int startX = kRenWinX - 112;
-	//const int startX = kRenWinX - 60; // 512
-
-	for (int i = 0; i < kNumStructureTypes; i++)
-	{
-		legendTextActor[i] = vtkTextActor::New();
-		legendTextActor[i]->SetHeight(0.25);
-		legendTextActor[i]->SetDisplayPosition(startX, startY - i * yDecrement);
-		legendTextActor[i]->GetTextProperty()->SetColor(1, 1, 0);
-		legendTextActor[i]->GetTextProperty()->BoldOn();
-		legendTextActor[i]->SetInput(shortStructureName[i]);
-		legendTextActor[i]->GetTextProperty()->SetColor(
-			structureColor[i][0], structureColor[i][1], structureColor[i][2]);
-		renderer->AddActor(legendTextActor[i]);
-	}
+  for (int i = 0; i < kNumStructureTypes; i++)
+  {
+    legendTextActor[i] = vtkTextActor::New();
+    legendTextActor[i]->SetHeight(0.25);
+    legendTextActor[i]->SetDisplayPosition(startX, startY - i * yDecrement);
+    legendTextActor[i]->GetTextProperty()->SetColor(1, 1, 0);
+    legendTextActor[i]->GetTextProperty()->BoldOn();
+    legendTextActor[i]->SetInput(shortStructureName[i]);
+    legendTextActor[i]->GetTextProperty()->SetColor(
+      structureColor[i][0], structureColor[i][1], structureColor[i][2]);
+    renderer->AddActor(legendTextActor[i]);
+  }
 }
 
 ////SetProjection///////////////////////////////////////////////////////////////
@@ -826,19 +622,21 @@ void Projector::SetProjection(int patientNum, int angle)
 {
   char txt[kMaxChars];  
   SetCameraPosition(angle); 
-  sprintf_s(txt, "patient #%03d: gantry angle %d degrees", patientNum, angle);
+  sprintf_s(txt, "Duke patient #%03d: gantry angle %d degrees", patientNum, angle);
+  renderer->RemoveActor(textActor);
   renderer->AddActor(textActor); // Need to do this every time to see text
   textActor->SetInput(txt);
 
-  //if (!usedThemUp)
+  for (int i = 0; i < kNumStructureTypes; i++) // Why? Dunno, but it works
   {
-	  for (int i = 0; i < kNumStructureTypes; i++) // Why? Dunno, but it works
-		  if (legendTextActor[i]) renderer->AddActor(legendTextActor[i]);
+    if (legendTextActor[i]) 
+    {
+      renderer->RemoveActor(legendTextActor[i]);
+      renderer->AddActor(legendTextActor[i]);
+    }
   }
 
-  usedThemUp = !usedThemUp; //major HACK
-
-  renWin->Render();
+  vtkWidget->GetRenderWindow()->Render();
   //ReportCameraPosition(renderer);
 }
 
@@ -847,25 +645,25 @@ void Projector::SetProjection(int patientNum, int angle)
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::InitSlicePlane()
 {
-	if (slicePlane)
-	{
-		slicePlane->Delete();
-		sliceMapper->Delete();
-		sliceActor->Delete();
-	}
+  if (slicePlane)
+  {
+    slicePlane->Delete();
+    sliceMapper->Delete();
+    sliceActor->Delete();
+  }
 
-	slicePlane = vtkCubeSource::New();
-	sliceMapper = vtkPolyDataMapper::New();
-	sliceActor = vtkActor::New();
+  slicePlane = vtkCubeSource::New();
+  sliceMapper = vtkPolyDataMapper::New();
+  sliceActor = vtkActor::New();
  
 
-	sliceMapper->SetInputConnection(slicePlane->GetOutputPort());
-	sliceMapper->ScalarVisibilityOff();
-	sliceActor->SetMapper(sliceMapper);
-	sliceActor->GetProperty()->SetOpacity(0.2);
+  sliceMapper->SetInputConnection(slicePlane->GetOutputPort());
+  sliceMapper->ScalarVisibilityOff();
+  sliceActor->SetMapper(sliceMapper);
+  sliceActor->GetProperty()->SetOpacity(0.2);
 
 #if USE_PROJECTOR_SLICE_PLANE
-	renderer->AddActor(sliceActor);  
+  renderer->AddActor(sliceActor);  
 #endif
 }
 
@@ -874,34 +672,34 @@ void Projector::InitSlicePlane()
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::PositionSlicePlane(int orientation, int slice, double *spacing)
 {
-	slicePlane->SetCenter(avgX, avgY, avgZ);
+  slicePlane->SetCenter(avgX, avgY, avgZ);
 
-	slicePlane->SetXLength(maxX - minX);
-	slicePlane->SetYLength(maxY - minY);
-	slicePlane->SetZLength(maxZ - minZ);
+  slicePlane->SetXLength(maxX - minX);
+  slicePlane->SetYLength(maxY - minY);
+  slicePlane->SetZLength(maxZ - minZ);
 
-	const double thinDimension = 1.0;
+  const double thinDimension = 1.0;
 
-	switch(orientation)
-	{
-	case 0: // Sagittal
-		slicePlane->SetXLength(spacing[0]);
-		slicePlane->SetCenter(slice * spacing[0], avgY, avgZ);
-		break;
-	case 1: // Coronal
-		slicePlane->SetYLength(spacing[1]);
-		slicePlane->SetCenter(avgX, slice * spacing[1], avgZ);
-		break;
-	case 2: // Axial
-		slicePlane->SetZLength(spacing[2]);
-		slicePlane->SetCenter(avgX, avgY, slice * spacing[2]);
-		break;
-	default:
-		cout << "Projector::PositionSlicePlane(...): Invalid orientation: " << endl;		
-		break;
-	}
+  switch(orientation)
+  {
+  case 0: // Sagittal
+    slicePlane->SetXLength(spacing[0]);
+    slicePlane->SetCenter(slice * spacing[0], avgY, avgZ);
+    break;
+  case 1: // Coronal
+    slicePlane->SetYLength(spacing[1]);
+    slicePlane->SetCenter(avgX, slice * spacing[1], avgZ);
+    break;
+  case 2: // Axial
+    slicePlane->SetZLength(spacing[2]);
+    slicePlane->SetCenter(avgX, avgY, slice * spacing[2]);
+    break;
+  default:
+    cout << "Projector::PositionSlicePlane(...): Invalid orientation: " << endl;    
+    break;
+  }
 
-	renWin->Render();
+  renWin->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -911,49 +709,49 @@ void Projector::PositionSlicePlane(int orientation, int slice, double *spacing)
 ////////////////////////////////////////////////////////////////////////////////
 void Projector::PositionSlicePlane(int orientation, int slice, int numSlices)
 {
-	slicePlane->SetCenter(avgX, avgY, avgZ);
+  slicePlane->SetCenter(avgX, avgY, avgZ);
 
-	slicePlane->SetXLength(maxX - minX);
-	slicePlane->SetYLength(maxY - minY);
-	slicePlane->SetZLength(maxZ - minZ);
+  slicePlane->SetXLength(maxX - minX);
+  slicePlane->SetYLength(maxY - minY);
+  slicePlane->SetZLength(maxZ - minZ);
 
-	const double thinDimension = 1.0;
+  const double thinDimension = 1.0;
 
-	double rangeXMin = avgX - 2 * (avgX - minX);
-	double rangeYMin = avgY - 2 * (avgY - minY);
-	double rangeZMin = avgZ - 2 * (avgZ - minZ);
-	double rangeXMax = avgX + 2 * (maxX - avgX);
-	double rangeYMax = avgY + 2 * (maxY - avgY);
-	double rangeZMax = avgZ + 2 * (maxZ - avgZ);
+  double rangeXMin = avgX - 2 * (avgX - minX);
+  double rangeYMin = avgY - 2 * (avgY - minY);
+  double rangeZMin = avgZ - 2 * (avgZ - minZ);
+  double rangeXMax = avgX + 2 * (maxX - avgX);
+  double rangeYMax = avgY + 2 * (maxY - avgY);
+  double rangeZMax = avgZ + 2 * (maxZ - avgZ);
 
-	double xSliceSize = (rangeXMax - rangeXMin) / numSlices;
-	double ySliceSize = (rangeYMax - rangeYMin) / numSlices;
-	double zSliceSize = (rangeZMax - rangeZMin) / numSlices;
+  double xSliceSize = (rangeXMax - rangeXMin) / numSlices;
+  double ySliceSize = (rangeYMax - rangeYMin) / numSlices;
+  double zSliceSize = (rangeZMax - rangeZMin) / numSlices;
 
-	switch(orientation)
-	{
-	case 0: // Sagittal
-		slicePlane->SetXLength(thinDimension);
-		//slicePlane->SetXLength(spacing[0]);
-		//slicePlane->SetCenter(slice * spacing[0], avgY, avgZ);
-		//slicePlane->SetCenter(rangeXMin + (xSliceSize * slice), avgY, avgZ);
-		slicePlane->SetCenter(rangeXMax - (xSliceSize * slice), avgY, avgZ);
-		break;
-	case 1: // Coronal
-		slicePlane->SetYLength(thinDimension);
-		//slicePlane->SetYLength(spacing[1]);
-		slicePlane->SetCenter(avgX, rangeYMax - (ySliceSize * slice), avgZ);
-		break;
-	case 2: // Axial
-		slicePlane->SetZLength(thinDimension);
-		//slicePlane->SetZLength(spacing[2]);
-		slicePlane->SetCenter(avgX, avgY, rangeZMin + (zSliceSize * slice));
-		break;
-	default:
-		cout << "Projector::PositionSlicePlane(...): Invalid orientation: "
-			 << endl;		
-		break;
-	}
+  switch(orientation)
+  {
+  case 0: // Sagittal
+    slicePlane->SetXLength(thinDimension);
+    //slicePlane->SetXLength(spacing[0]);
+    //slicePlane->SetCenter(slice * spacing[0], avgY, avgZ);
+    //slicePlane->SetCenter(rangeXMin + (xSliceSize * slice), avgY, avgZ);
+    slicePlane->SetCenter(rangeXMax - (xSliceSize * slice), avgY, avgZ);
+    break;
+  case 1: // Coronal
+    slicePlane->SetYLength(thinDimension);
+    //slicePlane->SetYLength(spacing[1]);
+    slicePlane->SetCenter(avgX, rangeYMax - (ySliceSize * slice), avgZ);
+    break;
+  case 2: // Axial
+    slicePlane->SetZLength(thinDimension);
+    //slicePlane->SetZLength(spacing[2]);
+    slicePlane->SetCenter(avgX, avgY, rangeZMin + (zSliceSize * slice));
+    break;
+  default:
+    cout << "Projector::PositionSlicePlane(...): Invalid orientation: "
+       << endl;    
+    break;
+  }
 
-	renWin->Render();
+  renWin->Render();
 }

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'CompareDialog.ui'
 **
-** Created: Fri Dec 2 10:08:49 2011
+** Created: Tue Jan 17 10:47:17 2012
 **      by: Qt User Interface Compiler version 4.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!

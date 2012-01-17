@@ -35,7 +35,7 @@
 //
 // author:  Steve Chall, RENCI
 // primary collaborators: Joseph Lo, Shiva Das, and Vorakarn Chanyavanich,
-//						  Duke Medical Center
+//              Duke Medical Center
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -51,6 +51,8 @@
 #include "vtkContextView.h"
 #include "vtkContextScene.h"
 #include "vtkTextProperty.h"
+#include "vtkTextActor.h"
+#include "vtkProperty2D.h"
 #include "vtkChartLegend.h"
 #include "vtkBrush.h"
 
@@ -71,185 +73,207 @@
 
 int min(int a, int b) 
 {
-	return (a < b) ? a : b;
+  return (a < b) ? a : b;
 }
 
 int max(int a, int b) 
 {
-	return (a > b) ? a : b;
+  return (a > b) ? a : b;
 }
 
 // rgb values, 0.0-1.0 range (used by Projector class):
 static const double structureColor[CompareDialog::numStructures][3] =
 {
-	0.9, 0.0, 0.0,			// PTV red     
-	0.545, 0.271, 0.075,	// rectum "saddle brown"
-	1.0, 0.84, 0.0,			// bladder "golden yellow"
-	//0.33, 0.33, 0.4,		// left femoral head blue-gray
-	//0.67, 0.67, 0.67		// right femoral head lite gray
-	0.5, 0.5, 0.6,			// left femoral head blue-gray
-	0.75, 0.75, 0.75		// right femoral head lite gray
+  0.9, 0.0, 0.0,       // PTV red     
+  0.545, 0.271, 0.075, // rectum "saddle brown"
+  1.0, 0.84, 0.0,      // bladder "golden yellow"
+  //0.33, 0.33, 0.4,   // left femoral head blue-gray
+  //0.67, 0.67, 0.67   // right femoral head lite gray
+  0.5, 0.5, 0.6,       // left femoral head blue-gray
+  0.75, 0.75, 0.75     // right femoral head lite gray
 };
 
 // rgb values equivalent to those in structureColor, but in the 0-255 range:
 static const double color[CompareDialog::numStructures][3] =
 {
-	230, 0, 0,				// PTV red     
-	139, 69, 19,			// rectum "saddle brown"
-	255, 215, 0,			// bladder "golden yellow"
-	//85, 85, 102,			// left femoral head blue-gray
-	//171, 171, 171			// right femoral head lite gray
-	127, 127, 153,			// left femoral head blue-gray
-	191, 191, 191			// right femoral head lite gray
+  230, 0, 0,            // PTV red     
+  139, 69, 19,          // rectum "saddle brown"
+  255, 215, 0,          // bladder "golden yellow"
+  //85, 85, 102,        // left femoral head blue-gray
+  //171, 171, 171       // right femoral head lite gray
+  127, 127, 153,        // left femoral head blue-gray
+  191, 191, 191         // right femoral head lite gray
 };
 
 static const char *structureName[CompareDialog::numStructures] =
 {
-	"PTV",		// Planning Target Volume
-	"rectum",
-	"bladder",
-	"left fem",
-	"right fem"
+  "PTV",                // Planning Target Volume
+  "rectum",
+  "bladder",
+  "left fem",
+  "right fem"
 };
 
-const int CompareDialog::xDVHWidget = 733; // Width of DVH display
-const int CompareDialog::yDVHWidget = 512; // Height of DVH display
+const int CompareDialog::xDVHWidget = 663; // Width of DVH display
+const int CompareDialog::yDVHWidget = 460; // Height of DVH display
 
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
 CompareDialog::CompareDialog()
-	:	queryAngle(Patient::defaultGantryAngle),
-		matchAngle(Patient::defaultGantryAngle),
-		queryPatient(NULL),
-		matchPatient(NULL),
-		overlayPatient(NULL),
-		queryDICOMReader(NULL),
-		matchDICOMReader(NULL),
-		queryCTImageFlip(NULL),
-		matchCTImageFlip(NULL),
-		queryCTImageViewer(NULL),
-		matchCTImageViewer(NULL),
-		gantryAngleMenu(NULL),
-		gantryAngleActionGroup(NULL),
-		overlayDVH(NULL),
-		matchDVH(NULL),
-		overlayDVHView(NULL),
-		matchDVHView(NULL),
-		caseSpaceDialog(NULL),
-		queryProjector(NULL),
-		matchProjector(NULL),
-		queryProjectionRenWin(NULL),
-		matchProjectionRenWin(NULL),
-		matchHistoryMenu(NULL),
-		overlaySelectionMenu(NULL),
-		matchDVHDataExists(false),
-		matchXYDataExists(true)
+  : queryAngle(Patient::defaultGantryAngle),
+    matchAngle(Patient::defaultGantryAngle),
+    queryPatient(NULL),
+    matchPatient(NULL),
+    overlayPatient(NULL),
+    queryDICOMReader(NULL),
+    matchDICOMReader(NULL),
+    queryCTImageFlip(NULL),
+    matchCTImageFlip(NULL),
+    queryCTImageViewer(NULL),
+    matchCTImageViewer(NULL),
+    queryCTTextActor(NULL),
+    matchCTTextActor(NULL),
+    qSliceMin(4096),
+    qSliceMax(-1),
+    mSliceMin(4096),
+    mSliceMax(-1),
+    queryPixelSpacing(NULL),
+    matchPixelSpacing(NULL),
+    qIsocenterSlice(-1),
+    mIsocenterSlice(-1),
+    CTSliderIsocenterValue(-1),
+    gantryAngleMenu(NULL),
+    gantryAngleActionGroup(NULL),
+    overlayDVH(NULL),
+    matchDVH(NULL),
+    overlayDVHView(NULL),
+    matchDVHView(NULL),
+    caseSpaceDialog(NULL),
+    queryProjector(NULL),
+    matchProjector(NULL),
+    queryProjectionRenWin(NULL),
+    matchProjectionRenWin(NULL),
+    matchHistoryMenu(NULL),
+    overlaySelectionMenu(NULL),
+    matchDVHDataExists(false),
+    matchXYDataExists(true)
 {
-	setupUi(this);
-	setupVTKUI();
-	setupProjectionGantryAngleMenu();
-	setupMatchHistoryMenu();
-	setupOverlaySelectionMenu();
-	createActions();
+  setupUi(this);
+  setupVTKUI();
+  setupProjectionGantryAngleMenu();
+  setupMatchHistoryMenu();
+  setupOverlaySelectionMenu();
+  createActions();
 
-	viewStructureCheckBox[PTV] = viewPTVCheckBox;
-	viewStructureCheckBox[rectum] = viewRectumCheckBox;
-	viewStructureCheckBox[bladder] = viewBladderCheckBox;
-	viewStructureCheckBox[leftFem] = viewFemoralHeadsCheckBox;
-	viewStructureCheckBox[rightFem] = viewFemoralHeadsCheckBox;
+  viewStructureCheckBox[PTV] = viewPTVCheckBox;
+  viewStructureCheckBox[rectum] = viewRectumCheckBox;
+  viewStructureCheckBox[bladder] = viewBladderCheckBox;
+  viewStructureCheckBox[leftFem] = viewFemoralHeadsCheckBox;
+  viewStructureCheckBox[rightFem] = viewFemoralHeadsCheckBox;
 
-	setViewCheckboxColors();
+  setViewCheckboxColors();
 
-	viewRectumCheckBox->setChecked(true);
-	viewBladderCheckBox->setChecked(true);
-	viewPTVCheckBox->setChecked(true);
-	viewFemoralHeadsCheckBox->setChecked(true);
-	flatShadedCheckBox->setChecked(true);
-	historyPushButton->setEnabled(false);
-	removeCurrentMatchPushButton->setEnabled(false);
-	overlaySelectionPushButton->setEnabled(false);
-	removeSelectedOverlayPushButton->setEnabled(false);
-	overlayDVHCheckBox->setEnabled(false);
-	querySelectSpinBox->setHidden(true);
-	queryInstitutionPushButton->setHidden(true);
-	originCheckBox->setHidden(true);
+  viewRectumCheckBox->setChecked(true);
+  viewBladderCheckBox->setChecked(true);
+  viewPTVCheckBox->setChecked(true);
+  viewFemoralHeadsCheckBox->setChecked(true);
+  flatShadedCheckBox->setChecked(true);
+  historyPushButton->setEnabled(false);
+  removeCurrentMatchPushButton->setEnabled(false);
+  overlaySelectionPushButton->setEnabled(false);
+  removeSelectedOverlayPushButton->setEnabled(false);
+  overlayDVHCheckBox->setEnabled(false);
+  querySelectSpinBox->setHidden(true);
+  queryInstitutionPushButton->setHidden(true);
+  originCheckBox->setHidden(true);
 
-	sliceSelectionSpinBox->setKeyboardTracking(false);
-	querySelectSpinBox->setKeyboardTracking(false);
-	matchSelectSpinBox->setKeyboardTracking(false);
-	transparencySpinBox->setKeyboardTracking(false);
+  sliceSelectionSpinBox->setKeyboardTracking(false);
+  querySelectSpinBox->setKeyboardTracking(false);
+  matchSelectSpinBox->setKeyboardTracking(false);
+  transparencySpinBox->setKeyboardTracking(false);
 }
 
 ///ctor/////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
 CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
-	:	queryAngle(Patient::defaultGantryAngle),
-		matchAngle(Patient::defaultGantryAngle),
-		queryPatient(NULL),
-		matchPatient(NULL),
-		overlayPatient(NULL),
-		queryDICOMReader(NULL),
-		matchDICOMReader(NULL),
-		queryCTImageFlip(NULL),
-		matchCTImageFlip(NULL),
-		queryCTImageViewer(NULL),
-		matchCTImageViewer(NULL),
-		gantryAngleMenu(NULL),
-		gantryAngleActionGroup(NULL),
-		overlayDVH(NULL),
-		matchDVH(NULL),
-		overlayDVHView(NULL),
-		matchDVHView(NULL),
-		caseSpaceDialog(csDlog),
-		queryProjector(NULL),
-		matchProjector(NULL),
-		queryProjectionRenWin(NULL),
-		matchProjectionRenWin(NULL),
-		matchHistoryMenu(NULL),
-		overlaySelectionMenu(NULL),
-		matchDVHDataExists(false),
-		matchXYDataExists(true)
+  : queryAngle(Patient::defaultGantryAngle),
+    matchAngle(Patient::defaultGantryAngle),
+    queryPatient(NULL),
+    matchPatient(NULL),
+    overlayPatient(NULL),
+    queryDICOMReader(NULL),
+    matchDICOMReader(NULL),
+    queryCTImageFlip(NULL),
+    matchCTImageFlip(NULL),
+    queryCTImageViewer(NULL),
+    matchCTImageViewer(NULL),
+    queryCTTextActor(NULL),
+    matchCTTextActor(NULL),
+    qSliceMin(4096),
+    qSliceMax(-1),
+    mSliceMin(4096),
+    mSliceMax(-1),
+    queryPixelSpacing(NULL),
+    matchPixelSpacing(NULL),
+    qIsocenterSlice(-1),
+    mIsocenterSlice(-1),
+    CTSliderIsocenterValue(-1),
+    gantryAngleMenu(NULL),
+    gantryAngleActionGroup(NULL),
+    overlayDVH(NULL),
+    matchDVH(NULL),
+    overlayDVHView(NULL),
+    matchDVHView(NULL),
+    caseSpaceDialog(csDlog),
+    queryProjector(NULL),
+    matchProjector(NULL),
+    queryProjectionRenWin(NULL),
+    matchProjectionRenWin(NULL),
+    matchHistoryMenu(NULL),
+    overlaySelectionMenu(NULL),
+    matchDVHDataExists(false),
+    matchXYDataExists(true)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	setupUi(this);
-	setupVTKUI();
-	setupProjectionGantryAngleMenu();
-	createActions();
+  setAttribute(Qt::WA_DeleteOnClose);
+  setupUi(this);
+  setupVTKUI();
+  setupProjectionGantryAngleMenu();
+  createActions();
 
-	viewStructureCheckBox[PTV] = viewPTVCheckBox;
-	viewStructureCheckBox[rectum] = viewRectumCheckBox;
-	viewStructureCheckBox[bladder] = viewBladderCheckBox;
-	viewStructureCheckBox[leftFem] = viewFemoralHeadsCheckBox;
-	viewStructureCheckBox[rightFem] = viewFemoralHeadsCheckBox;
+  viewStructureCheckBox[PTV] = viewPTVCheckBox;
+  viewStructureCheckBox[rectum] = viewRectumCheckBox;
+  viewStructureCheckBox[bladder] = viewBladderCheckBox;
+  viewStructureCheckBox[leftFem] = viewFemoralHeadsCheckBox;
+  viewStructureCheckBox[rightFem] = viewFemoralHeadsCheckBox;
 
-	setViewCheckboxColors();
+  setViewCheckboxColors();
 
-	viewRectumCheckBox->setChecked(true);
-	viewBladderCheckBox->setChecked(true);
-	viewPTVCheckBox->setChecked(true);
-	viewFemoralHeadsCheckBox->setChecked(true);
-	flatShadedCheckBox->setChecked(true);
-	historyPushButton->setEnabled(false);
-	removeCurrentMatchPushButton->setEnabled(false);
-	overlaySelectionPushButton->setEnabled(false);
-	removeSelectedOverlayPushButton->setEnabled(false);
-	overlayDVHCheckBox->setEnabled(false);
-	querySelectSpinBox->setHidden(true);
-	queryInstitutionPushButton->setHidden(true);
-	originCheckBox->setHidden(true);
-	sliceSelectionSpinBox->setHidden(true);
-	maxSliceLabel->setHidden(true);
-	dvhLabel->setHidden(true);
-	flatShadedCheckBox->setHidden(true);
+  viewRectumCheckBox->setChecked(true);
+  viewBladderCheckBox->setChecked(true);
+  viewPTVCheckBox->setChecked(true);
+  viewFemoralHeadsCheckBox->setChecked(true);
+  flatShadedCheckBox->setChecked(true);
+  historyPushButton->setEnabled(false);
+  removeCurrentMatchPushButton->setEnabled(false);
+  overlaySelectionPushButton->setEnabled(false);
+  removeSelectedOverlayPushButton->setEnabled(false);
+  overlayDVHCheckBox->setEnabled(false);
+  querySelectSpinBox->setHidden(true);
+  queryInstitutionPushButton->setHidden(true);
+  originCheckBox->setHidden(true);
+  sliceSelectionSpinBox->setHidden(true);
+  maxSliceLabel->setHidden(true);
+  dvhLabel->setHidden(true);
+  flatShadedCheckBox->setHidden(true);
 
-	sliceSelectionSpinBox->setKeyboardTracking(false);
-	querySelectSpinBox->setKeyboardTracking(false);
-	matchSelectSpinBox->setKeyboardTracking(false);
-	transparencySpinBox->setKeyboardTracking(false);
-	buttonBox->button(QDialogButtonBox::Ok)->setFocusPolicy(Qt::NoFocus);
-	buttonBox->button(QDialogButtonBox::Cancel)->setFocusPolicy(Qt::NoFocus);
+  sliceSelectionSpinBox->setKeyboardTracking(false);
+  querySelectSpinBox->setKeyboardTracking(false);
+  matchSelectSpinBox->setKeyboardTracking(false);
+  transparencySpinBox->setKeyboardTracking(false);
+  buttonBox->button(QDialogButtonBox::Ok)->setFocusPolicy(Qt::NoFocus);
+  buttonBox->button(QDialogButtonBox::Cancel)->setFocusPolicy(Qt::NoFocus);
 }
 
 ///dtor/////////////////////////////////////////////////////////////////////////
@@ -257,99 +281,99 @@ CompareDialog::CompareDialog(CaseSpaceDialog * csDlog)
 ////////////////////////////////////////////////////////////////////////////////
 CompareDialog::~CompareDialog()
 {
-	if (queryDICOMReader)
-	{
-		queryDICOMReader->Delete();
-	}
-		
-	if (matchDICOMReader)
-	{
-		matchDICOMReader->Delete();
-	}
-		
-	if (queryCTImageFlip)
-	{
-		queryCTImageFlip->Delete();
-	}
-		
-	if (matchCTImageFlip)
-	{
-		matchCTImageFlip->Delete();
-	}
-		
-	if (queryCTImageViewer)
-	{
-		queryCTImageViewer->Delete();
-	}
-		
-	if (matchCTImageViewer)
-	{
-		matchCTImageViewer->Delete();
-	}
-		
-	if (gantryAngleMenu)
-	{
-		delete gantryAngleMenu;
-	}
-		
-	if (gantryAngleActionGroup)
-	{
-		delete gantryAngleActionGroup;
-	}
-		
-	if (overlayDVH)
-	{
-		overlayDVH->Delete();
-	}
-		
-	if (matchDVH)
-	{
-		matchDVH->Delete();
-	}
-	
-	if (overlayDVHView)
-	{
-		overlayDVHView->Delete();
-	}
-	
-	if (matchDVHView)
-	{
-		matchDVHView->Delete();
-	}
+  if (queryDICOMReader)
+  {
+    queryDICOMReader->Delete();
+  }
+    
+  if (matchDICOMReader)
+  {
+    matchDICOMReader->Delete();
+  }
+    
+  if (queryCTImageFlip)
+  {
+    queryCTImageFlip->Delete();
+  }
+    
+  if (matchCTImageFlip)
+  {
+    matchCTImageFlip->Delete();
+  }
+    
+  if (queryCTImageViewer)
+  {
+    queryCTImageViewer->Delete();
+  }
+    
+  if (matchCTImageViewer)
+  {
+    matchCTImageViewer->Delete();
+  }
+    
+  if (gantryAngleMenu)
+  {
+    delete gantryAngleMenu;
+  }
+    
+  if (gantryAngleActionGroup)
+  {
+    delete gantryAngleActionGroup;
+  }
+    
+  if (overlayDVH)
+  {
+    overlayDVH->Delete();
+  }
+    
+  if (matchDVH)
+  {
+    matchDVH->Delete();
+  }
+  
+  if (overlayDVHView)
+  {
+    overlayDVHView->Delete();
+  }
+  
+  if (matchDVHView)
+  {
+    matchDVHView->Delete();
+  }
 
-	if (queryProjector)
-	{
-		delete queryProjector;
-	}
+  if (queryProjector)
+  {
+    delete queryProjector;
+  }
 
-	if (matchProjector)
-	{
-		delete matchProjector;
-	}
+  if (matchProjector)
+  {
+    delete matchProjector;
+  }
 
 /* Looks like these deletions are handled via QVTKWidget:
 
-	if (queryProjectionRenWin)
-	{
-		queryProjectionRenWin->Delete();
-	}
+  if (queryProjectionRenWin)
+  {
+    queryProjectionRenWin->Delete();
+  }
 
-	if (matchProjectionRenWin)
-	{
-		matchProjectionRenWin->Delete();
-	}
+  if (matchProjectionRenWin)
+  {
+    matchProjectionRenWin->Delete();
+  }
 */
-	if (matchHistoryMenu)
-	{
-		matchHistoryMenu->clear();
-		delete matchHistoryMenu;
-	}
+  if (matchHistoryMenu)
+  {
+    matchHistoryMenu->clear();
+    delete matchHistoryMenu;
+  }
 
-	if (overlaySelectionMenu)
-	{
-		overlaySelectionMenu->clear();
-		delete overlaySelectionMenu;
-	}
+  if (overlaySelectionMenu)
+  {
+    overlaySelectionMenu->clear();
+    delete overlaySelectionMenu;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -357,9 +381,9 @@ CompareDialog::~CompareDialog()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::accept()
 {
-	caseSpaceDialog->enableCompareCasesButton(true);
-	caseSpaceDialog->setCompareDialogPointer(NULL);
-	QDialog::accept();
+  caseSpaceDialog->enableCompareCasesButton(true);
+  caseSpaceDialog->setCompareDialogPointer(NULL);
+  QDialog::accept();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -367,9 +391,9 @@ void CompareDialog::accept()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::reject()
 {
-	caseSpaceDialog->enableCompareCasesButton(true);
-	caseSpaceDialog->setCompareDialogPointer(NULL);
-	QDialog::reject();
+  caseSpaceDialog->enableCompareCasesButton(true);
+  caseSpaceDialog->setCompareDialogPointer(NULL);
+  QDialog::reject();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -377,27 +401,28 @@ void CompareDialog::reject()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setQuery(Patient *patient)
 {
-	queryPatient = patient;
-	QString text = "patient #"
-				 + QString::number(queryPatient->getNumber());
-	queryCaseNumberLabel->setText(text);
-	querySelectSpinBox->setValue(queryPatient->getNumber());
-	selectQueryCTSlice(sliceSelectionSlider->value());
-	setSliceAxis();
+  queryPatient = patient;
+  QString text = "patient #" + QString::number(queryPatient->getNumber());
+  queryCaseNumberLabel->setText(text);
+  querySelectSpinBox->setValue(queryPatient->getNumber());
+  selectQueryCTSlice(sliceSelectionSlider->value());
+
+  if (matchPatient) setSliceAxis();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 // NOTE: setMatch(...) is called to set the match for the CompareDialog from the
 // CaseSpaceDialog. selectMatch(...) is called as a slot for the match spin box.
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setMatch(Patient *patient)
 {
-	matchPatient = patient;
-	matchSelectSpinBox->setValue(matchPatient->getNumber());
-	selectMatchCTSlice(sliceSelectionSlider->value());
-	setSliceAxis();
+  matchPatient = patient;
+  matchSelectSpinBox->setValue(matchPatient->getNumber()); 
+  selectMatchCTSlice(sliceSelectionSlider->value());
+
+  if (queryPatient) setSliceAxis();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -411,28 +436,28 @@ void CompareDialog::setMatch(Patient *patient)
 ////////////////////////////////////////////////////////////////////////////////
 bool CompareDialog::CTDataExistsFor(Patient *patient)
 {
-	QFile CTDir(patient->getPathToCTData());
+  QFile CTDir(patient->getPathToCTData());
 
-	QString path = patient->getPathToCTData();
+  QString path = patient->getPathToCTData();
 
-	const char *s = path.ascii();
+  const char *s = path.ascii();
 
-	//cout << "CompareDialog::CTDataExistsFor(patient #"
-	//	   << patient->getNumber() << "): path: " << s << endl;
+  //cout << "CompareDialog::CTDataExistsFor(patient #"
+  //     << patient->getNumber() << "): path: " << s << endl;
 
-	if (!CTDir.exists())
-	{
-		return false;
-	}
+  if (!CTDir.exists())
+  {
+    return false;
+  }
 
 #define CHECKFORDVHDATA
 
 #ifdef CHECKFORDVHDATA
-	QFile DVHDataFile(patient->getPathToDVHData());
+  QFile DVHDataFile(patient->getPathToDVHData());
 
-	return (DVHDataFile.exists());
+  return (DVHDataFile.exists());
 #else
-	return true;
+  return true;
 #endif
 }
 
@@ -447,17 +472,17 @@ bool CompareDialog::DVHDataExistsFor(Patient *patient)
 #define CHECKFORDVHDATA
 
 #ifdef CHECKFORDVHDATA
-	QFile DVHDataFile(patient->getPathToDVHData());
+  QFile DVHDataFile(patient->getPathToDVHData());
 
-	QString path = patient->getPathToCTData();
+  QString path = patient->getPathToCTData();
 
-	//const char *s = path.ascii();
-	//cout << "CompareDialog::DVHDataExistsFor(patient #"
-	//     << patient->getNumber() << "): path: " << s << endl;
+  //const char *s = path.ascii();
+  //cout << "CompareDialog::DVHDataExistsFor(patient #"
+  //     << patient->getNumber() << "): path: " << s << endl;
 
-	return (DVHDataFile.exists());
+  return (DVHDataFile.exists());
 #else
-	return true;
+  return true;
 #endif
 }
 
@@ -466,69 +491,77 @@ bool CompareDialog::DVHDataExistsFor(Patient *patient)
 // Make sure that queryPatient has been initialized before you call this method.
 //
 ////////////////////////////////////////////////////////////////////////////////
-void CompareDialog::readIsocenters()
+void CompareDialog::readIsocenters(Patient *qCase)
 {
-	QString isoCenterFilePath = queryPatient->getDataDir() + "/isocenters.txt";
+  QString isoCenterFilePath = qCase->getDataDir()
+    + "/Isocenters-originZs.txt";
 
-	QFile file(isoCenterFilePath);
+  QFile file(isoCenterFilePath);
 
-	if (!file.open(QIODevice::ReadOnly))
-	{
-		QString warn = 
-			"CompareDialog::readIsocenters(): Failed to open \""
-			+ isoCenterFilePath + "\"";
+  if (!file.open(QIODevice::ReadOnly))
+  {
+    QString warn = 
+      "CompareDialog::readIsocenters(): Failed to open \""
+      + isoCenterFilePath + "\"";
 
-		QMessageBox::warning(this, tr("File Open Failed"), warn);
-		return;
-	}
+    QMessageBox::warning(this, tr("File Open Failed"), warn);
+    return;
+  }
 
-	QTextStream in(&file);
-	
-	in.readLine(); // skip first row: column headers;
+  QTextStream in(&file);
+  
+  in.readLine(); // skip first row: column headers;
 
-	int i = 0;
+  int i = 0;
 
-	while (!in.atEnd())
-	{
-		in.readLine();
-		i++;
-	}
+  while (!in.atEnd())
+  {
+    in.readLine();
+    i++;
+  }
 
-	numIsocenters = i;
+  numIsocenters = i;
 
-	in.flush();
+  in.flush();
 
-	if (!in.seek(0)) // back to the top
-	{
-		QString warn = 
-			"CompareDialog::readIsocenters(): seek(0) failed for file \""
-			+ isoCenterFilePath + "\"";
-		QMessageBox::warning(this, 
-			tr("failure attempting to return to file start"), warn);
-		return; 
-	}
+  if (!in.seek(0)) // back to the top of the file
+  {
+    QString warn = 
+      "CompareDialog::readIsocenters(): seek(0) failed for file \""
+      + isoCenterFilePath + "\"";
+    QMessageBox::warning(this, 
+      tr("failure attempting to return to file start"), warn);
+    return; 
+  }
 
-	in.readLine(); // skip first row
+  in.readLine(); // skip first row
 
-	isocenterIndex = new int[numIsocenters];
+  isocenterCaseNumber = new int[numIsocenters];
+  originZSlice = new int[numIsocenters];
+  double originZ; // Not using this so just read past it.
 
-	for (i = 0; i < numIsocenters; i++)
-	{
-		in >> isocenterIndex[i]
-		   >> isocenter[i][0]
-		   >> isocenter[i][1]
-		   >> isocenter[i][2];
-	}
+  for (i = 0; i < numIsocenters; i++)
+  {
+    in >> isocenterCaseNumber[i]
+       >> isocenter[i][0]
+       >> isocenter[i][1]
+       >> isocenter[i][2]
+       >> originZSlice[i]
+       >> originZ;
+  }
+
 /*
-	for (i = 0; i < numIsocenters; i++)
-	{
-		cout << isocenterIndex[i] << ": "
-		   << isocenter[i][0] << ", "
-		   << isocenter[i][1] << ", "
-		   << isocenter[i][2] << ", " << endl;
-	}
+  for (i = 0; i < numIsocenters; i++)
+  {
+    cout << isocenterCaseNumber[i] << ": "
+       << isocenter[i][0] << ", "
+       << isocenter[i][1] << ", "
+       << isocenter[i][2] << ", " 
+       << originZSlice[i] << endl;
+  }
 */
-	file.close();
+
+  file.close();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -539,13 +572,13 @@ void CompareDialog::readIsocenters()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQuery(int patientNumber)
 {
-	if (!caseSpaceDialog) return;
+  if (!caseSpaceDialog) return;
 
-	queryPatient = caseSpaceDialog->getDukePatientFrom(patientNumber);
-	queryPatient->setNumber(patientNumber);
-	selectQueryCTSlice(sliceSelectionSlider->value());
-	setSliceAxis();
-	selectQueryProjection(true);
+  queryPatient = caseSpaceDialog->getDukePatientFrom(patientNumber);
+  queryPatient->setNumber(patientNumber);
+  selectQueryCTSlice(sliceSelectionSlider->value());
+  setSliceAxis();
+  selectQueryProjection(true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -560,71 +593,71 @@ void CompareDialog::selectQuery(int patientNumber)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectMatch(int patientNumber)
 {
-	if (!caseSpaceDialog) return;
+  if (!caseSpaceDialog) return;
 
-	if (patientNumber == queryPatient->getNumber())
-	{
-		QString warn =
-			"Match case must differ from query case." ;
-		QMessageBox::warning(this, tr("Query and match must differ"), warn);
+  if (patientNumber == queryPatient->getNumber())
+  {
+    QString warn =
+      "Match case must differ from query case." ;
+    QMessageBox::warning(this, tr("Query and match must differ"), warn);
 
-		// Restore previous value:
-		matchSelectSpinBox->setValue(matchPatient->getNumber());
-		
-		return;
-	}
+    // Restore previous value:
+    matchSelectSpinBox->setValue(matchPatient->getNumber());
+    
+    return;
+  }
 
-	Patient *matchPatientCandidate =
-		caseSpaceDialog->getDukePatientFrom(patientNumber);
+  Patient *matchPatientCandidate =
+    caseSpaceDialog->getDukePatientFrom(patientNumber);
 
-	matchXYDataExists = matchXYDataExists && (matchPatientCandidate != NULL);
+  matchXYDataExists = matchXYDataExists && (matchPatientCandidate != NULL);
 
-	if (!matchPatientCandidate)
-	{
-		QString warn =
-			"No overlap data for Duke Patient #"
-			+ (QString::number(patientNumber))
-			+ " exists." ;
-		QMessageBox::warning(this, tr("Nonexistent Patient Data"), warn);
+  if (!matchPatientCandidate)
+  {
+    QString warn =
+      "No overlap data for Duke Patient #"
+      + (QString::number(patientNumber))
+      + " exists." ;
+    QMessageBox::warning(this, tr("Nonexistent Patient Data"), warn);
 
-		// Restore previous value:
-		matchSelectSpinBox->setValue(matchPatient->getNumber());
-		
-		return;
-	}
+    // Restore previous value:
+    matchSelectSpinBox->setValue(matchPatient->getNumber());
+    
+    return;
+  }
 
-	if (!caseSpaceDialog->isNewMatchCaseSelectedHere())
-	{
-		caseSpaceDialog->setMatchCaseFromCompareDialog(patientNumber);
-		caseSpaceDialog->setLastMatchCase(matchPatient);
-	}
+  if (!caseSpaceDialog->isNewMatchCaseSelectedHere())
+  {
+    caseSpaceDialog->setMatchCaseFromCompareDialog(patientNumber);
+    caseSpaceDialog->setLastMatchCase(matchPatient);
+  }
 
-	matchPatient = matchPatientCandidate;
+  matchPatient = matchPatientCandidate;
 
-	selectMatchCTSlice(sliceSelectionSlider->value());
-	setSliceAxis();
-	selectMatchProjection(true);
+  selectMatchCTSlice(sliceSelectionSlider->value());
+  setSliceAxis();
+  selectMatchProjection(true);
 
-	if (!matchHistoryMenu)
-	{
-		setupMatchHistoryMenu();
-	}
-	else if (matchXYDataExists)
-	{
-		addMatchHistoryItem();
-	}
+  if (!matchHistoryMenu)
+  {
+    setupMatchHistoryMenu();
+  }
+  else if (matchXYDataExists)
+  {
+    addMatchHistoryItem();
+  }
 
-	if (!overlaySelectionMenu)
-	{
-		setupOverlaySelectionMenu();
-	}
-	else if (matchXYDataExists)
-	{
-		addOverlaySelectionItem();
-	}
-	else matchXYDataExists = true;
+  if (!overlaySelectionMenu)
+  {
+    setupOverlaySelectionMenu();
+  }
+  else if (matchXYDataExists)
+  {
+    addOverlaySelectionItem();
+  }
+  else matchXYDataExists = true;
 
-	displayMatchDVHData();
+  displayMatchDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -669,109 +702,156 @@ void CompareDialog::selectMatch(int patientNumber)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setSliceAxis(bool val /* = true */)
 {
-	int orientation; 
+  int orientation; 
 
-	if (axialRadioButton->isChecked()) 
-	{
-		sliceSelectionLabel->setText(tr("Z slice:"));
-		if (queryPatient) queryPatient->setSliceOrientation(Patient::Z);
-		if (matchPatient) matchPatient->setSliceOrientation(Patient::Z);
+  if (axialRadioButton->isChecked()) 
+  {
+    sliceSelectionLabel->setText(tr("Z slice:"));
+    if (queryPatient) queryPatient->setSliceOrientation(Patient::Z);
+    if (matchPatient) matchPatient->setSliceOrientation(Patient::Z);
 
-		queryCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
-		matchCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
-		queryCTImageViewer->SetSliceOrientationToXY();
-		matchCTImageViewer->SetSliceOrientationToXY();
-		orientation = 2;
-	}
-	else if (sagittalRadioButton->isChecked())
-	{
-		sliceSelectionLabel->setText(tr("X slice:"));
-		queryPatient->setSliceOrientation(Patient::X);
-		matchPatient->setSliceOrientation(Patient::X);
-		queryCTImageFlip->SetFilteredAxis(2); // Flip about z
-		matchCTImageFlip->SetFilteredAxis(2); // Flip about z
-		queryCTImageViewer->SetSliceOrientationToYZ();
-		matchCTImageViewer->SetSliceOrientationToYZ();
-		orientation = 0;
-	}
-	else if (coronalRadioButton->isChecked())
-	{
-		sliceSelectionLabel->setText(tr("Y slice:"));
-		queryPatient->setSliceOrientation(Patient::Y);
-		matchPatient->setSliceOrientation(Patient::Y);
-		queryCTImageFlip->SetFilteredAxis(2); // Flip about z
-		matchCTImageFlip->SetFilteredAxis(2); // Flip about z
-		queryCTImageViewer->SetSliceOrientationToXZ();
-		matchCTImageViewer->SetSliceOrientationToXZ();
-		orientation = 1;
-	}
+    queryCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
+    matchCTImageFlip->SetFilteredAxis(0); // Flip about x (i.e., no flip)
+    queryCTImageViewer->SetSliceOrientationToXY();
+    matchCTImageViewer->SetSliceOrientationToXY();
+    orientation = 2;
+  }
+  else if (sagittalRadioButton->isChecked())
+  {
+    sliceSelectionLabel->setText(tr("X slice:"));
+    queryPatient->setSliceOrientation(Patient::X);
+    matchPatient->setSliceOrientation(Patient::X);
+    queryCTImageFlip->SetFilteredAxis(2); // Flip about z
+    matchCTImageFlip->SetFilteredAxis(2); // Flip about z
+    queryCTImageViewer->SetSliceOrientationToYZ();
+    matchCTImageViewer->SetSliceOrientationToYZ();
+    orientation = 0;
+  }
+  else if (coronalRadioButton->isChecked())
+  {
+    sliceSelectionLabel->setText(tr("Y slice:"));
+    queryPatient->setSliceOrientation(Patient::Y);
+    matchPatient->setSliceOrientation(Patient::Y);
+    queryCTImageFlip->SetFilteredAxis(2); // Flip about z
+    matchCTImageFlip->SetFilteredAxis(2); // Flip about z
+    queryCTImageViewer->SetSliceOrientationToXZ();
+    matchCTImageViewer->SetSliceOrientationToXZ();
+    orientation = 1;
+  }
 
-	int qSliceMin = queryCTImageViewer->GetSliceMin();
-	int qSliceMax = queryCTImageViewer->GetSliceMax();
-	int mSliceMin = matchCTImageViewer->GetSliceMin();
-	int mSliceMax = matchCTImageViewer->GetSliceMax();
+  qSliceMin = queryCTImageViewer->GetSliceMin();
+  qSliceMax = queryCTImageViewer->GetSliceMax();
+  mSliceMin = matchCTImageViewer->GetSliceMin();
+  mSliceMax = matchCTImageViewer->GetSliceMax();
 
-	sliceSelectionSlider->setMaxValue(max(qSliceMax, mSliceMax));
-	sliceSelectionSpinBox->setMaxValue(max(qSliceMax, mSliceMax));
-	sliceSelectionSlider->setMinValue(min(qSliceMin, mSliceMin));
-	sliceSelectionSpinBox->setMinValue(min(qSliceMin, mSliceMin));
-	// Here's where we'll set the two CT displays to their isocenters bydefault 
-	sliceSelectionSlider->setValue(max(qSliceMax, mSliceMax) / 2); // ~ middle
-	maxSliceLabel->setText(QString::number(max(qSliceMax, mSliceMax)));
+  sliceSelectionSlider->setMaxValue(max(qSliceMax, mSliceMax));
+  sliceSelectionSpinBox->setMaxValue(max(qSliceMax, mSliceMax));
+  sliceSelectionSlider->setMinValue(min(qSliceMin, mSliceMin));
+  sliceSelectionSpinBox->setMinValue(min(qSliceMin, mSliceMin));
 
-	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
-	float *mImagePosition = matchDICOMReader->GetImagePositionPatient();
+  if (queryPatient && matchPatient && (!setCTSliderToMaxIsocenter(orientation)))
+  {
+    QMessageBox::warning(this, tr("Isocenter data missing"),
+      tr("Missing isocenter data"));
+    sliceSelectionSlider->setValue(max(qSliceMax, mSliceMax) / 2); // ~ middle
+  }
 
-	//cout << "qImagePosition: " << qImagePosition[0] << ", "
-	//     << qImagePosition[1] << ", " << qImagePosition[2] << endl;
-	//cout << "mImagePosition: " << mImagePosition[0] << ", "
-	//     << mImagePosition[1] << ", " << mImagePosition[2] << endl;
+  maxSliceLabel->setText(QString::number(max(qSliceMax, mSliceMax)));
 
 #if USE_PROJECTOR_SLICE_PLANE
-	queryProjector->PositionSlicePlane(orientation,
-		queryCTImageViewer->GetSlice(), qSliceMax - qSliceMin);
-	matchProjector->PositionSlicePlane(orientation,
-		matchCTImageViewer->GetSlice(), mSliceMax - mSliceMin);
+  queryProjector->PositionSlicePlane(orientation,
+    queryCTImageViewer->GetSlice(), qSliceMax - qSliceMin);
+  matchProjector->PositionSlicePlane(orientation,
+    matchCTImageViewer->GetSlice(), mSliceMax - mSliceMin);
 #endif
-
-/*	queryProjector->PositionSlicePlane(orientation,
-		queryCTImageViewer->GetSlice(), queryDICOMReader->GetDataSpacing());
-	matchProjector->PositionSlicePlane(orientation,
-		matchCTImageViewer->GetSlice(), matchDICOMReader->GetDataSpacing());
-*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::setCTDisplaysToIsocenters()
+{
+  setCTSliderToMaxIsocenter(queryPatient->getSliceOrientation());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// The query and match CT displays are aligned with respect to isocenters. Since
+// those isocenters are typically located on different slices for different
+// patients, with the additional complication that there are different numbers 
+// of axial slices for different patients, it's likely that the two slices
+// simultaneously displayed will not have the same slice number.
+// 
+////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::changeSlice(int slice)
 {
-	queryCTImageViewer->SetSlice(slice);
-	matchCTImageViewer->SetSlice(slice);
+  int qSlice = qIsocenterSlice - (CTSliderIsocenterValue - slice);
 
+  if (qSlice < qSliceMin) 
+  {
+    qSlice = qSliceMin;
+  }
+  else if (qSlice > qSliceMax)
+  {
+    qSlice = qSliceMax;
+  }
+
+  int mSlice = mIsocenterSlice - (CTSliderIsocenterValue - slice);
+
+  if (mSlice < mSliceMin) 
+  {
+    mSlice = mSliceMin;
+  }
+  else if (mSlice > mSliceMax)
+  {
+    mSlice = mSliceMax;
+  }
+
+  queryCTImageViewer->SetSlice(qSlice);
+  matchCTImageViewer->SetSlice(mSlice);
+
+  char qS[255];
+  sprintf_s(qS, "Duke patient #%03d: slice #%d", queryPatient->getNumber(), qSlice);
+  queryCTTextActor->SetInput(qS);
+  queryCTImageViewer->GetRenderWindow()->Render();
+
+  // ??? Text not showing up until I manually move the slider:
+  char mS[255];
+  sprintf_s(mS, "Duke patient #%03d: slice #%d", matchPatient->getNumber(), mSlice);
+  //matchCTImageViewer->GetRenderer()->RemoveActor(matchCTTextActor);
+  //matchCTImageViewer->GetRenderer()->AddActor(matchCTTextActor);
+  matchCTTextActor->SetInput(mS);
+  //matchCTImageWidget->GetRenderWindow()->Render();
+  matchCTImageViewer->GetRenderWindow()->Render();
+  //matchCTImageViewer->GetRenderer()->Render();
+ 
 #if USE_PROJECTOR_SLICE_PLANE
-	if (queryPatient && queryDICOMReader)
-	{
-		queryProjector->PositionSlicePlane(queryPatient->getSliceOrientation(),
-			queryCTImageViewer->GetSlice(), 
-			queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin());
-	}
+  if (queryPatient && queryDICOMReader)
+  {
+    queryProjector->PositionSlicePlane(queryPatient->getSliceOrientation(),
+      queryCTImageViewer->GetSlice(), 
+      queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin());
+  }
 
-	if (matchPatient && matchDICOMReader)
-	{
-		matchProjector->PositionSlicePlane(matchPatient->getSliceOrientation(),
-			matchCTImageViewer->GetSlice(), 
-			matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin());
-	}
+  if (matchPatient && matchDICOMReader)
+  {
+    matchProjector->PositionSlicePlane(matchPatient->getSliceOrientation(),
+      matchCTImageViewer->GetSlice(), 
+      matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin());
+  }
 #endif
 
-	sliceSelectionSlider->setSliderPosition(slice);
-	sliceSelectionSlider->setValue(slice);
-	sliceSelectionSlider->update();
-	sliceSelectionSpinBox->setValue(slice);
-	sliceSelectionSpinBox->update();
+  sliceSelectionSlider->setSliderPosition(slice);
+  sliceSelectionSlider->setValue(slice);
+  sliceSelectionSlider->update();
+  sliceSelectionSpinBox->setValue(slice);
+  sliceSelectionSpinBox->update();
 
-	//extractQueryDICOMData();
+  //extractQueryDICOMData();
+  //printIsocenterValues(orientation, isocenterCaseNumber[qIsocenterIx],qSlice, 
+  //isocenterCaseNumber[mIsocenterIx], mSlice);
+
+  //cout << "qSlice: " << qSlice << "; mSlice: " << mSlice << endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -796,30 +876,21 @@ void CompareDialog::changeSlice(int slice)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::autoplay()
 {
-	int maxSliceNum = sliceSelectionSlider->maxValue();
+  int maxSliceNum = sliceSelectionSlider->maxValue();
 
-	//setSliceAxis();
+  //setSliceAxis();
 
-	//bool hasTracking = sliceSelectionSlider->hasTracking();
+  //bool hasTracking = sliceSelectionSlider->hasTracking();
 
-	bool updatesEnabled = sliceSelectionSlider->updatesEnabled();
+  bool updatesEnabled = sliceSelectionSlider->updatesEnabled();
 
-	for (int i = 0; i <= maxSliceNum; i++)
-	{
-		changeSlice(i);
+  for (int i = 0; i <= maxSliceNum; i++)
+  {
+    changeSlice(i);
 
-		this->setWindowTitle(QString::number(i));
-		maxSliceLabel->setText(QString::number(i));
-
-		sliceSelectionSlider->setSliderPosition(i);
-		sliceSelectionSlider->setValue(i);
-		sliceSelectionSlider->update();
-		//int val = sliceSelectionSlider->value();
-		//int pos = sliceSelectionSlider->sliderPosition();
-
-		sliceSelectionSpinBox->setValue(i);
-		sliceSelectionSpinBox->update();
-	}
+    //this->setWindowTitle(QString::number(i)); // TEMP diagnostic
+    maxSliceLabel->setText(QString::number(i));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -827,19 +898,19 @@ void CompareDialog::autoplay()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle25()
 {
-	angle25Action->setChecked(true);
-	queryAngle = matchAngle = 25;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle25Action->setChecked(true);
+  queryAngle = matchAngle = 25;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle75()
 {
-	angle75Action->setChecked(true);
-	queryAngle = matchAngle = 75;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle75Action->setChecked(true);
+  queryAngle = matchAngle = 75;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -847,10 +918,10 @@ void CompareDialog::setGantryAngle75()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle130()
 {
-	angle130Action->setChecked(true);
-	queryAngle = matchAngle = 130;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle130Action->setChecked(true);
+  queryAngle = matchAngle = 130;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -858,10 +929,10 @@ void CompareDialog::setGantryAngle130()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle180()
 {
-	angle180Action->setChecked(true);
-	queryAngle = matchAngle = 180;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle180Action->setChecked(true);
+  queryAngle = matchAngle = 180;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -869,10 +940,10 @@ void CompareDialog::setGantryAngle180()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle230()
 {
-	angle230Action->setChecked(true);
-	queryAngle = matchAngle = 230;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle230Action->setChecked(true);
+  queryAngle = matchAngle = 230;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -880,10 +951,10 @@ void CompareDialog::setGantryAngle230()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle280()
 {
-	angle280Action->setChecked(true);
-	queryAngle = matchAngle = 280;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle280Action->setChecked(true);
+  queryAngle = matchAngle = 280;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -891,10 +962,10 @@ void CompareDialog::setGantryAngle280()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setGantryAngle335()
 {
-	angle335Action->setChecked(true);
-	queryAngle = matchAngle = 335;
-	selectQueryProjection();
-	selectMatchProjection();
+  angle335Action->setChecked(true);
+  queryAngle = matchAngle = 335;
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -904,14 +975,14 @@ void CompareDialog::setGantryAngle335()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::changeTransparency(int transp)
 {
-	queryProjector->setTransparency(transp);
-	matchProjector->setTransparency(transp);
+  queryProjector->setTransparency(transp);
+  matchProjector->setTransparency(transp);
 
-	selectQueryProjection();
-	selectMatchProjection();
+  selectQueryProjection();
+  selectMatchProjection();
 
-	transparencySlider->setValue(transp);
-	transparencySpinBox->setValue(transp);
+  transparencySlider->setValue(transp);
+  transparencySpinBox->setValue(transp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -921,7 +992,7 @@ void CompareDialog::changeTransparency(int transp)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::changeTransparency()
 {
-	changeTransparency(transparencySpinBox->value());
+  changeTransparency(transparencySpinBox->value());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -931,10 +1002,10 @@ void CompareDialog::changeTransparency()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::toggleFlatShadedStructures(bool checked)
 {
-	queryProjector->setFlatShaded(checked);
-	selectQueryProjection();
-	matchProjector->setFlatShaded(checked);
-	selectMatchProjection();
+  queryProjector->setFlatShaded(checked);
+  selectQueryProjection();
+  matchProjector->setFlatShaded(checked);
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -944,8 +1015,8 @@ void CompareDialog::toggleFlatShadedStructures(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::toggleOrigin(bool checked)
 {
-	selectQueryProjection();
-	selectMatchProjection();
+  selectQueryProjection();
+  selectMatchProjection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -955,31 +1026,31 @@ void CompareDialog::toggleOrigin(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::toggleViewStructure(bool checked)
 {
-	queryProjector->setDrawStructure(Projector::ekBladder,
-		viewBladderCheckBox->isChecked());
-	queryProjector->setDrawStructure(Projector::ekRectum,
-		viewRectumCheckBox->isChecked());
-	queryProjector->setDrawStructure(Projector::ekPTV,
-		viewPTVCheckBox->isChecked());
-	queryProjector->setDrawStructure(Projector::ekLtFem,
-		viewFemoralHeadsCheckBox->isChecked());
-	queryProjector->setDrawStructure(Projector::ekRtFem,
-		viewFemoralHeadsCheckBox->isChecked());
+  queryProjector->setDrawStructure(Projector::ekBladder,
+    viewBladderCheckBox->isChecked());
+  queryProjector->setDrawStructure(Projector::ekRectum,
+    viewRectumCheckBox->isChecked());
+  queryProjector->setDrawStructure(Projector::ekPTV,
+    viewPTVCheckBox->isChecked());
+  queryProjector->setDrawStructure(Projector::ekLtFem,
+    viewFemoralHeadsCheckBox->isChecked());
+  queryProjector->setDrawStructure(Projector::ekRtFem,
+    viewFemoralHeadsCheckBox->isChecked());
 
-	matchProjector->setDrawStructure(Projector::ekBladder,
-		viewBladderCheckBox->isChecked());
-	matchProjector->setDrawStructure(Projector::ekRectum,
-		viewRectumCheckBox->isChecked());
-	matchProjector->setDrawStructure(Projector::ekPTV,
-		viewPTVCheckBox->isChecked());
-	matchProjector->setDrawStructure(Projector::ekLtFem,
-		viewFemoralHeadsCheckBox->isChecked());
-	matchProjector->setDrawStructure(Projector::ekRtFem,
-		viewFemoralHeadsCheckBox->isChecked());
+  matchProjector->setDrawStructure(Projector::ekBladder,
+    viewBladderCheckBox->isChecked());
+  matchProjector->setDrawStructure(Projector::ekRectum,
+    viewRectumCheckBox->isChecked());
+  matchProjector->setDrawStructure(Projector::ekPTV,
+    viewPTVCheckBox->isChecked());
+  matchProjector->setDrawStructure(Projector::ekLtFem,
+    viewFemoralHeadsCheckBox->isChecked());
+  matchProjector->setDrawStructure(Projector::ekRtFem,
+    viewFemoralHeadsCheckBox->isChecked());
 
-	selectQueryProjection();
-	selectMatchProjection();
-	displayMatchDVHData();
+  selectQueryProjection();
+  selectMatchProjection();
+  displayMatchDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -987,39 +1058,40 @@ void CompareDialog::toggleViewStructure(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupVTKUI()
 {
-	initQueryCTPipeLine();
-	initMatchCTPipeLine();
+  initQueryCTPipeLine();
+  initMatchCTPipeLine();
 
-	QString dataDir = caseSpaceDialog->getMainWindow()->getDataDir();
-	queryProjector = new Projector(dataDir);
-	matchProjector = new Projector(dataDir);
+  QString dataDir = caseSpaceDialog->getMainWindow()->getDataDir();
+  queryProjector = new Projector(dataDir);
+  matchProjector = new Projector(dataDir);
 
-	queryProjectionRenWin = vtkRenderWindow::New();
-	matchProjectionRenWin = vtkRenderWindow::New();
+  queryProjectionRenWin = vtkRenderWindow::New();
+  matchProjectionRenWin = vtkRenderWindow::New();
 
-	originCheckBox->setChecked(false);
+  originCheckBox->setChecked(false);
 
-	queryProjector->WindowInit(queryProjectionRenWin, queryProjectionWidget);
-	matchProjector->WindowInit(matchProjectionRenWin, matchProjectionWidget);
+  queryProjector->WindowInit(queryProjectionRenWin, queryProjectionWidget);
+  matchProjector->WindowInit(matchProjectionRenWin, matchProjectionWidget);
 
-	queryProjector->InitExtrema();
-	matchProjector->InitExtrema();
+  queryProjector->InitExtrema();
+  matchProjector->InitExtrema();
 
-	queryProjector->InitLegend();
+  queryProjector->InitLegend();
+  matchProjector->InitLegend();
 
-	queryProjector->TextInit();
-	matchProjector->TextInit();
+  queryProjector->TextInit();
+  matchProjector->TextInit();
 
 #if USE_PROJECTOR_SLICE_PLANE
-	queryProjector->InitSlicePlane();
-	matchProjector->InitSlicePlane();
+  queryProjector->InitSlicePlane();
+  matchProjector->InitSlicePlane();
 #endif
 
-	queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
-	matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
+  queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
+  matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
 
-	initOverlayDVHObjects();
-	initMatchDVHObjects();
+  initOverlayDVHObjects();
+  initMatchDVHObjects();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1029,73 +1101,75 @@ void CompareDialog::setupVTKUI()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::createActions()
 {
-	connect(querySelectSpinBox, SIGNAL(valueChanged(int)), this, 
-		SLOT(selectQuery(int)));
-	connect(matchSelectSpinBox, SIGNAL(valueChanged(int)), this, 
-		SLOT(selectMatch(int)));
+  connect(querySelectSpinBox, SIGNAL(valueChanged(int)), this, 
+    SLOT(selectQuery(int)));
+  connect(matchSelectSpinBox, SIGNAL(valueChanged(int)), this, 
+    SLOT(selectMatch(int)));
 
-	connect(axialRadioButton, SIGNAL(toggled(bool)), this, 
-		SLOT(setSliceAxis(bool)));
-	connect(sagittalRadioButton, SIGNAL(toggled(bool)), this, 
-		SLOT(setSliceAxis(bool)));
-	connect(coronalRadioButton, SIGNAL(toggled(bool)), this, 
-		SLOT(setSliceAxis(bool)));
+  connect(axialRadioButton, SIGNAL(toggled(bool)), this, 
+    SLOT(setSliceAxis(bool)));
+  connect(sagittalRadioButton, SIGNAL(toggled(bool)), this, 
+    SLOT(setSliceAxis(bool)));
+  connect(coronalRadioButton, SIGNAL(toggled(bool)), this, 
+    SLOT(setSliceAxis(bool)));
+  connect(isocenterPushButton, SIGNAL(clicked()), this,
+    SLOT(setCTDisplaysToIsocenters()));
 
-	connect(sliceSelectionSlider, SIGNAL(valueChanged(int)), this, 
-		SLOT(changeSlice(int)));
-	connect(sliceSelectionSpinBox, SIGNAL(valueChanged(int)), this, 
-		SLOT(changeSlice(int)));
-	connect(autoPlayPushButton, SIGNAL(clicked()), this, SLOT(autoplay()));
+  connect(sliceSelectionSlider, SIGNAL(valueChanged(int)), this, 
+    SLOT(changeSlice(int)));
+  connect(sliceSelectionSpinBox, SIGNAL(valueChanged(int)), this, 
+    SLOT(changeSlice(int)));
+  connect(autoPlayPushButton, SIGNAL(clicked()), this, SLOT(autoplay()));
 
-	connect(viewBladderCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleViewStructure(bool)));
-	connect(viewRectumCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleViewStructure(bool)));
-	connect(viewPTVCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleViewStructure(bool)));
-	connect(viewFemoralHeadsCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleViewStructure(bool)));
-	
-	connect(flatShadedCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleFlatShadedStructures(bool)));
-	connect(originCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleOrigin(bool)));
+  connect(viewBladderCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleViewStructure(bool)));
+  connect(viewRectumCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleViewStructure(bool)));
+  connect(viewPTVCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleViewStructure(bool)));
+  connect(viewFemoralHeadsCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleViewStructure(bool)));
+  
+  connect(flatShadedCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleFlatShadedStructures(bool)));
+  connect(originCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleOrigin(bool)));
 
-	connect(transparencySlider, SIGNAL(valueChanged(int)), this, 
-		SLOT(changeTransparency(int)));
-	connect(transparencySpinBox, SIGNAL(editingFinished()), this, 
-		SLOT(changeTransparency()));
+  connect(transparencySlider, SIGNAL(valueChanged(int)), this, 
+    SLOT(changeTransparency(int)));
+  connect(transparencySpinBox, SIGNAL(editingFinished()), this, 
+    SLOT(changeTransparency()));
 
-	connect(removeCurrentMatchPushButton, SIGNAL(released()), this,
-		SLOT(removeCurrentMatch()));
-	connect(savePushButton, SIGNAL(released()), this,
-		SLOT(saveMatchHistory()));
+  connect(removeCurrentMatchPushButton, SIGNAL(released()), this,
+    SLOT(removeCurrentMatch()));
+  connect(savePushButton, SIGNAL(released()), this,
+    SLOT(saveMatchHistory()));
 
-	connect(overlayDVHCheckBox, SIGNAL(clicked(bool)), this, 
-		SLOT(toggleOverlayDVH(bool)));
-	connect(removeSelectedOverlayPushButton, SIGNAL(released()), this,
-		SLOT(removeSelectedOverlayMenuItem()));
+  connect(overlayDVHCheckBox, SIGNAL(clicked(bool)), this, 
+    SLOT(toggleOverlayDVH(bool)));
+  connect(removeSelectedOverlayPushButton, SIGNAL(released()), this,
+    SLOT(removeSelectedOverlayMenuItem()));
 
-	connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-	connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Call *after* the viewStructureCheckBox array has been set up
+// Call *after* the viewStructureCheckBox array has been set up.
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setViewCheckboxColors()
 {
-	for (int s = PTV; s < rightFem; s++)
-	{
-		QColor clr((int)(color[s][0]), (int)(color[s][1]), (int)(color[s][2]));
-		viewStructureCheckBox[s]->setPaletteForegroundColor(clr);
-	}
+  for (int s = PTV; s < rightFem; s++)
+  {
+    QColor clr((int)(color[s][0]), (int)(color[s][1]), (int)(color[s][2]));
+    viewStructureCheckBox[s]->setPaletteForegroundColor(clr);
+  }
 
-	QColor shadowClr((int)(color[bladder][0]) / 2, (int)(color[bladder][1]) / 2,
-					 (int)(color[bladder][2]) / 2);
-	viewBladderCheckboxShadowLabel->setPaletteForegroundColor(shadowClr);
+  QColor shadowClr((int)(color[bladder][0]) / 2, (int)(color[bladder][1]) / 2,
+           (int)(color[bladder][2]) / 2);
+  viewBladderCheckboxShadowLabel->setPaletteForegroundColor(shadowClr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1103,32 +1177,44 @@ void CompareDialog::setViewCheckboxColors()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::initQueryCTPipeLine()
 {
-	if (queryDICOMReader)
-	{
-		queryDICOMReader->Delete();
-	}
-		
-	if (queryCTImageFlip)
-	{
-		queryCTImageFlip->Delete();
-	}
-		
-	if (queryCTImageViewer)
-	{
-		queryCTImageViewer->Delete();
-	}
-		
-	queryDICOMReader = vtkDICOMImageReader::New();
-	queryCTImageFlip = vtkImageFlip::New();
-	queryCTImageFlip->SetInputConnection(queryDICOMReader->GetOutputPort());
-	queryCTImageViewer = vtkImageViewer2::New();
-	queryCTImageViewer->SetInputConnection(queryCTImageFlip->GetOutputPort());
-	queryCTImageWidget->SetRenderWindow(queryCTImageViewer->GetRenderWindow());
-	queryCTImageViewer->SetupInteractor(
-		queryCTImageWidget->GetRenderWindow()->GetInteractor());
+  if (queryDICOMReader)
+  {
+    queryDICOMReader->Delete();
+  }
+    
+  if (queryCTImageFlip)
+  {
+    queryCTImageFlip->Delete();
+  }
+    
+  if (queryCTImageViewer)
+  {
+    queryCTImageViewer->Delete();
+  }
+    
+ if (queryCTTextActor)
+  {
+    queryCTTextActor->Delete();
+  }
+    
+  queryDICOMReader = vtkDICOMImageReader::New();
+  queryCTImageFlip = vtkImageFlip::New();
+  queryCTImageFlip->SetInputConnection(queryDICOMReader->GetOutputPort());
+  queryCTImageViewer = vtkImageViewer2::New();
+  queryCTImageViewer->SetInputConnection(queryCTImageFlip->GetOutputPort());
+  queryCTImageWidget->SetRenderWindow(queryCTImageViewer->GetRenderWindow());
+  queryCTImageViewer->SetupInteractor(
+    queryCTImageWidget->GetRenderWindow()->GetInteractor());
 
-	queryCTImageViewer->SetColorLevel(40);		// Set to increase contrast...
-	queryCTImageViewer->SetColorWindow(350);	// ...at Vorakarn's request
+  queryCTImageViewer->SetColorLevel(40);    // Set to increase contrast...
+  queryCTImageViewer->SetColorWindow(350);  // ...at Vorakarn's request
+
+  queryCTTextActor = vtkTextActor::New();
+  queryCTTextActor->GetProperty()->SetColor(1, 1, 1);
+  queryCTTextActor->SetHeight(0.34);
+  queryCTTextActor->SetDisplayPosition(10, 3);
+  //queryCTTextActor->SetInput("slice #777");
+  queryCTImageViewer->GetRenderer()->AddActor(queryCTTextActor);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1136,32 +1222,44 @@ void CompareDialog::initQueryCTPipeLine()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::initMatchCTPipeLine()
 {
-	if (matchDICOMReader)
-	{
-		matchDICOMReader->Delete();
-	}
-		
-	if (matchCTImageFlip)
-	{
-		matchCTImageFlip->Delete();
-	}
-		
-	if (matchCTImageViewer)
-	{
-		matchCTImageViewer->Delete();
-	}
-		
-	matchDICOMReader = vtkDICOMImageReader::New();
-	matchCTImageFlip = vtkImageFlip::New();
-	matchCTImageFlip->SetInputConnection(matchDICOMReader->GetOutputPort());
-	matchCTImageViewer = vtkImageViewer2::New();
-	matchCTImageViewer->SetInputConnection(matchCTImageFlip->GetOutputPort());
-	matchCTImageWidget->SetRenderWindow(matchCTImageViewer->GetRenderWindow());
-	matchCTImageViewer->SetupInteractor(
-		matchCTImageWidget->GetRenderWindow()->GetInteractor());
+  if (matchDICOMReader)
+  {
+    matchDICOMReader->Delete();
+  }
+    
+  if (matchCTImageFlip)
+  {
+    matchCTImageFlip->Delete();
+  }
+    
+  if (matchCTImageViewer)
+  {
+    matchCTImageViewer->Delete();
+  }
+    
+ if (matchCTTextActor)
+  {
+    matchCTTextActor->Delete();
+  }
+    
+  matchDICOMReader = vtkDICOMImageReader::New();
+  matchCTImageFlip = vtkImageFlip::New();
+  matchCTImageFlip->SetInputConnection(matchDICOMReader->GetOutputPort());
+  matchCTImageViewer = vtkImageViewer2::New();
+  matchCTImageViewer->SetInputConnection(matchCTImageFlip->GetOutputPort());
+  matchCTImageWidget->SetRenderWindow(matchCTImageViewer->GetRenderWindow());
+  matchCTImageViewer->SetupInteractor(
+    matchCTImageWidget->GetRenderWindow()->GetInteractor());
 
-	matchCTImageViewer->SetColorLevel(40);		// Set to increase contrast...
-	matchCTImageViewer->SetColorWindow(350);	// ...at Vorakarn's request
+  matchCTImageViewer->SetColorLevel(40);    // Set to increase contrast...
+  matchCTImageViewer->SetColorWindow(350);  // ...at Vorakarn's request
+
+  matchCTTextActor = vtkTextActor::New();
+  matchCTTextActor->GetProperty()->SetColor(1, 1, 1);
+  matchCTTextActor->SetHeight(0.34);
+  matchCTTextActor->SetDisplayPosition(10, 3);
+  //matchCTTextActor->SetInput("slice #888");
+  matchCTImageViewer->GetRenderer()->AddActor(matchCTTextActor);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1171,29 +1269,30 @@ void CompareDialog::initMatchCTPipeLine()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQueryCTSlice(int slice)
 {
-	initQueryCTPipeLine();
+  initQueryCTPipeLine();
 
-	QFile file(queryPatient->getPathToCTData());
+  QFile file(queryPatient->getPathToCTData());
 
-	if (file.exists())
-	{
-		queryDICOMReader->SetDirectoryName(
-			(queryPatient->getPathToCTData()).toAscii());
-		queryDICOMReader->Update();
-		queryCTImageViewer->SetSlice(slice);
-	}
-	else
-	{
-		QString warn =
-			"CompareDialog::selectQueryCTSlice(int): Failed to open \""
-			+ queryPatient->getPathToCTData() + "\"";
-		//QMessageBox::warning(this, tr("File Open Failed"), warn);
-		queryDICOMReader = NULL;
-	}
+  if (file.exists())
+  {
+    queryDICOMReader->SetDirectoryName(
+      (queryPatient->getPathToCTData()).toAscii());
+    queryDICOMReader->Update();
+    queryPixelSpacing = queryDICOMReader->GetPixelSpacing();
+    queryCTImageViewer->SetSlice(slice);
+  }
+  else
+  {
+    QString warn =
+      "CompareDialog::selectQueryCTSlice(int): Failed to open \""
+      + queryPatient->getPathToCTData() + "\"";
+    //QMessageBox::warning(this, tr("File Open Failed"), warn);
+    queryDICOMReader = NULL;
+  }
 
-	queryCTImageViewer->GetRenderWindow()->Render();
-	
-	//extractQueryDICOMData();
+  queryCTImageViewer->GetRenderWindow()->Render();
+  
+  //extractQueryDICOMData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1203,30 +1302,152 @@ void CompareDialog::selectQueryCTSlice(int slice)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectMatchCTSlice(int slice)
 {
-	initMatchCTPipeLine();
+  initMatchCTPipeLine();
 
-	QFile file(matchPatient->getPathToCTData());
+  QFile file(matchPatient->getPathToCTData());
 
-	if (file.exists())
-	{
-		matchDICOMReader->SetDirectoryName(
-			(matchPatient->getPathToCTData()).toAscii());
-		matchDICOMReader->Update();
-		matchCTImageViewer->SetSlice(slice);
-	}
-	else
-	{
-		QString warn =
-			"CompareDialog::selectMatchCTSlice(int): Failed to open \""
-			+ matchPatient->getPathToCTData() + "\"";
-		//QMessageBox::warning(this, tr("File Open Failed"), warn);
-		matchCTImageViewer->SetColorLevel(0);
-		matchCTImageViewer->SetColorWindow(0);
+  if (file.exists())
+  {
+    matchDICOMReader->SetDirectoryName(
+      (matchPatient->getPathToCTData()).toAscii());
+    matchDICOMReader->Update();
+    matchPixelSpacing = matchDICOMReader->GetPixelSpacing();
+    matchCTImageViewer->SetSlice(slice);
+  }
+  else
+  {
+    QString warn =
+      "CompareDialog::selectMatchCTSlice(int): Failed to open \""
+      + matchPatient->getPathToCTData() + "\"";
+    //QMessageBox::warning(this, tr("File Open Failed"), warn);
+    matchCTImageViewer->SetColorLevel(0);
+    matchCTImageViewer->SetColorWindow(0);
 
-		matchDICOMReader = NULL;
-	}
+    matchDICOMReader = NULL;
+  }
 
-	matchCTImageViewer->Render();
+  matchCTImageViewer->Render();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// If there is isocenter data for the patient with number == patientNum, then
+// return the isocenter array index for that patient in parameter isocenterIx
+// and return true for the method.  Otherwise, return false and isocenterIx is
+// unchanged.
+//
+// Note: make sure numIsocenters has been initialized before calling this 
+// method.
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CompareDialog::isocenterDataExists(int patientNum, int &isocenterIx)
+{
+  int ix = 0;
+
+  while (ix < numIsocenters) 
+  {
+    if (isocenterCaseNumber[ix] == patientNum)
+    {
+      isocenterIx = ix;
+      return true;
+    }
+
+    ix++;
+  }
+
+  return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+int rnd(double x)
+{
+  return (x > 0.0) ? floor(x + 0.5) : ceil(x - 0.5);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Set the CT slider to the slice most closely approximating the larger
+// of the two isocenters.
+//
+////////////////////////////////////////////////////////////////////////////////
+bool CompareDialog::setCTSliderToMaxIsocenter(int orientation)
+{
+  if ((!matchPatient) || (!queryPatient)) return false;
+
+  int qIsocenterIx = -1;
+  int mIsocenterIx = -1;
+
+  if (!isocenterDataExists(queryPatient->getNumber(), qIsocenterIx))
+  {
+    return false;
+  }
+
+  if (!isocenterDataExists(matchPatient->getNumber(), mIsocenterIx))
+  {
+    return false;
+  }
+
+  int qOrigin[3] = { 257, 257, originZSlice[qIsocenterIx] };
+  int mOrigin[3] = { 257, 257, originZSlice[mIsocenterIx] };
+
+  // For axial (z-axis) and sagittal (x-axis) orientations, subtract instead of
+  // adding distance in slices from origin to isocenter:
+  int sign = (orientation != 1) ? -1 : 1;
+
+  int nSlicesFromOriginToQueryIsocenter = sign *
+    rnd(isocenter[qIsocenterIx][orientation] / queryPixelSpacing[orientation]);
+  int nSlicesFromOriginToMatchIsocenter = sign *
+    rnd(isocenter[mIsocenterIx][orientation] / matchPixelSpacing[orientation]);
+
+
+  qIsocenterSlice = qOrigin[orientation] + nSlicesFromOriginToQueryIsocenter;
+  mIsocenterSlice = mOrigin[orientation] + nSlicesFromOriginToMatchIsocenter;
+  CTSliderIsocenterValue = max(qIsocenterSlice, mIsocenterSlice);
+
+  int nSlicesAfterQueryIsocenter = qSliceMax - qIsocenterSlice;
+  int nSlicesAfterMatchIsocenter = mSliceMax - mIsocenterSlice;
+  int maxSliderVal = CTSliderIsocenterValue +
+    max(nSlicesAfterQueryIsocenter, nSlicesAfterMatchIsocenter);
+  sliceSelectionSlider->setMaxValue(maxSliderVal);
+
+  sliceSelectionSlider->setValue(CTSliderIsocenterValue);
+
+  //printIsocenterValues(orientation, isocenterCaseNumber[qIsocenterIx],
+  //  qIsocenterSlice, isocenterCaseNumber[mIsocenterIx], mIsocenterSlice);
+
+  return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Diagnostics for debug.
+//
+////////////////////////////////////////////////////////////////////////////////
+void CompareDialog::printIsocenterValues(int orientation, int qNum, int qSlice, 
+  int mNum, int mSlice)
+{
+  switch (orientation)
+  {
+    case 0: 
+      cout << "sagittal; ";
+      break;
+    case 1:
+      cout << "coronal; ";
+      break;
+    case 2:
+      cout << "axial; ";
+      break;
+    default:
+      cout << "unknown orientation; ";
+      break;
+  }
+
+  cout << "query #" << qNum << "; slice #" << qSlice << " of "
+       << queryCTImageViewer->GetSliceMax() << "; ";
+  cout << "match #" << mNum << "; slice #" << mSlice << " of "
+       << matchCTImageViewer->GetSliceMax() << endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1236,48 +1457,48 @@ void CompareDialog::selectMatchCTSlice(int slice)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::extractQueryDICOMData()
 {
-	cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
-	int dataExtent[6];
-	double dataSpacing[3];
-	double dataOrigin[3];
-	queryDICOMReader->GetDataExtent(dataExtent);
-	queryDICOMReader->GetDataSpacing(dataSpacing);
-	queryDICOMReader->GetDataOrigin(dataOrigin);
-	float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
-	double *pixelSpacing = queryDICOMReader->GetPixelSpacing();
-	int w = queryDICOMReader->GetWidth();
-	int h = queryDICOMReader->GetHeight();
+  cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
+  int dataExtent[6];
+  double dataSpacing[3];
+  double dataOrigin[3];
+  queryDICOMReader->GetDataExtent(dataExtent);
+  queryDICOMReader->GetDataSpacing(dataSpacing);
+  queryDICOMReader->GetDataOrigin(dataOrigin);
+  float *qImagePosition = queryDICOMReader->GetImagePositionPatient();
+  double *pixelSpacing = queryDICOMReader->GetPixelSpacing();
+  int w = queryDICOMReader->GetWidth();
+  int h = queryDICOMReader->GetHeight();
 
-	cout << "CT slice #" << queryCTImageViewer->GetSlice() << ": " << endl;
-	cout << "orientation: " << queryCTImageViewer->GetSliceOrientation() << endl;
-	cout << "extent: " << dataExtent[0] << ", "
-					   << dataExtent[1] << ", "
-					   << dataExtent[2] << ", "
-					   << dataExtent[3] << ", "
-					   << dataExtent[4] << ", "
-					   << dataExtent[5] << endl;
-	cout << "spacing: " << dataSpacing[0] << ", "
-					    << dataSpacing[1] << ", "
-					    << dataSpacing[2] << endl;
-	cout << "data origin: " << dataOrigin[0] << ", "
-					    << dataOrigin[1] << ", "
-					    << dataOrigin[2] << endl;
-	cout << "qImagePosition: " << qImagePosition[0] << ", "
-						<< qImagePosition[1] << ", "
-						<< qImagePosition[2] << endl;
-	cout << "pixelSpacing: " << pixelSpacing[0] << ", "
-							 << pixelSpacing[1] << ", "
-							 << pixelSpacing[2] << endl;
-	cout << "width, height: " << w << ", " << h << endl;
-	cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
-	
-	const char *xferSyntaxUID = queryDICOMReader->GetTransferSyntaxUID();
-	const char *patientName = queryDICOMReader->GetPatientName();
-	const char *studyUID = queryDICOMReader->GetStudyUID();
-	const char *studyID = queryDICOMReader->GetStudyID();
-	const char *fileX = queryDICOMReader->GetFileExtensions();
-	float rescaleSlope = queryDICOMReader->GetRescaleSlope();
-	float rescaleOffset = queryDICOMReader->GetRescaleOffset();
+  cout << "CT slice #" << queryCTImageViewer->GetSlice() << ": " << endl;
+  cout << "orientation: " << queryCTImageViewer->GetSliceOrientation() << endl;
+  cout << "extent: " << dataExtent[0] << ", "
+             << dataExtent[1] << ", "
+             << dataExtent[2] << ", "
+             << dataExtent[3] << ", "
+             << dataExtent[4] << ", "
+             << dataExtent[5] << endl;
+  cout << "spacing: " << dataSpacing[0] << ", "
+              << dataSpacing[1] << ", "
+              << dataSpacing[2] << endl;
+  cout << "data origin: " << dataOrigin[0] << ", "
+              << dataOrigin[1] << ", "
+              << dataOrigin[2] << endl;
+  cout << "qImagePosition: " << qImagePosition[0] << ", "
+            << qImagePosition[1] << ", "
+            << qImagePosition[2] << endl;
+  cout << "pixelSpacing: " << pixelSpacing[0] << ", "
+               << pixelSpacing[1] << ", "
+               << pixelSpacing[2] << endl;
+  cout << "width, height: " << w << ", " << h << endl;
+  cout << "|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-" << endl;
+  
+  const char *xferSyntaxUID = queryDICOMReader->GetTransferSyntaxUID();
+  const char *patientName = queryDICOMReader->GetPatientName();
+  const char *studyUID = queryDICOMReader->GetStudyUID();
+  const char *studyID = queryDICOMReader->GetStudyID();
+  const char *fileX = queryDICOMReader->GetFileExtensions();
+  float rescaleSlope = queryDICOMReader->GetRescaleSlope();
+  float rescaleOffset = queryDICOMReader->GetRescaleOffset();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1285,36 +1506,30 @@ void CompareDialog::extractQueryDICOMData()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectQueryProjection(bool newQuery /* = false */)
 {
-	int pNum = queryPatient->getNumber();
+  int pNum = queryPatient->getNumber();
 
     if (!queryProjector->BuildStructuresForPatient(pNum, newQuery))
-	{	
-		QString warn =
-			"CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
-			+ QString::number(pNum);
-		//QMessageBox::warning(this, tr("File Open Failed"), warn);		
-	}
+  {  
+    QString warn =
+      "CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
+      + QString::number(pNum);
+    //QMessageBox::warning(this, tr("File Open Failed"), warn);    
+  }
 
-	if (originCheckBox->isChecked())
-	{
-		queryProjector->AddOrigin(queryProjector->GetRenderer());
-	}
+  // Don't compute a new avgZ value if all you're doing is showing or hiding 
+  // structures, because then the collection of visible structures is likely
+  // to move around:
+  if (newQuery)
+  {
+    queryProjector->ComputeAverages();
+  }
 
-	// Don't compute a new avgZ value if all you're doing is showing or hiding 
-	// structures, because then the collection of visible structures is likely
-	// to move around:
-	if (newQuery)
-	{
-		queryProjector->ComputeAverages();
-	}
+  queryProjector->PositionSlicePlane(
+    queryCTImageViewer->GetSliceOrientation(),
+    queryCTImageViewer->GetSlice(),
+    queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin()); // TEMP SAC
 
-	queryProjector->PositionSlicePlane(
-		queryCTImageViewer->GetSliceOrientation(),
-		queryCTImageViewer->GetSlice(),
-		queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin()); // TEMP
-//		queryDICOMReader->GetDataSpacing());
-
-	queryProjector->SetProjection(pNum, queryAngle);
+  queryProjector->SetProjection(pNum, queryAngle);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1322,40 +1537,35 @@ void CompareDialog::selectQueryProjection(bool newQuery /* = false */)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectMatchProjection(bool newMatch /* = false */ )
 {
-	int pNum = matchPatient->getNumber();
+  int pNum = matchPatient->getNumber();
 
-	if (newMatch)
-	{
-		matchProjector->InitExtrema();
-	}
+  if (newMatch)
+  {
+    matchProjector->InitExtrema();
+  }
 
     if (!matchProjector->BuildStructuresForPatient(pNum, newMatch))
-	{	
-		QString warn =
-			"CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
-			+ QString::number(pNum);
-		//QMessageBox::warning(this, tr("File Open Failed"), warn);		
-	}
+  {  
+    QString warn =
+      "CompareDialog::selectQueryProjection(): Failed to build structures for patient #"
+      + QString::number(pNum);
+    //QMessageBox::warning(this, tr("File Open Failed"), warn);    
+  }
 
-	if (originCheckBox->isChecked())
-	{
-		matchProjector->AddOrigin(matchProjector->GetRenderer());
-	}
-	
-	// Don't compute a new avgZ value if all you're doing is showing or hiding 
-	// structures, because then the collection of visible structures is likely
-	// to move around:
-	if (newMatch)
-	{
-		matchProjector->ComputeAverages();
-	}
+  // Don't compute a new avgZ value if all you're doing is showing or hiding 
+  // structures, because then the collection of visible structures is likely
+  // to move around:
+  if (newMatch)
+  {
+    matchProjector->ComputeAverages();
+  }
 
-	matchProjector->PositionSlicePlane(
-		matchCTImageViewer->GetSliceOrientation(),
-		matchCTImageViewer->GetSlice(),
-		matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin()); // TEMP 
-		//matchDICOMReader->GetDataSpacing());
-	matchProjector->SetProjection(pNum, matchAngle);
+  matchProjector->PositionSlicePlane(
+    matchCTImageViewer->GetSliceOrientation(),
+    matchCTImageViewer->GetSlice(),
+    matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin()); // TEMP 
+
+  matchProjector->SetProjection(pNum, matchAngle);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1363,42 +1573,42 @@ void CompareDialog::selectMatchProjection(bool newMatch /* = false */ )
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupProjectionGantryAngleMenu()
 {
-	gantryAngleMenu = new QMenu(this);
-	angle25Action = 
-		gantryAngleMenu->addAction("25 degrees", this, SLOT(setGantryAngle25()));
-	angle75Action = 
-		gantryAngleMenu->addAction("75 degrees", this, SLOT(setGantryAngle75()));
-	angle130Action = 
-		gantryAngleMenu->addAction("130 degrees", this, SLOT(setGantryAngle130()));
-	angle180Action = 
-		gantryAngleMenu->addAction("180 degrees", this, SLOT(setGantryAngle180()));
-	angle230Action = 
-		gantryAngleMenu->addAction("230 degrees", this, SLOT(setGantryAngle230()));
-	angle280Action = 
-		gantryAngleMenu->addAction("280 degrees", this, SLOT(setGantryAngle280()));
-	angle335Action = 
-		gantryAngleMenu->addAction("335 degrees", this, SLOT(setGantryAngle335()));
+  gantryAngleMenu = new QMenu(this);
+  angle25Action = 
+    gantryAngleMenu->addAction("25 degrees", this, SLOT(setGantryAngle25()));
+  angle75Action = 
+    gantryAngleMenu->addAction("75 degrees", this, SLOT(setGantryAngle75()));
+  angle130Action = 
+    gantryAngleMenu->addAction("130 degrees", this, SLOT(setGantryAngle130()));
+  angle180Action = 
+    gantryAngleMenu->addAction("180 degrees", this, SLOT(setGantryAngle180()));
+  angle230Action = 
+    gantryAngleMenu->addAction("230 degrees", this, SLOT(setGantryAngle230()));
+  angle280Action = 
+    gantryAngleMenu->addAction("280 degrees", this, SLOT(setGantryAngle280()));
+  angle335Action = 
+    gantryAngleMenu->addAction("335 degrees", this, SLOT(setGantryAngle335()));
 
-	angle25Action->setCheckable(true);
-	angle75Action->setCheckable(true);
-	angle130Action->setCheckable(true);
-	angle180Action->setCheckable(true);
-	angle230Action->setCheckable(true);
-	angle280Action->setCheckable(true);
-	angle335Action->setCheckable(true);
+  angle25Action->setCheckable(true);
+  angle75Action->setCheckable(true);
+  angle130Action->setCheckable(true);
+  angle180Action->setCheckable(true);
+  angle230Action->setCheckable(true);
+  angle280Action->setCheckable(true);
+  angle335Action->setCheckable(true);
 
-	gantryAngleActionGroup = new QActionGroup(this);
-	gantryAngleActionGroup->add(angle25Action);
-	gantryAngleActionGroup->add(angle75Action);
-	gantryAngleActionGroup->add(angle130Action);
-	gantryAngleActionGroup->add(angle180Action);
-	gantryAngleActionGroup->add(angle230Action);
-	gantryAngleActionGroup->add(angle280Action);
-	gantryAngleActionGroup->add(angle335Action);
+  gantryAngleActionGroup = new QActionGroup(this);
+  gantryAngleActionGroup->add(angle25Action);
+  gantryAngleActionGroup->add(angle75Action);
+  gantryAngleActionGroup->add(angle130Action);
+  gantryAngleActionGroup->add(angle180Action);
+  gantryAngleActionGroup->add(angle230Action);
+  gantryAngleActionGroup->add(angle280Action);
+  gantryAngleActionGroup->add(angle335Action);
 
-	angle180Action->setChecked(true);
+  angle180Action->setChecked(true);
 
-	gantryAnglePushButton->setMenu(gantryAngleMenu);
+  gantryAnglePushButton->setMenu(gantryAngleMenu);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1406,30 +1616,30 @@ void CompareDialog::setupProjectionGantryAngleMenu()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::initOverlayDVHObjects()
 {
-	if (overlayDVH) overlayDVH->Delete();
-	overlayDVH = vtkChartXY::New();
-	setDVHYAxisTicks(overlayDVH);
+  if (overlayDVH) overlayDVH->Delete();
+  overlayDVH = vtkChartXY::New();
+  setDVHYAxisTicks(overlayDVH);
 
-	overlayDVH->GetAxis(vtkAxis::LEFT)->GetLabelProperties()->SetColor(1, 1, 1);
-	overlayDVH->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetColor(1, 1, 1);
+  overlayDVH->GetAxis(vtkAxis::LEFT)->GetLabelProperties()->SetColor(1, 1, 1);
+  overlayDVH->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetColor(1, 1, 1);
 
-	overlayDVH->GetAxis(vtkAxis::BOTTOM)->GetLabelProperties()->SetColor(1, 1, 1);
-	overlayDVH->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetColor(1, 1, 1);
+  overlayDVH->GetAxis(vtkAxis::BOTTOM)->GetLabelProperties()->SetColor(1, 1, 1);
+  overlayDVH->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetColor(1, 1, 1);
 
-	overlayDVH->GetTitleProperties()->SetColor(1, 1, 1);
+  overlayDVH->GetTitleProperties()->SetColor(1, 1, 1);
 
-	vtkChartLegend *l = overlayDVH->GetLegend();
-	l->GetBrush()->SetColorF(0, 0, 0, 0.67);
-	l->GetLabelProperties()->SetColor(1, 1, 1);
+  vtkChartLegend *l = overlayDVH->GetLegend();
+  l->GetBrush()->SetColorF(0, 0, 0, 0.67);
+  l->GetLabelProperties()->SetColor(1, 1, 1);
 
-	if (overlayDVHView) overlayDVHView->Delete();
-	overlayDVHView = vtkContextView::New();
-	overlayDVHView->GetRenderer()->SetBackground(0, 0, 0);
+  if (overlayDVHView) overlayDVHView->Delete();
+  overlayDVHView = vtkContextView::New();
+  overlayDVHView->GetRenderer()->SetBackground(0, 0, 0);
 
-	overlayDVHView->GetScene()->AddItem(overlayDVH);
-	overlayDVHView->SetInteractor(overlayDVHWidget->GetInteractor());
-	overlayDVHWidget->SetRenderWindow(overlayDVHView->GetRenderWindow());
-	overlayDVHView->GetRenderWindow()->SetSize(xDVHWidget, yDVHWidget);
+  overlayDVHView->GetScene()->AddItem(overlayDVH);
+  overlayDVHView->SetInteractor(overlayDVHWidget->GetInteractor());
+  overlayDVHWidget->SetRenderWindow(overlayDVHView->GetRenderWindow());
+  overlayDVHView->GetRenderWindow()->SetSize(xDVHWidget, yDVHWidget);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1437,96 +1647,96 @@ void CompareDialog::initOverlayDVHObjects()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::initMatchDVHObjects()
 {
-	if (matchDVH) matchDVH->Delete();
-	matchDVH = vtkChartXY::New();
-	setDVHYAxisTicks(matchDVH);
+  if (matchDVH) matchDVH->Delete();
+  matchDVH = vtkChartXY::New();
+  setDVHYAxisTicks(matchDVH);
 
-	if (matchDVHView) matchDVHView->Delete();
-	matchDVHView = vtkContextView::New();
-	matchDVHView->GetRenderer()->SetBackground(0, 0, 0);
+  if (matchDVHView) matchDVHView->Delete();
+  matchDVHView = vtkContextView::New();
+  matchDVHView->GetRenderer()->SetBackground(0, 0, 0);
 
-	matchDVH->GetAxis(vtkAxis::LEFT)->GetLabelProperties()->SetColor(1, 1, 1);
-	matchDVH->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetColor(1, 1, 1);
+  matchDVH->GetAxis(vtkAxis::LEFT)->GetLabelProperties()->SetColor(1, 1, 1);
+  matchDVH->GetAxis(vtkAxis::LEFT)->GetTitleProperties()->SetColor(1, 1, 1);
 
-	matchDVH->GetAxis(vtkAxis::BOTTOM)->GetLabelProperties()->SetColor(1, 1, 1);
-	matchDVH->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetColor(1, 1, 1);
+  matchDVH->GetAxis(vtkAxis::BOTTOM)->GetLabelProperties()->SetColor(1, 1, 1);
+  matchDVH->GetAxis(vtkAxis::BOTTOM)->GetTitleProperties()->SetColor(1, 1, 1);
 
-	matchDVH->GetTitleProperties()->SetColor(1, 1, 1);
+  matchDVH->GetTitleProperties()->SetColor(1, 1, 1);
 
-	vtkChartLegend *l = matchDVH->GetLegend();
-	l->GetBrush()->SetColorF(0, 0, 0, 0.67);
-	l->GetLabelProperties()->SetColor(1, 1, 1);
+  vtkChartLegend *l = matchDVH->GetLegend();
+  l->GetBrush()->SetColorF(0, 0, 0, 0.67);
+  l->GetLabelProperties()->SetColor(1, 1, 1);
 
-	matchDVHView->GetScene()->AddItem(matchDVH);
-	matchDVHView->SetInteractor(matchDVHWidget->GetInteractor());
-	matchDVHWidget->SetRenderWindow(matchDVHView->GetRenderWindow());
-	matchDVHView->GetRenderWindow()->SetSize(xDVHWidget, yDVHWidget);
+  matchDVHView->GetScene()->AddItem(matchDVH);
+  matchDVHView->SetInteractor(matchDVHWidget->GetInteractor());
+  matchDVHWidget->SetRenderWindow(matchDVHView->GetRenderWindow());
+  matchDVHView->GetRenderWindow()->SetSize(xDVHWidget, yDVHWidget);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::initVolumesArray(
-	float volumes[numStructures][maxNumDVHPoints])
+  float volumes[numStructures][maxNumDVHPoints])
 {
 
-	for (int i = 0; i < numStructures; i++)
-	{
-		for (int j = 0; j < maxNumDVHPoints; j++)
-		{
-			volumes[i][j] = 0.0;
-		}
-	}
+  for (int i = 0; i < numStructures; i++)
+  {
+    for (int j = 0; j < maxNumDVHPoints; j++)
+    {
+      volumes[i][j] = 0.0;
+    }
+  }
 }
 
 ///readDVHData///////////////////////////////////////////////////////////////////
 //
 // File format (as of 2011-09-20):
-//	1. bladder:
-//		30 lines to skip over;
-//		variable number of lines of numeric data for bladder; each line:
-//			1) relative dose (%) in 0.1% increments: x axis;
-//			2) dose (cGy == centi-Grays): we're not using this here;
-//			3) ratio of total structure volume (%): y-axis;
-//		last line of data followed by blank line (carriage return only).
+//  1. bladder:
+//    30 lines to skip over;
+//    variable number of lines of numeric data for bladder; each line:
+//      1) relative dose (%) in 0.1% increments: x axis;
+//      2) dose (cGy == centi-Grays): we're not using this here;
+//      3) ratio of total structure volume (%): y-axis;
+//    last line of data followed by blank line (carriage return only).
 //  2, 3, 4, 5. rectum, left femoral head, right femoral head, PTV:
-//		18 lines to skip over (not including blank line that terminated data for
-//			previous structure)
-//		data as above
+//    18 lines to skip over (not including blank line that terminated data for
+//      previous structure)
+//    data as above
 //
 ////////////////////////////////////////////////////////////////////////////////
 bool CompareDialog::readDVHData(Patient &patient,
-	float volumes[numStructures][maxNumDVHPoints], int &numPoints)
+  float volumes[numStructures][maxNumDVHPoints], int &numPoints)
 {
-	QString path = patient.getPathToDVHData();
-	QFile file(path);
+  QString path = patient.getPathToDVHData();
+  QFile file(path);
 
-	if (!file.open(QIODevice::ReadOnly))
-	{
-		QString warn = "Failed to open \"" + path + "\"";
-		QMessageBox::warning(this, tr("File Open Failed"), warn);
-		return false;
-	}
+  if (!file.open(QIODevice::ReadOnly))
+  {
+    QString warn = "Failed to open \"" + path + "\"";
+    QMessageBox::warning(this, tr("File Open Failed"), warn);
+    return false;
+  }
 
-	QTextStream in(&file);
-	QString line;
-	
-	for (int i = 0; i < 12; i++) // Skip 12 lines of file header
-	{
-		line = in.readLine();
-	}
+  QTextStream in(&file);
+  QString line;
+  
+  for (int i = 0; i < 12; i++) // Skip 12 lines of file header
+  {
+    line = in.readLine();
+  }
 
-	initVolumesArray(volumes);
-	numPoints = readDVHStructureData(in, bladder, volumes);
-	readDVHStructureData(in, rectum, volumes);
-	readDVHStructureData(in, leftFem, volumes);
-	readDVHStructureData(in, rightFem, volumes);
-	readDVHStructureData(in, PTV, volumes);
+  initVolumesArray(volumes);
+  numPoints = readDVHStructureData(in, bladder, volumes);
+  readDVHStructureData(in, rectum, volumes);
+  readDVHStructureData(in, leftFem, volumes);
+  readDVHStructureData(in, rightFem, volumes);
+  readDVHStructureData(in, PTV, volumes);
 
-	in.flush();
-	file.close();
+  in.flush();
+  file.close();
 
-	return true;
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1537,38 +1747,38 @@ bool CompareDialog::readDVHData(Patient &patient,
 //
 ////////////////////////////////////////////////////////////////////////////////
 int CompareDialog::readDVHStructureData(QTextStream &in, int structureNum,
-		float volumes[numStructures][maxNumDVHPoints])
+    float volumes[numStructures][maxNumDVHPoints])
 {
-	QString line;
-	const static int numStructureHeaderLines = 18;
+  QString line;
+  const static int numStructureHeaderLines = 18;
 
-	for (int i = 0; i < numStructureHeaderLines; i++) // Skip structure header
-	{
-		line = in.readLine();
-	}
+  for (int i = 0; i < numStructureHeaderLines; i++) // Skip structure header
+  {
+    line = in.readLine();
+  }
 
-	line = in.readLine(); // Initialize line for the while loop
-	int lineNum = 0;
-	QStringList list;
+  line = in.readLine(); // Initialize line for the while loop
+  int lineNum = 0;
+  QStringList list;
 
-	// readLine() trims endline chars so returns empty QString for blank line:
-	while ((!line.isEmpty()) && (lineNum < maxNumDVHPoints)) 
-	{
-		list = line.split(" ", QString::SkipEmptyParts);
-		//list = line.split(QRegExp("\\s+"));
+  // readLine() trims endline chars so returns empty QString for blank line:
+  while ((!line.isEmpty()) && (lineNum < maxNumDVHPoints)) 
+  {
+    list = line.split(" ", QString::SkipEmptyParts);
+    //list = line.split(QRegExp("\\s+"));
 
-		if (!list.at(0).contains(QChar('.'))) // Skip fractional % doses
-		{
-			dose[lineNum] = list.at(0).toDouble();
-			int size = list.size();
-			float vol = list.at(2).toDouble();
-			volumes[structureNum][lineNum++] = list.at(2).toDouble();
-		}
+    if (!list.at(0).contains(QChar('.'))) // Skip fractional % doses
+    {
+      dose[lineNum] = list.at(0).toDouble();
+      int size = list.size();
+      float vol = list.at(2).toDouble();
+      volumes[structureNum][lineNum++] = list.at(2).toDouble();
+    }
 
-		line = in.readLine();
-	}
+    line = in.readLine();
+  }
 
-	return lineNum - 1;
+  return lineNum - 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1599,82 +1809,82 @@ int CompareDialog::readDVHStructureData(QTextStream &in, int structureNum,
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupOverlayDVHChart(vtkChartXY *chart, char *title)
 {
-	chart->ClearPlots();
+  chart->ClearPlots();
 
-	if (title) chart->SetTitle(title);
-	chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
-	chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
-	chart->SetShowLegend(true);
+  if (title) chart->SetTitle(title);
+  chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
+  chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
+  chart->SetShowLegend(true);
 
-	vtkFloatArray *xCoords = vtkFloatArray::New();
-	vtkFloatArray *yCoords[numStructures];
-	vtkTable *table = vtkTable::New();
-	vtkPlot *line;
+  vtkFloatArray *xCoords = vtkFloatArray::New();
+  vtkFloatArray *yCoords[numStructures];
+  vtkTable *table = vtkTable::New();
+  vtkPlot *line;
 
-	xCoords->SetArray(dose, numMatchDVHPoints, 1);
-	xCoords->SetName("% dose");
-	table->AddColumn(xCoords);
-	table->SetNumberOfRows(numMatchDVHPoints);
+  xCoords->SetArray(dose, numMatchDVHPoints, 1);
+  xCoords->SetName("% dose");
+  table->AddColumn(xCoords);
+  table->SetNumberOfRows(numMatchDVHPoints);
 
-	int currStructureCount = 0;
+  int currStructureCount = 0;
 
-	for (int i = 0; i < numStructures; i++)
-	{
-		if (!viewStructureCheckBox[i]->isChecked()) continue;
+  for (int i = 0; i < numStructures; i++)
+  {
+    if (!viewStructureCheckBox[i]->isChecked()) continue;
 
-		yCoords[currStructureCount] = vtkFloatArray::New();
-		yCoords[currStructureCount]->SetArray(matchVolumes[i], numMatchDVHPoints, 1);
+    yCoords[currStructureCount] = vtkFloatArray::New();
+    yCoords[currStructureCount]->SetArray(matchVolumes[i], numMatchDVHPoints, 1);
 
-		if (overlayDVHCheckBox->isChecked())
-		{
-			QString name = "match ";
-			name.append(structureName[i]);
-			yCoords[currStructureCount]->SetName(name);
-		}
-		else
-		{
-			yCoords[currStructureCount]->SetName(structureName[i]);
-		}
+    if (overlayDVHCheckBox->isChecked())
+    {
+      QString name = "match ";
+      name.append(structureName[i]);
+      yCoords[currStructureCount]->SetName(name);
+    }
+    else
+    {
+      yCoords[currStructureCount]->SetName(structureName[i]);
+    }
 
-		table->AddColumn(yCoords[currStructureCount]);
-		table->Update();
-		line = chart->AddPlot(vtkChart::LINE);
-		line->SetInput(table, 0, currStructureCount + 1);
-		line->SetColor(color[i][0], color[i][1], color[i][2], 255);
-		yCoords[currStructureCount++]->Delete();
-	}
+    table->AddColumn(yCoords[currStructureCount]);
+    table->Update();
+    line = chart->AddPlot(vtkChart::LINE);
+    line->SetInput(table, 0, currStructureCount + 1);
+    line->SetColor(color[i][0], color[i][1], color[i][2], 255);
+    yCoords[currStructureCount++]->Delete();
+  }
 
-	if (overlayDVHCheckBox->isChecked() && overlayPatient)
-	{
-		vtkFloatArray *overlayYCoords[numStructures];
-		currStructureCount = 0;
+  if (overlayDVHCheckBox->isChecked() && overlayPatient)
+  {
+    vtkFloatArray *overlayYCoords[numStructures];
+    currStructureCount = 0;
 
-		for (int i = 0; i < numStructures; i++)
-		{
-			if (!viewStructureCheckBox[i]->isChecked()) continue;
+    for (int i = 0; i < numStructures; i++)
+    {
+      if (!viewStructureCheckBox[i]->isChecked()) continue;
 
-			overlayYCoords[currStructureCount] = vtkFloatArray::New();
+      overlayYCoords[currStructureCount] = vtkFloatArray::New();
 
-			overlayYCoords[currStructureCount]->SetArray(overlayVolumes[i],
-				numMatchDVHPoints, 1);
-			QString name = "overlay ";
-			name.append(structureName[i]);
-			overlayYCoords[currStructureCount]->SetName(name);
-			table->AddColumn(overlayYCoords[currStructureCount]);
-			table->Update();
-			line = chart->AddPlot(vtkChart::LINE);
-			line->SetInput(table, 0, table->GetNumberOfColumns() - 1);
-			line->SetColor(color[i][0], color[i][1], color[i][2], 255);
-			line->GetPen()->SetLineType(vtkPen::DASH_LINE);
-			line->GetPen()->SetWidth(4.0);
-			overlayYCoords[currStructureCount++]->Delete();
-		}
-	}
+      overlayYCoords[currStructureCount]->SetArray(overlayVolumes[i],
+        numMatchDVHPoints, 1);
+      QString name = "overlay ";
+      name.append(structureName[i]);
+      overlayYCoords[currStructureCount]->SetName(name);
+      table->AddColumn(overlayYCoords[currStructureCount]);
+      table->Update();
+      line = chart->AddPlot(vtkChart::LINE);
+      line->SetInput(table, 0, table->GetNumberOfColumns() - 1);
+      line->SetColor(color[i][0], color[i][1], color[i][2], 255);
+      line->GetPen()->SetLineType(vtkPen::DASH_LINE);
+      line->GetPen()->SetWidth(4.0);
+      overlayYCoords[currStructureCount++]->Delete();
+    }
+  }
 
-	chart->Update();
-	chart->RecalculateBounds();
+  chart->Update();
+  chart->RecalculateBounds();
 
-	xCoords->Delete();
+  xCoords->Delete();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1685,44 +1895,44 @@ void CompareDialog::setupOverlayDVHChart(vtkChartXY *chart, char *title)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 {
-	chart->ClearPlots();
+  chart->ClearPlots();
 
-	if (title) chart->SetTitle(title);
-	chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
-	chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
-	chart->SetShowLegend(true);
+  if (title) chart->SetTitle(title);
+  chart->GetAxis(vtkAxis::LEFT)->SetTitle("% volume");
+  chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("% dose");
+  chart->SetShowLegend(true);
 
-	vtkFloatArray *xCoords = vtkFloatArray::New();;
-	vtkFloatArray *yCoords[numStructures];
-	vtkTable *table = vtkTable::New();
-	vtkPlot *line;
+  vtkFloatArray *xCoords = vtkFloatArray::New();;
+  vtkFloatArray *yCoords[numStructures];
+  vtkTable *table = vtkTable::New();
+  vtkPlot *line;
 
-	xCoords->SetArray(dose, numMatchDVHPoints, 1);
-	xCoords->SetName("% dose");
-	table->AddColumn(xCoords);
-	table->SetNumberOfRows(numMatchDVHPoints);
+  xCoords->SetArray(dose, numMatchDVHPoints, 1);
+  xCoords->SetName("% dose");
+  table->AddColumn(xCoords);
+  table->SetNumberOfRows(numMatchDVHPoints);
 
-	int currStructureCount = 0;
+  int currStructureCount = 0;
 
-	for (int i = 0; i < numStructures; i++)
-	{
-		if (!viewStructureCheckBox[i]->isChecked()) continue;
+  for (int i = 0; i < numStructures; i++)
+  {
+    if (!viewStructureCheckBox[i]->isChecked()) continue;
 
-		yCoords[currStructureCount] = vtkFloatArray::New();
-		yCoords[currStructureCount]->SetArray(matchVolumes[i], numMatchDVHPoints, 1);
-		yCoords[currStructureCount]->SetName(structureName[i]);
-		table->AddColumn(yCoords[currStructureCount]);
-		table->Update();
-		line = chart->AddPlot(vtkChart::LINE);
-		line->SetInput(table, 0, currStructureCount + 1);
-		line->SetColor(color[i][0], color[i][1], color[i][2], 255);
-		yCoords[currStructureCount++]->Delete();
-	}
+    yCoords[currStructureCount] = vtkFloatArray::New();
+    yCoords[currStructureCount]->SetArray(matchVolumes[i], numMatchDVHPoints, 1);
+    yCoords[currStructureCount]->SetName(structureName[i]);
+    table->AddColumn(yCoords[currStructureCount]);
+    table->Update();
+    line = chart->AddPlot(vtkChart::LINE);
+    line->SetInput(table, 0, currStructureCount + 1);
+    line->SetColor(color[i][0], color[i][1], color[i][2], 255);
+    yCoords[currStructureCount++]->Delete();
+  }
 
-	chart->Update();
-	chart->RecalculateBounds();
+  chart->Update();
+  chart->RecalculateBounds();
 
-	xCoords->Delete();
+  xCoords->Delete();
 }
 
 ///displayOverlayDVHData////////////////////////////////////////////////////////
@@ -1797,37 +2007,37 @@ void CompareDialog::setupMatchDVHChart(vtkChartXY *chart, char *title)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::displayOverlayDVHData()
 {
-	QString title;
+  QString title;
 
-	if (overlayPatient && overlayDVHCheckBox->isChecked())
-	{	
-		if (readDVHData(*overlayPatient, overlayVolumes, numOverlayDVHPoints))
-		{
-			title = "DVH: match -- Duke patient #" + 
-			QString(("%1")).arg
-				(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
-			+ " + overlay -- Duke patient #" +
-			QString(("%1")).arg(
-				overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
-		}
-		else
-		{
-			cout << "Failed to read DVH data for patient #"
-				 << overlayPatient->getNumber() << endl;
+  if (overlayPatient && overlayDVHCheckBox->isChecked())
+  {  
+    if (readDVHData(*overlayPatient, overlayVolumes, numOverlayDVHPoints))
+    {
+      title = "DVH: match -- Duke patient #" + 
+      QString(("%1")).arg
+        (matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
+      + " + overlay -- Duke patient #" +
+      QString(("%1")).arg(
+        overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
+    }
+    else
+    {
+      cout << "Failed to read DVH data for patient #"
+         << overlayPatient->getNumber() << endl;
 
-			initOverlayDVHObjects();
-			return;
-		}
-	}
-	else
-	{
-		title = "Match DVH: Duke patient " + 
-		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
-	}
+      initOverlayDVHObjects();
+      return;
+    }
+  }
+  else
+  {
+    title = "Match DVH: Duke patient #" + 
+    QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
+  }
 
-	QByteArray ba = title.toLatin1();
-	setupOverlayDVHChart(overlayDVH, ba.data());
-	overlayDVHView->Render();
+  QByteArray ba = title.toLatin1();
+  setupOverlayDVHChart(overlayDVH, ba.data());
+  overlayDVHView->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1835,27 +2045,27 @@ void CompareDialog::displayOverlayDVHData()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::displayMatchDVHData()
 {
-	if (matchDVHDataExists = readDVHData(*matchPatient, matchVolumes, 
-		numMatchDVHPoints))
-	{
-		QString title = "Match DVH: patient " + 
-		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
+  if (matchDVHDataExists = readDVHData(*matchPatient, matchVolumes, 
+    numMatchDVHPoints))
+  {
+    QString title = "Match DVH: Duke patient #" + 
+    QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
 
-		QByteArray ba = title.toLatin1();
-		setupMatchDVHChart(matchDVH, ba.data());
-		matchDVHView->Render();
-	}
-	else
-	{
-		cout << "Failed to read DVH data for patient #"
-			 << matchPatient->getNumber() << endl;
+    QByteArray ba = title.toLatin1();
+    setupMatchDVHChart(matchDVH, ba.data());
+    matchDVHView->Render();
+  }
+  else
+  {
+    cout << "Failed to read DVH data for patient #"
+       << matchPatient->getNumber() << endl;
 
-		initMatchDVHObjects();
+    initMatchDVHObjects();
 
-		matchDVHView->Render();
-	}
+    matchDVHView->Render();
+  }
 
-	displayOverlayDVHData();
+  displayOverlayDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1863,28 +2073,28 @@ void CompareDialog::displayMatchDVHData()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::toggleOverlayDVH(bool checked)
 {
-	if (!overlayPatient || !matchPatient) return;
+  if (!overlayPatient || !matchPatient) return;
 
-	QString title;
+  QString title;
 
-	if (overlayDVHCheckBox->isChecked())
-	{
-		title = "DVH: match -- Duke patient " + 
-		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
-		+ " + overlay -- Duke patient " +
-		QString(("%1")).arg(
-			overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
-	}
-	else
-	{
-		title = "Match DVH: Duke patient " + 
-		QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
-	}
+  if (overlayDVHCheckBox->isChecked())
+  {
+    title = "DVH: match -- Duke patient #" + 
+    QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'))
+    + " + overlay -- Duke patient #" +
+    QString(("%1")).arg(
+      overlayPatient->getNumber(), 3, 10, QLatin1Char('0'));
+  }
+  else
+  {
+    title = "Match DVH: Duke patient #" + 
+    QString(("%1")).arg(matchPatient->getNumber(), 3, 10, QLatin1Char('0'));
+  }
 
-	QByteArray ba = title.toLatin1();
+  QByteArray ba = title.toLatin1();
 
-	setupOverlayDVHChart(overlayDVH, ba.data());
-	overlayDVHView->Render();
+  setupOverlayDVHChart(overlayDVH, ba.data());
+  overlayDVHView->Render();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1894,8 +2104,8 @@ void CompareDialog::toggleOverlayDVH(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::historyItemTriggered(bool checked)
 {
-	QAction *action = (QAction *)sender();
-	emit selectHistoryMatch(action->text());
+  QAction *action = (QAction *)sender();
+  emit selectHistoryMatch(action->text());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1906,23 +2116,23 @@ void CompareDialog::historyItemTriggered(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::removeCurrentMatch()
 {
-	if (!matchHistoryMenu || matchHistoryMenu->actions().isEmpty()) return;
+  if (!matchHistoryMenu || matchHistoryMenu->actions().isEmpty()) return;
 
-	// Replace the current match with the item on top of the history menu;
-	QAction *action = matchHistoryMenu->actions().first();
-	selectHistoryMatch(action->text());
+  // Replace the current match with the item on top of the history menu;
+  QAction *action = matchHistoryMenu->actions().first();
+  selectHistoryMatch(action->text());
 
-	// Now the new item on top of the history menu is the former match that
-	// we want to remove:
-	action = matchHistoryMenu->actions().first();
-	matchHistoryMenu->removeAction(action);
+  // Now the new item on top of the history menu is the former match that
+  // we want to remove:
+  action = matchHistoryMenu->actions().first();
+  matchHistoryMenu->removeAction(action);
 
-	removeCurrentMatchPushButton->setEnabled(
-		!matchHistoryMenu->actions().isEmpty());
+  removeCurrentMatchPushButton->setEnabled(
+    !matchHistoryMenu->actions().isEmpty());
 
-	historyPushButton->setEnabled(!matchHistoryMenu->actions().isEmpty());
+  historyPushButton->setEnabled(!matchHistoryMenu->actions().isEmpty());
 
-	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
+  if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1930,15 +2140,15 @@ void CompareDialog::removeCurrentMatch()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::saveMatchHistory()
 {
-	QFileDialog dlg;
-	dlg.setViewMode(QFileDialog::Detail);
-	QString fileName = QFileDialog::getSaveFileName(this,
-		tr("Save Results"), ".", tr("Text files (*.txt)"));
+  QFileDialog dlg;
+  dlg.setViewMode(QFileDialog::Detail);
+  QString fileName = QFileDialog::getSaveFileName(this,
+    tr("Save Results"), ".", tr("Text files (*.txt)"));
 
-	if (!fileName.isEmpty())
-	{
-		writeResults(fileName);
-	}
+  if (!fileName.isEmpty())
+  {
+    writeResults(fileName);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1948,8 +2158,8 @@ void CompareDialog::saveMatchHistory()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::overlayItemTriggered(bool checked)
 {
-	QAction *action = (QAction *)sender();
-	emit selectOverlay(action->text());
+  QAction *action = (QAction *)sender();
+  emit selectOverlay(action->text());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1957,15 +2167,15 @@ void CompareDialog::overlayItemTriggered(bool checked)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectHistoryMatch(QString text)
 {
-	caseSpaceDialog->setIsNewMatchCaseSelectedHere(false);
+  caseSpaceDialog->setIsNewMatchCaseSelectedHere(false);
 
-	QString nAsText = text.section('#', 1);
-	int num = nAsText.toInt();
-	matchSelectSpinBox->setValue(num);
+  QString nAsText = text.section('#', 1);
+  int num = nAsText.toInt();
+  matchSelectSpinBox->setValue(num);
 
-	removeRedundantMenuItem(matchHistoryMenu, text);
+  removeRedundantMenuItem(matchHistoryMenu, text);
 
-	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
+  if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
 
 }
 
@@ -2010,24 +2220,24 @@ void CompareDialog::selectHistoryMatch(QString text)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::selectOverlay(QString text)
 {
-	QByteArray a = text.toLatin1();
-	QString nAsText = text.section('#', 1);
-	int num = nAsText.toInt();
-	overlayPatient = caseSpaceDialog->getDukePatientFrom(num);
-	int numItems = overlaySelectionMenu->actions().size();
+  QByteArray a = text.toLatin1();
+  QString nAsText = text.section('#', 1);
+  int num = nAsText.toInt();
+  overlayPatient = caseSpaceDialog->getDukePatientFrom(num);
+  int numItems = overlaySelectionMenu->actions().size();
 
-	for (int i = 0; i < numItems; i++)
-	{
-		QAction *currAction = overlaySelectionMenu->actions().at(i);
-		QString currText = currAction->text();
-		currAction->setChecked(!text.compare(currText));
-	}
+  for (int i = 0; i < numItems; i++)
+  {
+    QAction *currAction = overlaySelectionMenu->actions().at(i);
+    QString currText = currAction->text();
+    currAction->setChecked(!text.compare(currText));
+  }
 
-	overlaySelectionPushButton->setEnabled(true);
-	removeSelectedOverlayPushButton->setEnabled(true);
-	overlayDVHCheckBox->setEnabled(true);
-	overlayDVHCheckBox->setChecked(true);
-	displayOverlayDVHData();
+  overlaySelectionPushButton->setEnabled(true);
+  removeSelectedOverlayPushButton->setEnabled(true);
+  overlayDVHCheckBox->setEnabled(true);
+  overlayDVHCheckBox->setChecked(true);
+  displayOverlayDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2035,33 +2245,33 @@ void CompareDialog::selectOverlay(QString text)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::removeSelectedOverlayMenuItem()
 {
-	if (!overlaySelectionMenu || overlaySelectionMenu->isEmpty()) return;
+  if (!overlaySelectionMenu || overlaySelectionMenu->isEmpty()) return;
 
-	bool deleted = false;
-	
-	QList<QAction *> actions = overlaySelectionMenu->actions(); 
-	QList<QAction *>::Iterator i;
+  bool deleted = false;
+  
+  QList<QAction *> actions = overlaySelectionMenu->actions(); 
+  QList<QAction *>::Iterator i;
 
-	for (i = actions.begin(); i != actions.end(); ++i)
-	{
-		if ((*i)->isChecked())
-		{
-			overlaySelectionMenu->removeAction(*i);
-		}
-	}
+  for (i = actions.begin(); i != actions.end(); ++i)
+  {
+    if ((*i)->isChecked())
+    {
+      overlaySelectionMenu->removeAction(*i);
+    }
+  }
 
-	if (overlaySelectionMenu->isEmpty())
-	{
-		overlaySelectionPushButton->setEnabled(false);
-		overlayDVHCheckBox->setEnabled(false);
-	}
+  if (overlaySelectionMenu->isEmpty())
+  {
+    overlaySelectionPushButton->setEnabled(false);
+    overlayDVHCheckBox->setEnabled(false);
+  }
 
-	removeSelectedOverlayPushButton->setEnabled(false); // Nothing selected
+  removeSelectedOverlayPushButton->setEnabled(false); // Nothing selected
 
-	overlayDVHCheckBox->setChecked(false);
-	overlayPatient = NULL;
-	toggleOverlayDVH(false);
-	displayOverlayDVHData();
+  overlayDVHCheckBox->setChecked(false);
+  overlayPatient = NULL;
+  toggleOverlayDVH(false);
+  displayOverlayDVHData();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2071,24 +2281,27 @@ void CompareDialog::removeSelectedOverlayMenuItem()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setDVHYAxisTicks(vtkChartXY *chart)
 {
-	static const int numTicks = 21;
-	static const double maxY = 110.0;
-	static const double tickIncrement = (maxY - 10.0) / (numTicks - 1);
-	char tickLabel[15]; // Can't possibly need more than 15 chars :-)
+  static const int numTicks = 21;
+  static const double maxY = 110.0;
+  static const double tickIncrement = (maxY - 10.0) / (numTicks - 1);
+  char tickLabel[15]; // Can't possibly need more than 15 chars :-)
 
-	vtkDoubleArray *tickPositions = vtkDoubleArray::New();
-	vtkStringArray *tickLabels = vtkStringArray::New();
+  vtkDoubleArray *tickPositions = vtkDoubleArray::New();
+  vtkStringArray *tickLabels = vtkStringArray::New();
 
-	for (int i = 0; i < numTicks; i++) 
-	{
-		tickPositions->InsertNextValue(i * tickIncrement);
-		sprintf_s(tickLabel, "%d", (i * (int)tickIncrement));
-		tickLabels->InsertNextValue(tickLabel);
-	}
+  for (int i = 0; i < numTicks; i++) 
+  {
+    tickPositions->InsertNextValue(i * tickIncrement);
+    sprintf_s(tickLabel, "%d", (i * (int)tickIncrement));
+    tickLabels->InsertNextValue(tickLabel);
+  }
 
-	chart->GetAxis(vtkAxis::LEFT)->SetTickPositions(tickPositions);
-	chart->GetAxis(vtkAxis::LEFT)->SetTickLabels(tickLabels);
-	chart->GetAxis(vtkAxis::LEFT)->SetRange(0, maxY);
+  chart->GetAxis(vtkAxis::LEFT)->SetTickPositions(tickPositions);
+  chart->GetAxis(vtkAxis::LEFT)->SetTickLabels(tickLabels);
+  chart->GetAxis(vtkAxis::LEFT)->SetRange(0, maxY);
+
+  chart->GetAxis(vtkAxis::LEFT)->GetGridPen()->SetColorF(0.17, 0.17, 0.22);
+  chart->GetAxis(vtkAxis::BOTTOM)->GetGridPen()->SetColorF(0.17, 0.17, 0.22);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2096,8 +2309,8 @@ void CompareDialog::setDVHYAxisTicks(vtkChartXY *chart)
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupMatchHistoryMenu()
 {
-	matchHistoryMenu = new QMenu(this);
-	historyPushButton->setMenu(matchHistoryMenu);
+  matchHistoryMenu = new QMenu(this);
+  historyPushButton->setMenu(matchHistoryMenu);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2105,10 +2318,10 @@ void CompareDialog::setupMatchHistoryMenu()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::setupOverlaySelectionMenu()
 {
-	overlaySelectionMenu = new QMenu(this);
-	overlaySelectionPushButton->setMenu(overlaySelectionMenu);
+  overlaySelectionMenu = new QMenu(this);
+  overlaySelectionPushButton->setMenu(overlaySelectionMenu);
 
-	overlaySelectionIndex = -1;
+  overlaySelectionIndex = -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2118,53 +2331,53 @@ void CompareDialog::setupOverlaySelectionMenu()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::addMatchHistoryItem()
 {
-	if ((!matchHistoryMenu) || (!caseSpaceDialog)) return;
+  if ((!matchHistoryMenu) || (!caseSpaceDialog)) return;
 
-	// If the new match (an old history item?) is in the history, remove it:
-	int maybeRedundantPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
+  // If the new match (an old history item?) is in the history, remove it:
+  int maybeRedundantPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
 
-	QString maybeRedundantItemText = /* matchPatient->getInstitution() + */
-		"Duke Patient #" + QString::number(maybeRedundantPatientNum);
+  QString maybeRedundantItemText = /* matchPatient->getInstitution() + */
+    "Duke Patient #" + QString::number(maybeRedundantPatientNum);
 
-	removeRedundantMenuItem(matchHistoryMenu, maybeRedundantItemText);
+  removeRedundantMenuItem(matchHistoryMenu, maybeRedundantItemText);
 
-	int newHistoryPatientNum = caseSpaceDialog->getLastMatchCase()->getNumber();
+  int newHistoryPatientNum = caseSpaceDialog->getLastMatchCase()->getNumber();
 
-	newHistoryItemText = /* matchPatient->getInstitution() + */
-		"Duke Patient #" + QString::number(newHistoryPatientNum);
+  newHistoryItemText = /* matchPatient->getInstitution() + */
+    "Duke Patient #" + QString::number(newHistoryPatientNum);
 
-	int currMatchHistoryNum = matchHistoryMenu->actions().size();
+  int currMatchHistoryNum = matchHistoryMenu->actions().size();
 
-	for (int i = 0; i < currMatchHistoryNum; i++)
-	{
-		QAction *currAction = matchHistoryMenu->actions().at(i);
-		QString currText = currAction->text();
+  for (int i = 0; i < currMatchHistoryNum; i++)
+  {
+    QAction *currAction = matchHistoryMenu->actions().at(i);
+    QString currText = currAction->text();
 
-		if (!newHistoryItemText.compare(currText))	// If they are the same...
-		{
-			return;	 // ...don't add (because it's already there)
-		}
-	}
+    if (!newHistoryItemText.compare(currText))  // If they are the same...
+    {
+      return;   // ...don't add (because it's already there)
+    }
+  }
 
-	QAction *matchHistoryAction = new QAction(newHistoryItemText, this);
-	connect(matchHistoryAction, SIGNAL(triggered(bool)),
-		this, SLOT(historyItemTriggered(bool)));
+  QAction *matchHistoryAction = new QAction(newHistoryItemText, this);
+  connect(matchHistoryAction, SIGNAL(triggered(bool)),
+    this, SLOT(historyItemTriggered(bool)));
 
-	QAction *firstAction = NULL;
+  QAction *firstAction = NULL;
 
-	if (!matchHistoryMenu->isEmpty())
-	{
-		firstAction = matchHistoryMenu->actions().first();
-	}
+  if (!matchHistoryMenu->isEmpty())
+  {
+    firstAction = matchHistoryMenu->actions().first();
+  }
 
-	matchHistoryMenu->insertAction(firstAction, matchHistoryAction);
-	
-	historyPushButton->setEnabled(!matchHistoryMenu->actions().isEmpty());
+  matchHistoryMenu->insertAction(firstAction, matchHistoryAction);
+  
+  historyPushButton->setEnabled(!matchHistoryMenu->actions().isEmpty());
 
-	removeCurrentMatchPushButton->setEnabled(
-		!matchHistoryMenu->actions().isEmpty());
+  removeCurrentMatchPushButton->setEnabled(
+    !matchHistoryMenu->actions().isEmpty());
 
-	if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
+  if (caseSpaceDialog) caseSpaceDialog->resetDukeDataPositions();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2177,63 +2390,63 @@ void CompareDialog::addMatchHistoryItem()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::addOverlaySelectionItem()
 {
-	if ((!overlaySelectionMenu) || (!caseSpaceDialog)) return;
+  if ((!overlaySelectionMenu) || (!caseSpaceDialog)) return;
 
-	// If the new match is in the overlay menu, remove it:
-	int maybeRedundantPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
+  // If the new match is in the overlay menu, remove it:
+  int maybeRedundantPatientNum = caseSpaceDialog->getMatchCase()->getNumber();
 
-	QString maybeRedundantItemText = /* matchPatient->getInstitution() + */
-		"Duke Patient #" + QString::number(maybeRedundantPatientNum);
+  QString maybeRedundantItemText = /* matchPatient->getInstitution() + */
+    "Duke Patient #" + QString::number(maybeRedundantPatientNum);
 
-	removeRedundantMenuItem(overlaySelectionMenu, maybeRedundantItemText);
+  removeRedundantMenuItem(overlaySelectionMenu, maybeRedundantItemText);
 
-	int newHistoryPatientNum = caseSpaceDialog->getLastMatchCase()->getNumber();
+  int newHistoryPatientNum = caseSpaceDialog->getLastMatchCase()->getNumber();
 
-	int currNumOverlayMenuItems = overlaySelectionMenu->actions().size();
+  int currNumOverlayMenuItems = overlaySelectionMenu->actions().size();
 
-	for (int i = 0; i < currNumOverlayMenuItems; i++)
-	{
-		QAction *currAction = overlaySelectionMenu->actions().at(i);
-		QString currText = currAction->text();
+  for (int i = 0; i < currNumOverlayMenuItems; i++)
+  {
+    QAction *currAction = overlaySelectionMenu->actions().at(i);
+    QString currText = currAction->text();
 
-		if (!newHistoryItemText.compare(currText))	// If they are the same...
-		{
-			return;	 // ...don't add (because it's already there)
-		}
-	}
+    if (!newHistoryItemText.compare(currText))  // If they are the same...
+    {
+      return;   // ...don't add (because it's already there)
+    }
+  }
 
-	QAction *overlaySelectionAction = new QAction(newHistoryItemText, this);
-	overlaySelectionAction->setCheckable(true);
-	connect(overlaySelectionAction, SIGNAL(triggered(bool)),
-		this, SLOT(overlayItemTriggered(bool)));
+  QAction *overlaySelectionAction = new QAction(newHistoryItemText, this);
+  overlaySelectionAction->setCheckable(true);
+  connect(overlaySelectionAction, SIGNAL(triggered(bool)),
+    this, SLOT(overlayItemTriggered(bool)));
 
-	QAction *firstAction = NULL;
+  QAction *firstAction = NULL;
 
-	if (!overlaySelectionMenu->isEmpty())
-	{
-		firstAction = overlaySelectionMenu->actions().first();
-	}
+  if (!overlaySelectionMenu->isEmpty())
+  {
+    firstAction = overlaySelectionMenu->actions().first();
+  }
 
-	overlaySelectionMenu->insertAction(firstAction, overlaySelectionAction);
+  overlaySelectionMenu->insertAction(firstAction, overlaySelectionAction);
 
-	overlayDVHCheckBox->setEnabled(!overlaySelectionMenu->isEmpty());
-	overlaySelectionPushButton->setEnabled(!overlaySelectionMenu->isEmpty());
+  overlayDVHCheckBox->setEnabled(!overlaySelectionMenu->isEmpty());
+  overlaySelectionPushButton->setEnabled(!overlaySelectionMenu->isEmpty());
 
-	/* No, no autoselection.  If an item is selected it's because the user did it.
-	// Select the first item:
-	overlaySelectionMenu->actions().first()->setChecked(true);
+  /* No, no autoselection.  If an item is selected it's because the user did it.
+  // Select the first item:
+  overlaySelectionMenu->actions().first()->setChecked(true);
 
-	currNumOverlayMenuItems = overlaySelectionMenu->actions().size();
+  currNumOverlayMenuItems = overlaySelectionMenu->actions().size();
 
-	// And deselect all the others:
-	for (int i = 1; i < currNumOverlayMenuItems; i++)
-	{
-		QAction *currAction = overlaySelectionMenu->actions().at(i);
-		currAction->setChecked(false);
-	}
+  // And deselect all the others:
+  for (int i = 1; i < currNumOverlayMenuItems; i++)
+  {
+    QAction *currAction = overlaySelectionMenu->actions().at(i);
+    currAction->setChecked(false);
+  }
 
-	displayOverlayDVHData();
-	*/
+  displayOverlayDVHData();
+  */
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2245,25 +2458,25 @@ void CompareDialog::addOverlaySelectionItem()
 ////////////////////////////////////////////////////////////////////////////////
 bool CompareDialog::removeRedundantMenuItem(QMenu *menu, QString text)
 {
-	bool wasActionRemoved = false;
-	int numMenuItems = menu->actions().size();
+  bool wasActionRemoved = false;
+  int numMenuItems = menu->actions().size();
 
-	int i = 0;
+  int i = 0;
 
-	while (i < numMenuItems)
-	{
-		QAction *currAction = menu->actions().at(i++);
-		QString currText = currAction->text();
+  while (i < numMenuItems)
+  {
+    QAction *currAction = menu->actions().at(i++);
+    QString currText = currAction->text();
 
-		if (!text.compare(currText)) // if they're the same...
-		{
-			menu->removeAction(currAction);
-			numMenuItems--;
-			wasActionRemoved = true;
-		}
-	}
+    if (!text.compare(currText)) // if they're the same...
+    {
+      menu->removeAction(currAction);
+      numMenuItems--;
+      wasActionRemoved = true;
+    }
+  }
 
-	return wasActionRemoved;
+  return wasActionRemoved;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2271,44 +2484,44 @@ bool CompareDialog::removeRedundantMenuItem(QMenu *menu, QString text)
 ////////////////////////////////////////////////////////////////////////////////
 bool CompareDialog::writeResults(QString fileName)
 {
-	QFile f(fileName);
-	  
-	if( !f.open( IO_WriteOnly | IO_Truncate | QIODevice::Text ) )
-	{
-		cout << "Failed to open file." << std::endl;
-		return false;
-	}
-	else
-	{
-		QTextStream ts(&f);
-		ts << "Query case: Duke Patient #" << queryPatient->getNumber() << endl;
-		ts << "Match candidates: " << "\t\t\tMI value wrt query case" << endl;
-		ts << "Current match: Duke Patient #" << matchPatient->getNumber() 
-		   << "\t\t" 
-		   << caseSpaceDialog->getMIValue(
-						queryPatient->getIndex(), matchPatient->getIndex())
-		   << endl;
-		ts << "History: " << endl;
+  QFile f(fileName);
+    
+  if( !f.open( IO_WriteOnly | IO_Truncate | QIODevice::Text ) )
+  {
+    cout << "Failed to open file." << std::endl;
+    return false;
+  }
+  else
+  {
+    QTextStream ts(&f);
+    ts << "Query case: Duke Patient #" << queryPatient->getNumber() << endl;
+    ts << "Match candidates: " << "\t\t\tMI value wrt query case" << endl;
+    ts << "Current match: Duke Patient #" << matchPatient->getNumber() 
+       << "\t\t" 
+       << caseSpaceDialog->getMIValue(
+            queryPatient->getIndex(), matchPatient->getIndex())
+       << endl;
+    ts << "History: " << endl;
 
-		QList<QAction *> actions = matchHistoryMenu->actions(); 
-		QList<QAction *>::Iterator i;
-		int  counter = 1;
+    QList<QAction *> actions = matchHistoryMenu->actions(); 
+    QList<QAction *>::Iterator i;
+    int  counter = 1;
 
-		for (i = actions.begin(); i != actions.end(); ++i)
-		{
-			QString text = (*i)->text();
-			QStringList list = text.split("#", QString::SkipEmptyParts);
-			int currIx = list.at(1).toInt();
+    for (i = actions.begin(); i != actions.end(); ++i)
+    {
+      QString text = (*i)->text();
+      QStringList list = text.split("#", QString::SkipEmptyParts);
+      int currIx = list.at(1).toInt();
 
-			ts << counter++ << ". " << text << "\t\t\t\t" 
-			   << caseSpaceDialog->getMIValue(queryPatient->getIndex(), currIx)
-			   << endl;
-		}
+      ts << counter++ << ". " << text << "\t\t\t\t" 
+         << caseSpaceDialog->getMIValue(queryPatient->getIndex(), currIx)
+         << endl;
+    }
 
-		f.close();
-	}
+    f.close();
+  }
 
-	return true;
+  return true;
 }
 
 
