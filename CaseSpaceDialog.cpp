@@ -9,9 +9,17 @@
 // query case's MI value (which is always the maximum) the query case is 
 // placed at the min MI value in the z direction.
 //
-// author: Steve Chall, RENCI
-// primary collaborators: Joseph Lo, Shiva Das, Vorakarn Chanyavanich,
-// Duke Medical Center
+// Author:    Steve Chall, RENCI
+//
+// Primary collaborators: 
+//            Joseph Lo, Shiva Das, Vorakarn Chanyavanich, Duke Medical Center
+//
+// Copyright: The Renaissance Computing Institute (RENCI)
+//
+// License:   Licensed under the RENCI Open Source Software License v. 1.0
+//
+//            See http://www.renci.org/resources/open-source-software-license
+//            for details.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -57,9 +65,12 @@
 using namespace std;
 
 static const char *MIAvgFileName = "/MI/mi_avg1-7.txt";
-const double CaseSpaceDialog::numMIColors = 100;
 
+const double CaseSpaceDialog::numMIColors = 100;
+const double nearClip = 1.0;
+const double farClip = 75760.0;
 const int numXYDataAngleMenuItems = 8;
+
 QString angleItemText[numXYDataAngleMenuItems] =
 {  
   "Average over all gantry angles",
@@ -144,20 +155,20 @@ CaseSpaceDialog::CaseSpaceDialog(MainWindow *mw)
     MIRange(0.0),
     MIThresholdPlane(NULL),
     mitpActor(NULL),
-    queryCaseIndex(-1),    // Impossible dummy value -> uninitialized,
+    queryCaseIndex(-1),     // Impossible dummy value -> uninitialized
     balloonWidget(NULL),
     balloonRep(NULL),
     zMult(10000.0),
     axes(NULL),
-    stdCamDist(33700.0),  // Empiricially determined
-    stdVertShift(2500.0),  // Add to move camera up, oblique & MI views
+    stdCamDist(33700.0),    // Empiricially determined
+    stdVertShift(2500.0),   // Add to move camera up, oblique & MI views
     parallelScale(5300.0),
     thresholdPlaneThickness(15.0),
     queryPoint(NULL),
     queryPointMapper(NULL),
     queryPointActor(NULL),
-    lastMatchCaseIndex(-1),  // Negative until initialized
-    currMatchCaseIndex(-1),  // Negative until initialized
+    lastMatchCaseIndex(-1), // Negative until initialized
+    currMatchCaseIndex(-1), // Negative until initialized
     MILegend(NULL),
     MILookupTable(NULL),
     newMatchCaseSelectedHere(false),
@@ -541,7 +552,7 @@ Patient *CaseSpaceDialog::getPatientFromCoodinates(double *xArray, double *yArra
 // selectMatch(int patientNumber), which updates the caseSpaceDialog's 
 // lastMatchCase variable to the current matchCase.  This is necessary when 
 // selectMatch(int patientNumber) is invoked by direct user manipulation of the
-// matchSelectSpinBox, but would ends with an incorrect patient (the newly
+// matchSelectSpinBox, but would end with an incorrect patient (the newly
 // selected) being placed in the matchHistory if the selection was made from
 // Case Space. Hence this variable is used to skip the incorrect lastMatchCase
 // update for the latter case.
@@ -688,7 +699,7 @@ void CaseSpaceDialog::setXYView(bool /* checked = true */ )
           yCenterQueryPt,
           zCenterQueryPt };
   double vUp[] = {0, 1, 0 };
-  double clip[] = { 1, 75760 };
+  double clip[] = { nearClip, farClip };
   double zoom = 1.0 / parallelScale;
 
   SetCameraPosition(pos, fp, vUp, clip, zoom);
@@ -706,7 +717,7 @@ void CaseSpaceDialog::setXMIView(bool /* checked = true */ )
           yCenterQueryPt,
           zCenterQueryPt + stdVertShift };
   double vUp[] = {0, 0, 1 };
-  double clip[] = { 1, 75760 };
+  double clip[] = { nearClip, farClip };
   double zoom = 1.0 / parallelScale;
 
   SetCameraPosition(pos, fp, vUp, clip, zoom);
@@ -724,7 +735,7 @@ void CaseSpaceDialog::setYMIView(bool /* checked = true */ )
           yCenterQueryPt,
           zCenterQueryPt + stdVertShift };
   double vUp[] = { 0, 0, 1 };
-  double clip[] = { 1, 75760 };
+  double clip[] = { nearClip, farClip };
   double zoom = 1.0 / parallelScale;
 
   SetCameraPosition(pos, fp, vUp, clip, zoom);
@@ -745,7 +756,7 @@ void CaseSpaceDialog::setObliqueView(bool /* checked = true */ )
                   yCenterQueryPt, 
                   zCenterQueryPt + stdVertShift };
   double vUp[] = { 0, 0, 1 };
-  double clip[] = { 1, 75760 };
+  double clip[] = { nearClip, farClip };
   double zoom = 1.0 / parallelScale;
 
   SetCameraPosition(pos, fp, vUp, clip, zoom);
@@ -1061,16 +1072,6 @@ void CaseSpaceDialog::SetCameraPosition(double pos[3], double fp[3],
   cam->SetParallelScale(1.0 / zoom);
 
   caseSpaceRenWin->Render();
-}
-
-///SetCameraPosition////////////////////////////////////////////////////////////
-//
-// Setting camera position and orientation with azimuth defined by argument az.
-//
-////////////////////////////////////////////////////////////////////////////////
-void CaseSpaceDialog::SetCameraPosition(double az)
-{
-  ren->GetActiveCamera()->Azimuth(-az);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

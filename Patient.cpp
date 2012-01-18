@@ -4,8 +4,17 @@
 // values specific to determining how to display data for an individual prostate
 // cancer patient.
 //
-// author: Steve Chall, RENCI
-// chief collaborator: Vorakarn Chanyavanich, Duke Medical Center
+// Author:    Steve Chall, RENCI
+//
+// Primary collaborators: 
+//            Joseph Lo, Shiva Das, Vorakarn Chanyavanich, Duke Medical Center
+//
+// Copyright: The Renaissance Computing Institute (RENCI)
+//
+// License:   Licensed under the RENCI Open Source Software License v. 1.0
+//
+//            See http://www.renci.org/resources/open-source-software-license
+//            for details.
 //
 ////////////////////////////////////////////////////////////////////////////////
 

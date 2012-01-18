@@ -9,9 +9,17 @@
 // query case's MI value (which is always the maximum) the query case is 
 // placed at the min MI value in the z direction.
 //
-// author: Steve Chall, RENCI
-// primary collaborators: Joseph Lo, Shiva Das, Vorakarn Chanyavanich,
-// Duke Medical Center
+// Author:    Steve Chall, RENCI
+//
+// Primary collaborators: 
+//            Joseph Lo, Shiva Das, Vorakarn Chanyavanich, Duke Medical Center
+//
+// Copyright: The Renaissance Computing Institute (RENCI)
+//
+// License:   Licensed under the RENCI Open Source Software License v. 1.0
+//
+//            See http://www.renci.org/resources/open-source-software-license
+//            for details.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -136,7 +144,6 @@ private slots:
 private: // methods
   void SetCameraPosition(double pos[3], double fp[3], double vUp[3],
     double clip[2], double zoom);
-  void SetCameraPosition(double az);
 
   void createActions();
   void setupCaseSpaceRenWin();
