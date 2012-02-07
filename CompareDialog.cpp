@@ -583,8 +583,7 @@ void CompareDialog::selectQuery(int patientNumber)
   if (!caseSpaceDialog) return;
 
   queryPatient = caseSpaceDialog->getDukePatientFrom(patientNumber);
-  queryPatient->setNumber(patientNumber);
-  selectQueryCTSlice(sliceSelectionSlider->value());
+   selectQueryCTSlice(sliceSelectionSlider->value());
   setSliceAxis();
   selectQueryProjection(true);
 }
@@ -1098,6 +1097,8 @@ void CompareDialog::setupVTKUI()
   queryProjectionWidget->SetRenderWindow(queryProjectionRenWin);
   matchProjectionWidget->SetRenderWindow(matchProjectionRenWin);
 
+  selectQuery(caseSpaceDialog->getMainWindow()->getQueryCasePatientNumber());
+
   initOverlayDVHObjects();
   initMatchDVHObjects();
 }
@@ -1109,8 +1110,8 @@ void CompareDialog::setupVTKUI()
 ////////////////////////////////////////////////////////////////////////////////
 void CompareDialog::createActions()
 {
-  connect(querySelectSpinBox, SIGNAL(valueChanged(int)), this, 
-    SLOT(selectQuery(int)));
+//  connect(querySelectSpinBox, SIGNAL(valueChanged(int)), this, 
+//    SLOT(selectQuery(int)));
   connect(matchSelectSpinBox, SIGNAL(valueChanged(int)), this, 
     SLOT(selectMatch(int)));
 
@@ -1266,7 +1267,6 @@ void CompareDialog::initMatchCTPipeLine()
   matchCTTextActor->GetProperty()->SetColor(1, 1, 1);
   matchCTTextActor->SetHeight(0.34);
   matchCTTextActor->SetDisplayPosition(10, 3);
-  //matchCTTextActor->SetInput("slice #888");
   matchCTImageViewer->GetRenderer()->AddActor(matchCTTextActor);
 }
 
@@ -1531,10 +1531,12 @@ void CompareDialog::selectQueryProjection(bool newQuery /* = false */)
     queryProjector->ComputeAverages();
   }
 
+#if USE_PROJECTOR_SLICE_PLANE
   queryProjector->PositionSlicePlane(
     queryCTImageViewer->GetSliceOrientation(),
     queryCTImageViewer->GetSlice(),
     queryCTImageViewer->GetSliceMax() - queryCTImageViewer->GetSliceMin()); // TEMP SAC
+#endif
 
   queryProjector->SetProjection(pNum, queryAngle);
 }
@@ -1567,10 +1569,12 @@ void CompareDialog::selectMatchProjection(bool newMatch /* = false */ )
     matchProjector->ComputeAverages();
   }
 
+#if USE_PROJECTOR_SLICE_PLANE
   matchProjector->PositionSlicePlane(
     matchCTImageViewer->GetSliceOrientation(),
     matchCTImageViewer->GetSlice(),
     matchCTImageViewer->GetSliceMax() - matchCTImageViewer->GetSliceMin()); // TEMP 
+#endif
 
   matchProjector->SetProjection(pNum, matchAngle);
 }

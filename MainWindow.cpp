@@ -32,11 +32,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 MainWindow::MainWindow()
-  : versionNumber(358),
+  : versionNumber(360),
     queryCaseSourceInstitution(kDuke),
     queryCasePatientNumber(-1),
-    dukeDir(""),
-    dukeDataDirectoryPath("./PathToDukeData"),
+    dukeDataDirName(""),
+    dukeDataDirFile("./PathToDukeData"),
     selectDukeQueryCaseAction(NULL),
     selectPoconoQueryCaseAction(NULL),
     selectHighPointQueryCaseAction(NULL),
@@ -44,20 +44,20 @@ MainWindow::MainWindow()
 {
   setupUi(this);
 
-  if (!dukeDataDirectoryPath.open(QIODevice::ReadOnly))
+  if (!dukeDataDirFile.open(QIODevice::ReadOnly))
   {
     selectDukeDirectory();  
   }
   else
   {
-    dukeDir = dukeDataDirectoryPath.readLine();
-    dukeDataDirectoryPath.close();
+    dukeDataDirName = dukeDataDirFile.readLine();
+    dukeDataDirFile.close();
   }
 
   setupSelectQueryCaseComboBoxes();
   createActions();
 
-  loadDukeLineEdit->setText(dukeDir);
+  loadDukeLineEdit->setText(dukeDataDirName);
   dukeQueryCaseComboBox->setDisabled(false);
   poconoQueryCaseComboBox->setDisabled(true);
   highPointQueryCaseComboBox->setDisabled(true);
@@ -85,6 +85,18 @@ void MainWindow::openCaseSpaceDialog()
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// dukeDataDirFile is a QFile object that points to a text file that holds a
+// string which represents the top-level directory that contains the Duke data.
+// This method is constructed to be called when the user wants to write the path
+// to that top-level Duke data directory into the text file (either an attempt
+// to open that text file has failed, or else that the user wants to explicitly
+// set the path string in that file). It opens a file dialog so that the user 
+// can make that selection, and writes the selected path to the text file.  If
+// data directory path selection succeeds, the list of Duke cases is set up in 
+// dukeQueryCaseComboBox which is then enabled, the path is written into 
+// loadDukeLineEdit, and the selected path is written to the file pointed to by
+// dukeDataDirFile for future use.
+//
 ////////////////////////////////////////////////////////////////////////////////
 void MainWindow::selectDukeDirectory()
 {
@@ -92,25 +104,25 @@ void MainWindow::selectDukeDirectory()
   dlg->setMode(QFileDialog::Directory);
   dlg->setOption(QFileDialog::ShowDirsOnly);
 
-  dukeDir = dlg->getExistingDirectory(0,
+  dukeDataDirName = dlg->getExistingDirectory(0,
     tr("Select directory for Duke case data"), ".");
 
-  if (!dukeDir.isEmpty())
+  if (!dukeDataDirName.isEmpty())
   {
     setupDukeSelectQueryCaseComboBox();
 
-    if (!dukeDataDirectoryPath.open(QIODevice::WriteOnly))
+    if (!dukeDataDirFile.open(QIODevice::WriteOnly))
     {
       QString warn = "Failed to open \"PathToDukeData\"";
       QMessageBox::warning(this, tr("File Open Failed"), warn);
     }
     else
     {
-      dukeDataDirectoryPath.write(dukeDir);
-      dukeDataDirectoryPath.close();
+      dukeDataDirFile.write(dukeDataDirName);
+      dukeDataDirFile.close();
     }
 
-    loadDukeLineEdit->setText(dukeDir);
+    loadDukeLineEdit->setText(dukeDataDirName);
     dukeQueryCaseComboBox->setDisabled(false);
   }
 }
@@ -205,7 +217,7 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
 
   // for each Duke patient for which we have overlap data, create a combo
   // box item:
-  dukeXYDataPath = dukeDir + "/overlap/Duke_struct_overlap";
+  dukeXYDataPath = dukeDataDirName + "/overlap/Duke_struct_overlap";
   QString defaultPath = dukeXYDataPath + "Avg.txt";
 
   QFile file(defaultPath);
@@ -218,8 +230,7 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
   }
 
   QTextStream in(&file);
-
-  
+ 
   in.readLine();    // Skip over the first line (column headers):
 
   int index;
@@ -239,23 +250,20 @@ bool MainWindow::setupDukeSelectQueryCaseComboBox()
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
-// 2do:
-// When we have real data, there will need to be error checking as we add 
-// items to the combo boxes: we'll need to try to open the essential data files
-// for each insitution and patient number as it comes up, and add items to the
-// combo box only for those patients where the open attempts were successful.
+// 2do: Need to extend to include non-Duke institutions when their data becomes
+// available.
 //
 ////////////////////////////////////////////////////////////////////////////////
 void MainWindow::setupSelectQueryCaseComboBoxes()
 {
-  QFile dataDir(dukeDir);
+  QFile dataDir(dukeDataDirName);
 
   if (dataDir.exists())
   {
     setupDukeSelectQueryCaseComboBox();
   }
 
-/**/
+/*
   // Dummy values
   selectPoconoQueryCaseAction = new QAction(poconoQueryCaseComboBox);
   poconoQueryCaseComboBox->addAction(selectPoconoQueryCaseAction); 
@@ -274,7 +282,7 @@ void MainWindow::setupSelectQueryCaseComboBoxes()
   {
     highPointQueryCaseComboBox->addItem(QString::number(i)); 
   }
-/**/
+*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -76,9 +76,11 @@ protected:
   QAction *selectPoconoQueryCaseAction;
   QAction *selectHighPointQueryCaseAction;
 
-  QFile dukeDataDirectoryPath;
+  // Object for accessing a text file that contains the path to the top level
+  // of the directory structure that holds the Duke data:
+  QFile dukeDataDirFile;
 
-  QString dukeDir;
+  QString dukeDataDirName;
   QString dukeXYDataPath;
   QString poconoDir;
   QString highPointDir;
@@ -91,11 +93,12 @@ protected:
   int versionNumber;
 
 public:
-  QString getDukeDir() { return dukeDir; };
-   // TEMP hardwired to Duke pending introduction of data from other institutions:
-  QString getDataDir() { return dukeDir; };
+  QString getDukeDir() { return dukeDataDirName; };
+  // TEMP hardwired to Duke pending introduction of data from other institutions:
+  QString getDataDir() { return dukeDataDirName; };
   QString &getDukeXYDataPath() { return dukeXYDataPath; };
-  SourceInstitution getQueryCaseSourceInstitution() { return queryCaseSourceInstitution; };
+  SourceInstitution getQueryCaseSourceInstitution()
+  { return queryCaseSourceInstitution; };
   int getQueryCasePatientNumber() { return queryCasePatientNumber; };
 
 private:
